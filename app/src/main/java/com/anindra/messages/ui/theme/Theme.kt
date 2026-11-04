@@ -314,12 +314,12 @@ internal fun schemeFor(
 ): ColorScheme = when {
     a11y.highContrastEnabled && darkTheme -> DarkHighContrastColors
     a11y.highContrastEnabled -> LightHighContrastColors
-    mode in listOf("cyber", "cyber_blue", "ab_cyber_blue", "blackout", "matrix", "neon_matrix", "arctic", "arctic_glass", "ghost", "ghost_protocol", "ocean", "deep_ocean", "crimson", "crimson_hacker", "quantum", "minimal", "minimal_glass") -> CyberTheme.schemeForMode(mode)
+    mode in listOf("stark", "stark_hud", "hud", "cyber", "cyber_blue", "ab_cyber_blue", "blackout", "matrix", "neon_matrix", "arctic", "arctic_glass", "ghost", "ghost_protocol", "ocean", "deep_ocean", "crimson", "crimson_hacker", "quantum", "minimal", "minimal_glass") -> CyberTheme.schemeForMode(mode)
     mode == SettingsStore.THEME_AMOLED -> CyberTheme.Blackout
     mode == SettingsStore.THEME_DYNAMIC && dynamic != null -> dynamic
-    darkTheme || mode == SettingsStore.THEME_DARK -> CyberTheme.AbCyberBlue
+    darkTheme || mode == SettingsStore.THEME_DARK -> CyberTheme.StarkHud
     mode == SettingsStore.THEME_LIGHT -> LightColors
-    else -> CyberTheme.AbCyberBlue
+    else -> CyberTheme.StarkHud
 }
 
 @Composable

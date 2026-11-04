@@ -27,6 +27,14 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Call
 import androidx.compose.material.icons.rounded.Close
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.border
+import androidx.compose.material.icons.rounded.CameraAlt
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Person
@@ -164,9 +172,59 @@ onBack: () -> Unit,
                 Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                PersonAvatar(address, size = 96.dp)
+                var avatarVersion by remember { mutableIntStateOf(0) }
+                val galleryPicker = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.PickVisualMedia()
+                ) { uri ->
+                    if (uri != null) {
+                        com.anindra.messages.data.CustomAvatarStore.saveAvatar(context, address, uri)
+                        invalidateAvatarCache(address)
+                        avatarVersion++
+                        Toast.makeText(context, context.getString(R.string.contact_avatar_updated), Toast.LENGTH_SHORT).show()
+                    }
+                }
 
-                Spacer(Modifier.height(12.dp))
+                Box(
+                    modifier = Modifier
+                        .clickable {
+                            galleryPicker.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
+                    contentAlignment = Alignment.BottomEnd
+                ) {
+                    key(avatarVersion) {
+                        PersonAvatar(address, size = 96.dp)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(30.dp)
+                            .background(MaterialTheme.colorScheme.primary, CircleShape)
+                            .border(1.5.dp, MaterialTheme.colorScheme.surface, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Rounded.CameraAlt,
+                            contentDescription = stringResource(R.string.contact_edit_photo),
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = stringResource(R.string.contact_edit_photo),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable {
+                        galleryPicker.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    }
+                )
+
+                Spacer(Modifier.height(10.dp))
 
                 // Inline editing: the name turns into a field in place rather than
                 // opening a dialog over the screen.

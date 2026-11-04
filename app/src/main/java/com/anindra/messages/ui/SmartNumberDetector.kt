@@ -209,7 +209,7 @@ object SmartNumberDetector {
         val trackingRegex = Regex("""(?<!\d)(\d{10,24})(?!\d)""")
         for (m in trackingRegex.findAll(normalizedBody)) {
             val range = m.range
-            if (results.none { it.range.first <= range.first && it.range.last >= range.last }) {
+            if (results.none { !(range.last < it.range.first || range.first > it.range.last) }) {
                 val original = text.substring(range)
                 results.add(
                     DetectedNumber(
@@ -222,7 +222,41 @@ object SmartNumberDetector {
             }
         }
 
-        return results.distinctBy { it.normalizedText }
+        // 7. General Numeric Sequences: Detect ANY 4 or more digits (4-digit, 10-digit, any length)
+        val generalNumRegex = Regex("""(?<!\d)(\d(?:[ -]?\d){3,29})(?!\d)""")
+        for (m in generalNumRegex.findAll(normalizedBody)) {
+            val range = m.range
+            val overlaps = results.any { existing ->
+                !(range.last < existing.range.first || range.first > existing.range.last)
+            }
+            if (!overlaps) {
+                val original = text.substring(range)
+                val clean = normalize(original)
+                if (clean.length >= 4) {
+                    val inferredType = when {
+                        clean.length in 4..8 && (text.contains("کد", ignoreCase = true) || text.contains("رمز", ignoreCase = true) || text.contains("otp", ignoreCase = true)) ->
+                            NumberType.OTP
+                        clean.length in 10..12 && clean.startsWith("09") -> NumberType.MOBILE
+                        clean.length in 10..12 && clean.startsWith("0") -> NumberType.LANDLINE
+                        clean.length == 10 -> NumberType.TRACKING
+                        clean.length == 16 -> NumberType.BANK_CARD
+                        else -> NumberType.GENERAL
+                    }
+                    val luhn = if (clean.length == 16) isValidLuhn(clean) else false
+                    results.add(
+                        DetectedNumber(
+                            originalText = original,
+                            normalizedText = clean,
+                            type = inferredType,
+                            isValidLuhn = luhn,
+                            range = range
+                        )
+                    )
+                }
+            }
+        }
+
+        return results.sortedBy { it.range.first }
     }
 }
 
@@ -236,6 +270,7 @@ fun SmartNumberActionRow(
 ) {
     if (detectedNumbers.isEmpty()) return
     val context = LocalContext.current
+    val uniqueNumbers = remember(detectedNumbers) { detectedNumbers.distinctBy { it.normalizedText } }
 
     Row(
         modifier = modifier
@@ -244,29 +279,29 @@ fun SmartNumberActionRow(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        for (item in detectedNumbers) {
+        for (item in uniqueNumbers) {
             val (icon, badgeColor) = when (item.type) {
                 SmartNumberDetector.NumberType.BANK_CARD ->
-                    Icons.Rounded.CreditCard to (if (item.isValidLuhn) Color(0xFF00E5FF) else Color(0xFFFFB4AB))
+                    Icons.Rounded.CreditCard to (if (item.isValidLuhn) Color(0xFFFFCC00) else Color(0xFFFFB4AB))
                 SmartNumberDetector.NumberType.IBAN ->
                     Icons.Rounded.Numbers to Color(0xFF00E5FF)
                 SmartNumberDetector.NumberType.MOBILE, SmartNumberDetector.NumberType.LANDLINE ->
-                    Icons.Rounded.Call to Color(0xFF008CFF)
+                    Icons.Rounded.Call to Color(0xFF00E5FF)
                 SmartNumberDetector.NumberType.OTP ->
-                    Icons.Rounded.Security to Color(0xFF00E5FF)
-                else ->
-                    Icons.Rounded.ContentCopy to Color(0xFF7892A8)
+                    Icons.Rounded.Security to Color(0xFFFFCC00)
+                SmartNumberDetector.NumberType.TRACKING, SmartNumberDetector.NumberType.GENERAL ->
+                    Icons.Rounded.Numbers to Color(0xFFFFCC00)
             }
 
             // Glass action chip with cyber border
             Surface(
-                color = Color(0x2200E5FF),
+                color = Color(0x33101827),
                 shape = RoundedCornerShape(4.dp),
-                border = BorderStroke(1.dp, badgeColor.copy(alpha = 0.6f)),
+                border = BorderStroke(1.dp, badgeColor.copy(alpha = 0.7f)),
                 modifier = Modifier.clickable {
                     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                     clipboard.setPrimaryClip(ClipData.newPlainText(item.type.label, item.normalizedText))
-                    Toast.makeText(context, "${item.type.label}: ${item.normalizedText} copied", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "کپی شد: ${item.normalizedText}", Toast.LENGTH_SHORT).show()
                 }
             ) {
                 Row(
@@ -282,7 +317,7 @@ fun SmartNumberActionRow(
                     Spacer(Modifier.width(4.dp))
                     Text(
                         text = item.normalizedText,
-                        color = Color(0xFFEAF6FF),
+                        color = Color(0xFFF0F6FC),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold
                     )

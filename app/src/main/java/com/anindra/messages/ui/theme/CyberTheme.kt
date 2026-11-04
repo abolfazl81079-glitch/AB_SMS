@@ -10,6 +10,36 @@ import androidx.compose.ui.graphics.Color
  */
 object CyberTheme {
 
+    // ──────────────── 0. Stark Cyber HUD (Hacker Cockpit Theme) ────────────────
+    val StarkHud = darkColorScheme(
+        primary = Color(0xFFFFCC00),             // Stark Tech Gold / Cyber Amber
+        onPrimary = Color(0xFF060A10),
+        primaryContainer = Color(0xFF261D05),    // Dark Amber Glass
+        onPrimaryContainer = Color(0xFFFFF4D0),
+        inversePrimary = Color(0xFFFFB300),
+        secondary = Color(0xFF00E5FF),           // Tech HUD Cyan
+        onSecondary = Color(0xFF060A10),
+        secondaryContainer = Color(0xFF0A1420),  // Dark Cyan Glass
+        onSecondaryContainer = Color(0xFFD0F4FF),
+        tertiary = Color(0xFFFF2A4A),            // Digital Crimson Alert
+        onTertiary = Color(0xFF060A10),
+        background = Color(0xFF04070B),          // Deep Cockpit Black
+        onBackground = Color(0xFFEAF4FC),        // High-tech White
+        surface = Color(0xFF080D14),             // Dark Cockpit Slate
+        onSurface = Color(0xFFEAF4FC),
+        surfaceVariant = Color(0xFF0F1722),      // HUD Cell Card Background
+        onSurfaceVariant = Color(0xFF8B9DAE),    // Telemetry secondary text
+        outline = Color(0xFFFFCC00),             // Cyber Gold Borders
+        outlineVariant = Color(0xFF00E5FF),      // Tech Cyan Linework
+        error = Color(0xFFFF2A4A),
+        onError = Color(0xFFFFFFFF),
+        surfaceContainerLowest = Color(0xFF04070B),
+        surfaceContainerLow = Color(0xFF060A10),
+        surfaceContainer = Color(0xFF0A1018),    // Cell Card Background
+        surfaceContainerHigh = Color(0xFF101824),
+        surfaceContainerHighest = Color(0xFF182232)
+    )
+
     // ──────────────── 1. AB Cyber Blue (Primary Theme) ────────────────
     val AbCyberBlue = darkColorScheme(
         primary = Color(0xFF00E5FF),             // Neon cyan
@@ -226,6 +256,8 @@ object CyberTheme {
      * Resolves the requested theme mode into a ColorScheme.
      */
     fun schemeForMode(mode: String): ColorScheme = when (mode) {
+        "stark", "stark_hud", "hacker_hud", "hud" -> StarkHud
+        "cyber", "cyber_blue", "ab_cyber_blue" -> AbCyberBlue
         "blackout" -> Blackout
         "matrix", "neon_matrix" -> NeonMatrix
         "arctic", "arctic_glass" -> ArcticGlass
@@ -234,6 +266,6 @@ object CyberTheme {
         "crimson", "crimson_hacker" -> CrimsonHacker
         "quantum" -> Quantum
         "minimal", "minimal_glass" -> MinimalGlass
-        else -> AbCyberBlue // Default is AB Cyber Blue
+        else -> StarkHud // Default is Stark Cyber HUD from screenshot
     }
 }

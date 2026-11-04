@@ -120,13 +120,22 @@ fun PersonAvatar(
 
 private val photoUriCache = PhotoUriCache()
 
-/** Resolves the contact's photo URI via ContactsContract (no caching). */
+fun invalidateAvatarCache(key: String) {
+    photoUriCache.remove(key)
+}
+
+/** Resolves the contact's photo URI: checks CustomAvatarStore first, then ContactsContract. */
 private fun resolveContactPhotoUri(context: Context, number: String): String? = try {
-    val lookupUri = Uri.withAppendedPath(
-        ContactsContract.AUTHORITY_URI, "phone_lookup/" + Uri.encode(number)
-    )
-    context.contentResolver.query(lookupUri, arrayOf("photo_uri"), null, null, null)?.use { c ->
-        if (c.moveToFirst()) c.getString(0)?.ifBlank { null } else null
+    val custom = com.anindra.messages.data.CustomAvatarStore.getAvatarUri(context, number)
+    if (custom != null) {
+        custom
+    } else {
+        val lookupUri = Uri.withAppendedPath(
+            ContactsContract.AUTHORITY_URI, "phone_lookup/" + Uri.encode(number)
+        )
+        context.contentResolver.query(lookupUri, arrayOf("photo_uri"), null, null, null)?.use { c ->
+            if (c.moveToFirst()) c.getString(0)?.ifBlank { null } else null
+        }
     }
 } catch (_: Exception) {
     null

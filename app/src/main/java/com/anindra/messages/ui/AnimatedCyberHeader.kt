@@ -79,14 +79,15 @@ fun AnimatedCyberHeader(
         label = "scan_offset"
     )
 
-    val neonCyan = Color(0xFF00E5FF)
-    val electricBlue = Color(0xFF008CFF)
-    val deepBlack = Color(0xFF070D14)
+    val cs = MaterialTheme.colorScheme
+    val hudPrimary = cs.primary
+    val hudSecondary = cs.secondary
+    val deepBlack = cs.background
 
     Surface(
-        color = deepBlack.copy(alpha = 0.85f),
-        shape = RoundedCornerShape(2.dp),
-        border = BorderStroke(1.dp, neonCyan.copy(alpha = 0.35f * pulseAlpha)),
+        color = cs.surface.copy(alpha = 0.92f),
+        shape = RoundedCornerShape(4.dp),
+        border = BorderStroke(1.dp, hudPrimary.copy(alpha = 0.5f * pulseAlpha)),
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 6.dp)
@@ -97,9 +98,9 @@ fun AnimatedCyberHeader(
                 .background(
                     Brush.horizontalGradient(
                         colors = listOf(
-                            Color(0x1100E5FF),
-                            Color(0x05008CFF),
-                            Color(0x1100E5FF)
+                            hudPrimary.copy(alpha = 0.08f),
+                            hudSecondary.copy(alpha = 0.04f),
+                            hudPrimary.copy(alpha = 0.08f)
                         )
                     )
                 )
@@ -112,17 +113,17 @@ fun AnimatedCyberHeader(
             ) {
                 // Left: Logo & Identity
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Futuristic Neon Terminal Box
+                    // Futuristic HUD Cassette / Terminal Box
                     Box(
                         modifier = Modifier
                             .size(34.dp)
-                            .border(1.dp, neonCyan.copy(alpha = pulseAlpha), RoundedCornerShape(2.dp))
-                            .background(Color(0xFF030609)),
+                            .border(1.dp, hudPrimary.copy(alpha = pulseAlpha), RoundedCornerShape(2.dp))
+                            .background(deepBlack),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "AB",
-                            color = neonCyan,
+                            color = hudPrimary,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Black,
                             fontFamily = FontFamily.Monospace,
@@ -136,7 +137,7 @@ fun AnimatedCyberHeader(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = "AB/SMS",
-                                color = Color(0xFFEAF6FF),
+                                color = cs.onSurface,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp
@@ -146,13 +147,13 @@ fun AnimatedCyberHeader(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(2.dp))
-                                    .background(Color(0xFF00E5FF).copy(alpha = 0.2f))
-                                    .border(0.5.dp, neonCyan, RoundedCornerShape(2.dp))
+                                    .background(hudPrimary.copy(alpha = 0.2f))
+                                    .border(0.5.dp, hudPrimary, RoundedCornerShape(2.dp))
                                     .padding(horizontal = 5.dp, vertical = 1.dp)
                             ) {
                                 Text(
-                                    text = "SECURE // CORE",
-                                    color = neonCyan,
+                                    text = "HUD // ONLINE",
+                                    color = hudPrimary,
                                     fontSize = 8.sp,
                                     fontWeight = FontWeight.Bold,
                                     fontFamily = FontFamily.Monospace,
@@ -161,8 +162,8 @@ fun AnimatedCyberHeader(
                             }
                         }
                         Text(
-                            text = "TERMINAL ONLINE // ENCRYPTED",
-                            color = Color(0xFF7892A8),
+                            text = "STARK TERMINAL // ENCRYPTED",
+                            color = cs.onSurfaceVariant,
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Medium,
                             fontFamily = FontFamily.Monospace,
@@ -181,7 +182,7 @@ fun AnimatedCyberHeader(
                             Icon(
                                 Icons.Rounded.Archive,
                                 contentDescription = stringResource(R.string.conversations_archived),
-                                tint = Color(0xFF7892A8),
+                                tint = cs.onSurfaceVariant,
                                 modifier = Modifier.size(19.dp)
                             )
                         }
@@ -194,7 +195,7 @@ fun AnimatedCyberHeader(
                         Icon(
                             Icons.Outlined.Search,
                             contentDescription = stringResource(R.string.icon_search),
-                            tint = neonCyan,
+                            tint = hudPrimary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -205,8 +206,8 @@ fun AnimatedCyberHeader(
                     ) {
                         Icon(
                             Icons.Rounded.Settings,
-                            contentDescription = stringResource(R.string.settings_title),
-                            tint = electricBlue,
+                            contentDescription = "Settings",
+                            tint = hudSecondary,
                             modifier = Modifier.size(20.dp)
                         )
                     }

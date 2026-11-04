@@ -2,6 +2,9 @@ package com.anindra.messages.ui
 
 import com.anindra.messages.data.JalaliCalendar
 import android.Manifest
+import android.content.Context
+import android.content.ClipboardManager
+import android.content.ClipData
 import android.content.Intent
 import android.net.Uri
 import android.provider.ContactsContract
@@ -332,7 +335,13 @@ internal fun ChatBubble(
     }
 
     pendingUrl?.let { url ->
-        if (linkWarningEnabled) {
+        if (url.startsWith("copy:")) {
+            val num = url.removePrefix("copy:")
+            val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            cm.setPrimaryClip(android.content.ClipData.newPlainText("AB/SMS", num))
+            Toast.makeText(context, "کپی شد: $num", Toast.LENGTH_SHORT).show()
+            pendingUrl = null
+        } else if (linkWarningEnabled) {
             LinkWarningDialog(
                 url = url,
                 onDismiss = { pendingUrl = null },
@@ -344,9 +353,28 @@ internal fun ChatBubble(
         }
     }
 
+    val hudBorder = if (isSelected) {
+        BorderStroke(1.5.dp, Color(0xFFFFCC00))
+    } else if (isSearchFocus) {
+        BorderStroke(2.dp, cs.primary.copy(alpha = searchHighlightAlpha))
+    } else if (msg.isMe) {
+        BorderStroke(1.dp, Color(0x66FFCC00))
+    } else {
+        BorderStroke(1.dp, Color(0x4400E5FF))
+    }
+
+    val hudBackground = if (isSelected) {
+        cs.selectedBubble
+    } else if (msg.isMe) {
+        Color(0xFF161205)
+    } else {
+        Color(0xFF070F19)
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 3.dp)
             .graphicsLayer {
                 val p = entrance.value
                 alpha = BubbleEntrance.alpha(p)
@@ -379,9 +407,9 @@ internal fun ChatBubble(
                         ImageBubble(uri = msg.mediaUri, isMe = msg.isMe)
                         if (msg.body.isNotBlank()) {
                             Surface(
-                                color = if (isSelected) cs.selectedBubble else if (msg.isMe) cs.outgoingBubble else cs.incomingBubble,
-                                shape = RoundedCornerShape(16.dp),
-                                border = if (isSearchFocus) BorderStroke(2.dp, cs.primary.copy(alpha = searchHighlightAlpha)) else null,
+                                color = hudBackground,
+                                shape = RoundedCornerShape(6.dp),
+                                border = hudBorder,
                                 modifier = Modifier.widthIn(max = 260.dp).padding(top = 2.dp)
                                     .combinedClickable(
                                         onClick = { onTap() },
@@ -391,7 +419,7 @@ internal fun ChatBubble(
                                 Text(
                                     text = bodyText,
                                     style = MaterialTheme.typography.bodyLarge.merge(
-                                        TextStyle(color = if (isSelected) cs.onSelectedBubble else if (msg.isMe) cs.onPrimaryContainer else cs.onSurface)
+                                        TextStyle(color = if (isSelected) cs.onSelectedBubble else if (msg.isMe) Color(0xFFFFF2B2) else Color(0xFFE6F3FF))
                                     ),
                                     modifier = Modifier
                                         .padding(horizontal = 14.dp, vertical = 8.dp)
@@ -405,9 +433,9 @@ internal fun ChatBubble(
                     }
                 } else {
                     Surface(
-                        color = if (isSelected) cs.selectedBubble else if (msg.isMe) cs.outgoingBubble else cs.incomingBubble,
-                        shape = corners.toShape(),
-                        border = if (isSearchFocus) BorderStroke(2.dp, cs.primary.copy(alpha = searchHighlightAlpha)) else null,
+                        color = hudBackground,
+                        shape = RoundedCornerShape(6.dp),
+                        border = hudBorder,
                         modifier = Modifier.widthIn(max = 300.dp).combinedClickable(
                             onClick = { onTap() },
                             onLongClick = { onLongPress() }
@@ -416,7 +444,7 @@ internal fun ChatBubble(
                         Text(
                             text = bodyText,
                             style = MaterialTheme.typography.bodyLarge.merge(
-                                TextStyle(color = if (isSelected) cs.onSelectedBubble else if (msg.isMe) cs.onPrimaryContainer else cs.onSurface)
+                                TextStyle(color = if (isSelected) cs.onSelectedBubble else if (msg.isMe) Color(0xFFFFF2B2) else Color(0xFFE6F3FF))
                             ),
                             modifier = Modifier
                                 .padding(horizontal = 14.dp, vertical = 8.dp)
@@ -2348,14 +2376,10 @@ private fun rememberLinkedText(
     val searchBackground = MaterialTheme.colorScheme.tertiaryContainer.copy(
         alpha = 0.6f * searchHighlightAlpha.coerceIn(0f, 1f)
     )
-    // produceState remembers its value WITHOUT keys, so an async redaction would
-    // keep painting the previous (unredacted) text and only swap it once the
-    // coroutine lands — every link bubble flashes its URL when the option is
-    // turned on. Hiding removes content, so resolve it before the first paint;
-    // hideUrls memoizes, so this is a cache hit on recomposition.
+    val context = LocalContext.current
     val base = if (hide) {
         remember(body) {
-            styledBody(hideUrls(body), linkColor, emptyMap(), null)
+            styledBody(hideUrls(body), linkColor, emptyMap(), null, context)
         }
     } else {
         produceState(AnnotatedString(body), body, highlight, textColor, linkColor) {
@@ -2368,7 +2392,7 @@ private fun rememberLinkedText(
                             (spanned.getSpanStart(it)..spanned.getSpanEnd(it) - 1) to it.url
                         }
                 } else emptyMap()
-                styledBody(body, linkColor, urls, onLinkClick)
+                styledBody(body, linkColor, urls, onLinkClick, context)
             }
         }.value
     }
@@ -2390,10 +2414,16 @@ private fun styledBody(
     body: String,
     linkColor: Color,
     urls: Map<IntRange, String>,
-    onLinkClick: ((String) -> Unit)?
+    onLinkClick: ((String) -> Unit)?,
+    context: Context? = null
 ): AnnotatedString {
-    val iso = BidiText.isolateNumberRuns(body, urls.keys.toList())
+    val detectedNumbers = SmartNumberDetector.detectNumbers(body)
+    val numberRanges = detectedNumbers.map { it.range }
+    val excluded = urls.keys.toList() + numberRanges
+    val iso = BidiText.isolateNumberRuns(body, excluded)
     val out = AnnotatedString.Builder(iso.text)
+
+    // 1. URLs
     urls.forEach { (original, url) ->
         val range = iso.remap(original)
         out.addLink(
@@ -2408,8 +2438,47 @@ private fun styledBody(
         out.addStyle(SpanStyle(color = linkColor), range.first, range.last + 1)
         out.addStyle(SpanStyle(textDecoration = TextDecoration.Underline), range.first, range.last + 1)
     }
+
+    // 2. Highlighting all detected numbers with Stark HUD gold styling & one-tap copy
+    val hudNumberGold = Color(0xFFFFCC00)
+    val hudNumberBg = Color(0x38FFCC00)
+    for (item in detectedNumbers) {
+        if (urls.keys.none { !(item.range.last < it.first || item.range.first > it.last) }) {
+            val range = iso.remap(item.range)
+            if (range.first >= 0 && range.last < iso.text.length && range.first <= range.last) {
+                out.addLink(
+                    LinkAnnotation.Url(
+                        url = "copy:${item.normalizedText}",
+                        linkInteractionListener = {
+                            if (context != null) {
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                clipboard.setPrimaryClip(ClipData.newPlainText("AB/SMS", item.normalizedText))
+                                Toast.makeText(context, "کپی شد: ${item.normalizedText}", Toast.LENGTH_SHORT).show()
+                            }
+                            onLinkClick?.invoke("copy:${item.normalizedText}")
+                        }
+                    ),
+                    range.first, range.last + 1
+                )
+                out.addStyle(
+                    SpanStyle(
+                        color = hudNumberGold,
+                        background = hudNumberBg,
+                        fontWeight = FontWeight.Bold,
+                        textDecoration = TextDecoration.Underline
+                    ),
+                    range.first, range.last + 1
+                )
+            }
+        }
+    }
+
+    // 3. Fallback OTP detector
     OtpDetector.findRanges(body)
-        .filter { r -> urls.keys.none { s -> r.first >= s.first && r.last <= s.last } }
+        .filter { r ->
+            urls.keys.none { s -> !(r.last < s.first || r.first > s.last) } &&
+            detectedNumbers.none { d -> !(r.last < d.range.first || r.first > d.range.last) }
+        }
         .forEach { r ->
             val range = iso.remap(r)
             out.addStyle(SpanStyle(color = linkColor), range.first, range.last + 1)
@@ -2606,7 +2675,13 @@ fun MessageRow(
     }
 
     pendingUrl?.let { url ->
-        if (linkWarningEnabled) {
+        if (url.startsWith("copy:")) {
+            val num = url.removePrefix("copy:")
+            val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            cm.setPrimaryClip(android.content.ClipData.newPlainText("AB/SMS", num))
+            Toast.makeText(context, "کپی شد: $num", Toast.LENGTH_SHORT).show()
+            pendingUrl = null
+        } else if (linkWarningEnabled) {
             LinkWarningDialog(
                 url = url,
                 onDismiss = { pendingUrl = null },
@@ -2621,9 +2696,25 @@ fun MessageRow(
         }
     }
 
+    val hudBorder = if (isSelected) {
+        BorderStroke(1.5.dp, Color(0xFFFFCC00))
+    } else if (msg.isMe) {
+        BorderStroke(1.dp, Color(0x66FFCC00))
+    } else {
+        BorderStroke(1.dp, Color(0x4400E5FF))
+    }
+
+    val hudBackground = if (isSelected) {
+        cs.selectedBubble
+    } else if (msg.isMe) {
+        Color(0xFF161205)
+    } else {
+        Color(0xFF070F19)
+    }
+
     Column(
         horizontalAlignment = if (msg.isMe) Alignment.End else Alignment.Start,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 3.dp)
     ) {
         Box {
             if (msg.mediaType == "image" && msg.mediaUri.isNotBlank()) {
@@ -2637,8 +2728,9 @@ fun MessageRow(
                     ImageBubble(uri = msg.mediaUri, isMe = msg.isMe)
                     if (msg.body.isNotBlank()) {
                         Surface(
-                            color = if (isSelected) cs.selectedBubble else if (msg.isMe) cs.outgoingBubble else cs.incomingBubble,
-                            shape = RoundedCornerShape(16.dp),
+                            color = hudBackground,
+                            shape = RoundedCornerShape(6.dp),
+                            border = hudBorder,
                             modifier = Modifier.widthIn(max = 260.dp).padding(top = 2.dp)
                                 .combinedClickable(
                                     onClick = {},
@@ -2648,7 +2740,7 @@ fun MessageRow(
                             Text(
                                 text = bodyText,
                                 style = MaterialTheme.typography.bodyLarge.merge(
-                                    TextStyle(color = if (isSelected) cs.onSelectedBubble else if (msg.isMe) cs.onPrimaryContainer else cs.onSurface)
+                                    TextStyle(color = if (isSelected) cs.onSelectedBubble else if (msg.isMe) Color(0xFFFFF2B2) else Color(0xFFE6F3FF))
                                 ),
                                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
                             )
@@ -2657,10 +2749,9 @@ fun MessageRow(
                 }
             } else {
                 Surface(
-                    color = if (isSelected) cs.selectedBubble else if (msg.isMe) cs.outgoingBubble else cs.incomingBubble,
-                    // Preview-only row; use the same rule the real bubble renders
-                    // so a preview cannot drift from the app.
-                    shape = bubbleCorners(BubblePosition.SINGLE, msg.isMe).toShape(),
+                    color = hudBackground,
+                    shape = RoundedCornerShape(6.dp),
+                    border = hudBorder,
                     modifier = Modifier.widthIn(max = 300.dp).combinedClickable(
                         onClick = {},
                         onLongClick = { onLongPress() }
@@ -2669,7 +2760,7 @@ fun MessageRow(
                     Text(
                         text = bodyText,
                         style = MaterialTheme.typography.bodyLarge.merge(
-                            TextStyle(color = if (isSelected) cs.onSelectedBubble else if (msg.isMe) cs.onPrimaryContainer else cs.onSurface)
+                            TextStyle(color = if (isSelected) cs.onSelectedBubble else if (msg.isMe) Color(0xFFFFF2B2) else Color(0xFFE6F3FF))
                         ),
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
                     )

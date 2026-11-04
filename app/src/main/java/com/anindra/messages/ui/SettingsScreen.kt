@@ -27,11 +27,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.CameraAlt
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Folder
@@ -57,6 +61,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,12 +70,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.anindra.messages.AppViewModel
+import com.anindra.messages.data.CustomAvatarStore
 import com.anindra.messages.data.SettingsStore
 import com.anindra.messages.data.PeriodicBackupScheduler
 import com.anindra.messages.data.SimCard
@@ -239,6 +247,81 @@ fun SettingsScreen(
         ) {
             Spacer(Modifier.height(SettingsLayout.TOP_GAP))
 
+            var profileAvatarTrigger by remember { mutableIntStateOf(0) }
+            val photoPickerLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.PickVisualMedia()
+            ) { uri ->
+                if (uri != null) {
+                    val ok = CustomAvatarStore.saveAvatar(context, "me", uri)
+                    if (ok) {
+                        invalidateAvatarCache("me")
+                        profileAvatarTrigger++
+                        Toast.makeText(context, "تصویر پروفایل شما ذخیره شد", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+
+            // User Profile Picture HUD Card
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF09101C)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x66FFCC00)),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp)
+                    .clickable {
+                        photoPickerLauncher.launch(
+                            androidx.activity.result.PickVisualMediaRequest(
+                                ActivityResultContracts.PickVisualMedia.ImageOnly
+                            )
+                        )
+                    }
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(14.dp)
+                ) {
+                    Box {
+                        key(profileAvatarTrigger) {
+                            PersonAvatar(
+                                key = "me",
+                                size = 52.dp,
+                                modifier = Modifier.border(1.5.dp, Color(0xFFFFCC00), CircleShape)
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(22.dp)
+                                .align(Alignment.BottomEnd)
+                                .background(Color(0xFFFFCC00), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.CameraAlt,
+                                contentDescription = null,
+                                tint = Color(0xFF04070B),
+                                modifier = Modifier.size(13.dp)
+                            )
+                        }
+                    }
+                    Spacer(Modifier.width(14.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "تصویر پروفایل شما (AB/SMS)",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFFFF2B2)
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = "برای انتخاب یا تغییر عکس ضربه بزنید",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFF88A0B8)
+                        )
+                    }
+                }
+            }
+
             SettingsGroup {
                 SettingsRow(
                     position = RowPosition.FIRST,
@@ -384,6 +467,7 @@ fun SettingsScreen(
             text = {
                 Column {
                     val options = buildList {
+                        add("stark" to "Stark Cyber HUD (Iron Man Gold & Cockpit Black)")
                         add("cyber" to "AB Cyber Blue (Electric Blue / Cyan)")
                         add("blackout" to "Blackout (Pure Black OLED)")
                         add("matrix" to "Neon Matrix (Black & Green)")
@@ -956,6 +1040,7 @@ private fun openSystemNotificationSettings(context: android.content.Context) {
 }
 
 private fun themeLabel(mode: String, context: android.content.Context) = when (mode) {
+    "stark", "stark_hud" -> "Stark Cyber HUD"
     "cyber", "cyber_blue", "ab_cyber_blue" -> "AB Cyber Blue"
     "blackout" -> "Blackout (OLED)"
     "matrix", "neon_matrix" -> "Neon Matrix"
@@ -969,7 +1054,7 @@ private fun themeLabel(mode: String, context: android.content.Context) = when (m
     "dark" -> context.getString(R.string.settings_theme_dark)
     "amoled" -> context.getString(R.string.settings_theme_amoled)
     "dynamic" -> context.getString(R.string.settings_theme_dynamic)
-    else -> "AB Cyber Blue"
+    else -> "Stark Cyber HUD"
 }
 
 

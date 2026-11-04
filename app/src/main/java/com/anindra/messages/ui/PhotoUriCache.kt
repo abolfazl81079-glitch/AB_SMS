@@ -11,6 +11,14 @@ class PhotoUriCache(private val max: Int = 1024) {
 
     fun get(key: String): String? = map[key]
 
+    fun remove(key: String) {
+        map.remove(key)
+    }
+
+    fun clear() {
+        map.clear()
+    }
+
     fun put(key: String, uri: String?) {
         map[key] = uri ?: ""
         while (map.size > max) {

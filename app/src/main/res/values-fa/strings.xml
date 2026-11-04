@@ -77,4 +77,6 @@
     <string name="theme_crimson_hacker">کریمسون هکر (سیاه و سرخ)</string>
     <string name="theme_quantum">کوانتوم (بنفش سایبری)</string>
     <string name="theme_minimal_glass">مینیمال گلس (شیشه‌ای شفاف)</string>
+    <string name="contact_edit_photo">تغییر تصویر پروفایل</string>
+    <string name="contact_avatar_updated">تصویر پروفایل به‌روزرسانی شد</string>
 </resources>

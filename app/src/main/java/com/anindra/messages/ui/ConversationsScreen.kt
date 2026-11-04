@@ -17,6 +17,9 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -1035,104 +1038,146 @@ internal fun ConversationRow(
         if (convo.pinned && settings.pinnedEnabled) context.getString(R.string.access_pinned) else null,
         if (selectionMode && selected) context.getString(R.string.contact_selected) else null
     )
-    Box(modifier = modifier.fillMaxWidth()) {
-        val pinnedTint = when {
-            selected && selectionMode -> MaterialTheme.colorScheme.surfaceContainerHighest
-            convo.pinned && settings.pinnedEnabled ->
-                MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.6f)
-            else -> MaterialTheme.colorScheme.background
-        }
+    val cs = MaterialTheme.colorScheme
+    val isUnread = convo.unreadCount > 0
+    val cardBorderColor = when {
+        selected && selectionMode -> cs.primary
+        isUnread -> cs.primary.copy(alpha = 0.85f)
+        convo.pinned && settings.pinnedEnabled -> cs.secondary.copy(alpha = 0.6f)
+        else -> cs.outline.copy(alpha = 0.3f)
+    }
+    val cardBg = when {
+        selected && selectionMode -> cs.surfaceContainerHighest
+        convo.pinned && settings.pinnedEnabled -> cs.surfaceContainerHigh.copy(alpha = 0.95f)
+        else -> cs.surfaceContainer.copy(alpha = 0.88f)
+    }
 
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .clearAndSetSemantics {
-                    contentDescription = a11yLabel
-                    role = Role.Button
-                    onClick(label = context.getString(R.string.access_open_conversation)) {
-                        onClick()
-                        true
-                    }
-                    onLongClick(label = context.getString(R.string.access_conversation_options)) {
-                        onLongClick()
-                        true
-                    }
-                }
-                .combinedClickable(
-                    onClickLabel = context.getString(R.string.access_open_conversation),
-                    onClick = onClick,
-                    onLongClick = onLongClick
-                )
-                .background(pinnedTint)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(4.dp),
+            color = cardBg,
+            border = BorderStroke(1.dp, cardBorderColor),
+            modifier = Modifier.fillMaxWidth()
         ) {
-            PersonAvatar(convo.groupTitle.ifBlank { convo.address })
-            Spacer(Modifier.width(16.dp))
-            Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = senderLabel,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Normal,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clearAndSetSemantics {
+                        contentDescription = a11yLabel
+                        role = Role.Button
+                        onClick(label = context.getString(R.string.access_open_conversation)) {
+                            onClick()
+                            true
+                        }
+                        onLongClick(label = context.getString(R.string.access_conversation_options)) {
+                            onLongClick()
+                            true
+                        }
+                    }
+                    .combinedClickable(
+                        onClickLabel = context.getString(R.string.access_open_conversation),
+                        onClick = onClick,
+                        onLongClick = onLongClick
                     )
-                    if (convo.pinned && settings.pinnedEnabled) {
-                        Spacer(Modifier.width(4.dp))
-                        Icon(
-                            Icons.Rounded.PushPin,
-                            contentDescription = stringResource(R.string.access_pinned),
-                            modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // High-tech HUD boxed avatar frame
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .border(1.dp, cardBorderColor, RoundedCornerShape(4.dp))
+                        .padding(2.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    PersonAvatar(convo.groupTitle.ifBlank { convo.address }, size = 40.dp)
+                }
+
+                Spacer(Modifier.width(12.dp))
+
+                Column(Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = senderLabel,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = if (isUnread) FontWeight.Bold else FontWeight.SemiBold,
+                            color = if (isUnread) cs.primary else cs.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                        if (convo.pinned && settings.pinnedEnabled) {
+                            Spacer(Modifier.width(4.dp))
+                            Icon(
+                                Icons.Rounded.PushPin,
+                                contentDescription = stringResource(R.string.access_pinned),
+                                modifier = Modifier.size(13.dp),
+                                tint = cs.primary
+                            )
+                        }
+                        if (workProfile) {
+                            Spacer(Modifier.width(4.dp))
+                            WorkProfileBadge()
+                        }
+                    }
+                    Spacer(Modifier.height(3.dp))
+                    if (hasDraft) {
+                        Text(
+                            text = previewLabel,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = cs.secondary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    } else {
+                        Text(
+                            text = previewLabel,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = if (isUnread) FontWeight.Medium else FontWeight.Normal,
+                            color = if (isUnread) cs.onSurface else cs.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
-                    if (workProfile) {
-                        Spacer(Modifier.width(4.dp))
-                        WorkProfileBadge()
+                }
+                Spacer(Modifier.width(8.dp))
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = formatListTime(convo.timestamp, now, context),
+                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                        color = if (isUnread) cs.primary else cs.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    if (convo.unreadCount > 0) {
+                        Box(
+                            modifier = Modifier
+                                .background(cs.primary, RoundedCornerShape(2.dp))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = convo.unreadCount.toString(),
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Black,
+                                    fontFamily = FontFamily.Monospace
+                                ),
+                                color = cs.onPrimary
+                            )
+                        }
                     }
                 }
-                Spacer(Modifier.height(2.dp))
-                if (hasDraft) {
-                    Text(
-                        text = previewLabel,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                } else {
-                    Text(
-                        text = previewLabel,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Normal,
-                        color = if (convo.unreadCount > 0) MaterialTheme.colorScheme.onSurface
-                        else MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1
+                if (selectionMode) {
+                    Spacer(Modifier.width(12.dp))
+                    Icon(
+                        imageVector = if (selected) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
+                        contentDescription = null,
+                        tint = if (selected) cs.primary else cs.onSurfaceVariant,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
-            }
-            Spacer(Modifier.width(8.dp))
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = formatListTime(convo.timestamp, now, context),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (convo.unreadCount > 0) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(6.dp))
-                if (convo.unreadCount > 0) UnreadBadge(convo.unreadCount) else Spacer(Modifier.height(20.dp))
-            }
-            if (selectionMode) {
-                Spacer(Modifier.width(12.dp))
-                Icon(
-                    imageVector = if (selected) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
-                    contentDescription = null,
-                    tint = if (selected) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
-                )
             }
         }
     }
