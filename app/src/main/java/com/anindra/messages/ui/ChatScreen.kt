@@ -279,6 +279,7 @@ internal fun ChatBubble(
     val cs = MaterialTheme.colorScheme
     val context = LocalContext.current
     var pendingUrl by remember { mutableStateOf<String?>(null) }
+    var pendingCopyItem by remember { mutableStateOf<SmartNumberDetector.DetectedNumber?>(null) }
     val isLockedAndHidden = msg.locked && !isUnlocked
     val displayBody = if (isLockedAndHidden) "@Lock" else msg.body
     val searchResultLabel = stringResource(R.string.chat_search_result)
@@ -300,6 +301,7 @@ internal fun ChatBubble(
         highlightLinks && !isLockedAndHidden,
         hideLinks && !isLockedAndHidden,
         onLinkClick = { pendingUrl = it },
+        onSmartNumberClick = { pendingCopyItem = it },
         textColor = if (isSelected) cs.onSelectedBubble else if (msg.isMe) cs.onPrimaryContainer else cs.onSurface,
         searchQuery = if (isLockedAndHidden) null else searchQuery,
         searchHighlightAlpha = searchHighlightAlpha
@@ -335,13 +337,7 @@ internal fun ChatBubble(
     }
 
     pendingUrl?.let { url ->
-        if (url.startsWith("copy:")) {
-            val num = url.removePrefix("copy:")
-            val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-            cm.setPrimaryClip(android.content.ClipData.newPlainText("AB/SMS", num))
-            Toast.makeText(context, "کپی شد: $num", Toast.LENGTH_SHORT).show()
-            pendingUrl = null
-        } else if (linkWarningEnabled) {
+        if (linkWarningEnabled) {
             LinkWarningDialog(
                 url = url,
                 onDismiss = { pendingUrl = null },
@@ -351,6 +347,20 @@ internal fun ChatBubble(
             pendingUrl = null
             openUrl(context, url)
         }
+    }
+
+    pendingCopyItem?.let { item ->
+        CopySeparatorDialog(
+            item = item,
+            onDismiss = { pendingCopyItem = null },
+            onCopy = { textToCopy, isClean ->
+                pendingCopyItem = null
+                val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                cm.setPrimaryClip(android.content.ClipData.newPlainText(item.type.label, textToCopy))
+                val label = if (isClean) "کپی بدون علامت انجام شد" else "کپی با علامت انجام شد"
+                Toast.makeText(context, "$label: $textToCopy", Toast.LENGTH_SHORT).show()
+            }
+        )
     }
 
     val hudBorder = if (isSelected) {
@@ -2361,6 +2371,7 @@ private fun rememberLinkedText(
     highlight: Boolean,
     hide: Boolean = false,
     onLinkClick: (String) -> Unit = {},
+    onSmartNumberClick: (SmartNumberDetector.DetectedNumber) -> Unit = {},
     textColor: Color = MaterialTheme.colorScheme.onSurface,
     searchQuery: String? = null,
     searchHighlightAlpha: Float = 1f
@@ -2372,7 +2383,7 @@ private fun rememberLinkedText(
     val context = LocalContext.current
     val base = if (hide) {
         remember(body) {
-            styledBody(hideUrls(body), linkColor, emptyMap(), null, context)
+            styledBody(hideUrls(body), linkColor, emptyMap(), null, null, context)
         }
     } else {
         produceState(AnnotatedString(body), body, highlight, textColor, linkColor) {
@@ -2385,7 +2396,7 @@ private fun rememberLinkedText(
                             (spanned.getSpanStart(it)..spanned.getSpanEnd(it) - 1) to it.url
                         }
                 } else emptyMap()
-                styledBody(body, linkColor, urls, onLinkClick, context)
+                styledBody(body, linkColor, urls, onLinkClick, onSmartNumberClick, context)
             }
         }.value
     }
@@ -2408,6 +2419,7 @@ private fun styledBody(
     linkColor: Color,
     urls: Map<IntRange, String>,
     onLinkClick: ((String) -> Unit)?,
+    onSmartNumberClick: ((SmartNumberDetector.DetectedNumber) -> Unit)? = null,
     context: Context? = null
 ): AnnotatedString {
     val detectedNumbers = SmartNumberDetector.detectNumbers(body)
@@ -2432,7 +2444,7 @@ private fun styledBody(
         out.addStyle(SpanStyle(textDecoration = TextDecoration.Underline), range.first, range.last + 1)
     }
 
-    // 2. Highlighting all detected numbers with Stark HUD gold styling & one-tap copy
+    // 2. Highlighting all detected numbers with Stark HUD gold styling & smart separator copy
     val hudNumberGold = Color(0xFFFFCC00)
     val hudNumberBg = Color(0x38FFCC00)
     for (item in detectedNumbers) {
@@ -2441,12 +2453,15 @@ private fun styledBody(
             if (range.first >= 0 && range.last < iso.text.length && range.first <= range.last) {
                 out.addLink(
                     LinkAnnotation.Url(
-                        url = "copy:${item.normalizedText}",
+                        url = "smartnum:${item.range.first}",
                         linkInteractionListener = {
-                            if (context != null) {
-                                SmartNumberDetector.copyToClipboard(context, item)
+                            if (item.hasSeparators()) {
+                                onSmartNumberClick?.invoke(item)
+                            } else {
+                                if (context != null) {
+                                    SmartNumberDetector.copyToClipboard(context, item)
+                                }
                             }
-                            onLinkClick?.invoke("copy:${item.normalizedText}")
                         }
                     ),
                     range.first, range.last + 1
@@ -2633,6 +2648,7 @@ fun MessageRow(
     val cs = MaterialTheme.colorScheme
     val context = LocalContext.current
     var pendingUrl by remember { mutableStateOf<String?>(null) }
+    var pendingCopyItem by remember { mutableStateOf<SmartNumberDetector.DetectedNumber?>(null) }
     val isLockedAndHidden = msg.locked && !isUnlocked
     val displayBody = if (isLockedAndHidden) "@Lock" else msg.body
     val bodyText = rememberLinkedText(
@@ -2640,6 +2656,7 @@ fun MessageRow(
         highlightLinks && !isLockedAndHidden,
         hideLinks && !isLockedAndHidden,
         onLinkClick = { pendingUrl = it },
+        onSmartNumberClick = { pendingCopyItem = it },
         textColor = if (isSelected) cs.onSelectedBubble else if (msg.isMe) cs.onPrimaryContainer else cs.onSurface
     )
 
@@ -2666,13 +2683,7 @@ fun MessageRow(
     }
 
     pendingUrl?.let { url ->
-        if (url.startsWith("copy:")) {
-            val num = url.removePrefix("copy:")
-            val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-            cm.setPrimaryClip(android.content.ClipData.newPlainText("AB/SMS", num))
-            Toast.makeText(context, "کپی شد: $num", Toast.LENGTH_SHORT).show()
-            pendingUrl = null
-        } else if (linkWarningEnabled) {
+        if (linkWarningEnabled) {
             LinkWarningDialog(
                 url = url,
                 onDismiss = { pendingUrl = null },
@@ -2685,6 +2696,20 @@ fun MessageRow(
             pendingUrl = null
             openUrl(context, url)
         }
+    }
+
+    pendingCopyItem?.let { item ->
+        CopySeparatorDialog(
+            item = item,
+            onDismiss = { pendingCopyItem = null },
+            onCopy = { textToCopy, isClean ->
+                pendingCopyItem = null
+                val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                cm.setPrimaryClip(android.content.ClipData.newPlainText(item.type.label, textToCopy))
+                val label = if (isClean) "کپی بدون علامت انجام شد" else "کپی با علامت انجام شد"
+                Toast.makeText(context, "$label: $textToCopy", Toast.LENGTH_SHORT).show()
+            }
+        )
     }
 
     val hudBorder = if (isSelected) {

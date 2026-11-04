@@ -285,8 +285,7 @@ fun SettingsScreen(
                         key(profileAvatarTrigger) {
                             PersonAvatar(
                                 key = "me",
-                                size = 52.dp,
-                                modifier = Modifier.border(1.5.dp, Color(0xFFFFCC00), CircleShape)
+                                size = 52.dp
                             )
                         }
                         Box(

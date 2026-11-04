@@ -3,10 +3,33 @@ package com.anindra.messages.ui
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.anindra.messages.data.JalaliCalendar
 
 /**
@@ -37,7 +60,28 @@ object SmartNumberDetector {
         val type: NumberType,
         val isValidLuhn: Boolean = false,
         val range: IntRange
-    )
+    ) {
+        /**
+         * Checks if the entity contains separators (hyphens, dots, commas, slashes, underscores, colons, or spaces).
+         * USSD codes and URLs are exempt as their special characters are structural.
+         */
+        fun hasSeparators(): Boolean {
+            if (type == NumberType.USSD || type == NumberType.URL) return false
+            val separators = setOf('-', '–', '—', '.', ',', '،', '/', '\\', '_', ':', ' ', '(', ')', '\u066B', '\u066C')
+            return originalText.any { it in separators }
+        }
+
+        /**
+         * Strips all separators (hyphens, dots, commas, slashes, underscores, colons, spaces)
+         * while keeping pure digits/alphanumeric characters, and normalizes Persian numerals to standard digits.
+         */
+        fun cleanWithoutSeparators(): String {
+            if (type == NumberType.USSD || type == NumberType.URL) return originalText
+            val separators = setOf('-', '–', '—', '.', ',', '،', '/', '\\', '_', ':', ' ', '(', ')', '\u066B', '\u066C')
+            val filtered = originalText.filter { it !in separators }
+            return JalaliCalendar.toEnglishDigits(filtered).trim()
+        }
+    }
 
     /**
      * Local Luhn algorithm for bank card validation.
@@ -102,6 +146,7 @@ object SmartNumberDetector {
 
     /**
      * Scans message body and detects all numeric sequences, codes, USSD, amounts, and entities.
+     * Guaranteed multi-pass detection with hyphen, dot, comma, and separator preservation.
      */
     fun detectNumbers(text: String): List<DetectedNumber> {
         if (text.isBlank()) return emptyList()
@@ -134,8 +179,8 @@ object SmartNumberDetector {
             }
         }
 
-        // 2. Formatted Currency / Amounts with commas or dots (e.g. 3,750,000, 5,200,675, 2,050,000)
-        val amountRegex = Regex("""(?<!\d)(\d{1,3}(?:[,،]\d{3})+(?:\.\d+)?)(?!\d)""")
+        // 2. Formatted Currency / Amounts with commas or dots (e.g. 3,750,000, 5,200,675, 2,050,000, 3،750،000)
+        val amountRegex = Regex("""(?<!\d)(\d{1,3}(?:[,،.]\d{3})+(?:\.\d+)?)(?!\d)""")
         for (m in amountRegex.findAll(normalizedBody)) {
             val range = m.range
             if (!overlaps(range)) {
@@ -153,8 +198,8 @@ object SmartNumberDetector {
             }
         }
 
-        // 3. Dates with dots, slashes, or dashes (e.g. 1405.08.12, 1403/11/04, 2026-11-04)
-        val dateRegex = Regex("""(?<!\d)(\d{2,4}[./-]\d{1,2}[./-]\d{1,2})(?!\d)""")
+        // 3. Dates with dots, slashes, or dashes (e.g. 1405.08.12, 1405.08.13, 1403/11/04, 2026-11-04)
+        val dateRegex = Regex("""(?<!\d)(\d{2,4}[./\-\u066B\u060D]\d{1,2}[./\-\u066B\u060D]\d{1,2})(?!\d)""")
         for (m in dateRegex.findAll(normalizedBody)) {
             val range = m.range
             if (!overlaps(range)) {
@@ -211,9 +256,9 @@ object SmartNumberDetector {
             }
         }
 
-        // 6. Alphanumeric Promo / Discount / Voucher / OTP Codes
-        // A. Keyword-preceded codes (e.g. "کد: LDMM7X", "کد: X4W2VT", "کد تخفیف: OKALA50")
-        val promoKeywordRegex = Regex("""(?i)(?:کد|رمز|code|coupon|voucher|pin|تخفیف|شناسه)[:\s-]*([A-Za-z0-9]{3,16})(?![A-Za-z0-9])""")
+        // 6. Alphanumeric Promo / Discount / Voucher / Tracking Codes
+        // A. Keyword-preceded codes (e.g. "کد: LDMM7X", "کد: X4W2VT", "کد تخفیف: OKALA50", "کد: AB-1234-CD")
+        val promoKeywordRegex = Regex("""(?i)(?:کد|رمز|code|coupon|voucher|pin|تخفیف|شناسه|پیگیری)[:\s-]*([A-Za-z0-9_-]{3,24})(?![A-Za-z0-9_-])""")
         for (m in promoKeywordRegex.findAll(text)) {
             val group = m.groups[1] ?: continue
             val range = group.range
@@ -230,11 +275,10 @@ object SmartNumberDetector {
             }
         }
 
-        // B. Standalone mixed alphanumeric codes containing letters AND digits (e.g. LDMM7X, X4W2VT)
-        val standaloneAlphaNumRegex = Regex("""(?<![A-Za-z0-9])([A-Za-z0-9]{4,14})(?![A-Za-z0-9])""")
+        // B. Standalone mixed alphanumeric codes containing letters AND digits with optional hyphens/underscores (e.g. LDMM7X, X4W2VT, SNAP-50)
+        val standaloneAlphaNumRegex = Regex("""(?<![A-Za-z0-9_-])([A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*)(?![A-Za-z0-9_-])""")
         for (m in standaloneAlphaNumRegex.findAll(text)) {
             val token = m.groupValues[1]
-            // Must contain at least one letter and at least one digit
             val hasLetter = token.any { it.isLetter() }
             val hasDigit = token.any { it.isDigit() }
             if (hasLetter && hasDigit && !overlaps(m.range)) {
@@ -267,7 +311,7 @@ object SmartNumberDetector {
             }
         }
 
-        // 8. Mobile & Landline Phone Numbers
+        // 8. Mobile & Landline Phone Numbers (with hyphens or spaces, e.g. 0912-345-6789, 0999 998 7641, 050 0030 1536)
         val phoneRegex = Regex("""(?<!\d)(\+?\d{1,4}[ -]?)?(0?9\d{2}[ -]?\d{3}[ -]?\d{4})(?!\d)""")
         for (m in phoneRegex.findAll(normalizedBody)) {
             val range = m.range
@@ -304,38 +348,182 @@ object SmartNumberDetector {
             }
         }
 
-        // 9. All Other Numeric Runs (2 or more digits: e.g. ۷۳۸, 1405, 50000, 80, 400, etc.)
-        val generalNumRegex = Regex("""(?<!\d)(\d(?:[ -]?\d){1,29})(?!\d)""")
-        for (m in generalNumRegex.findAll(normalizedBody)) {
+        // 9. All Multi-Segment Numbers with Separators (Hyphens, Dots, Slashes, Underscores, Colons, Spaces)
+        // Completely highlights full expressions like 1405.08.13, 123-456-789, 12-34-56, 18:10, etc.
+        val separatedNumRegex = Regex("""(?<!\d)(\d+(?:[-–—./\\_,،: ]\d+)+)(?!\d)""")
+        for (m in separatedNumRegex.findAll(normalizedBody)) {
             val range = m.range
             if (!overlaps(range)) {
                 val original = text.substring(range)
                 val clean = normalize(original)
-                if (clean.length >= 2) {
-                    val inferredType = when {
-                        clean.length in 4..6 && (text.contains("کد", ignoreCase = true) || text.contains("رمز", ignoreCase = true) || text.contains("otp", ignoreCase = true)) ->
-                            NumberType.OTP
-                        clean.length in 10..12 && clean.startsWith("09") -> NumberType.MOBILE
-                        clean.length in 10..12 && clean.startsWith("0") -> NumberType.LANDLINE
-                        clean.length == 10 -> NumberType.TRACKING
-                        clean.length == 16 -> NumberType.BANK_CARD
-                        else -> NumberType.GENERAL
-                    }
-                    val luhn = if (clean.length == 16) isValidLuhn(clean) else false
-                    results.add(
-                        DetectedNumber(
-                            originalText = original,
-                            normalizedText = clean,
-                            type = inferredType,
-                            isValidLuhn = luhn,
-                            range = range
-                        )
+                results.add(
+                    DetectedNumber(
+                        originalText = original,
+                        normalizedText = clean,
+                        type = NumberType.GENERAL,
+                        range = range
                     )
+                )
+            }
+        }
+
+        // 10. All Other Numeric Runs (2 or more digits: e.g. ۷۳۸, 1405, 50000, 80, 400, 0116466042000, etc.)
+        val pureNumRegex = Regex("""(?<!\d)(\d{2,30})(?!\d)""")
+        for (m in pureNumRegex.findAll(normalizedBody)) {
+            val range = m.range
+            if (!overlaps(range)) {
+                val original = text.substring(range)
+                val clean = normalize(original)
+                val inferredType = when {
+                    clean.length in 4..6 && (text.contains("کد", ignoreCase = true) || text.contains("رمز", ignoreCase = true) || text.contains("otp", ignoreCase = true)) ->
+                        NumberType.OTP
+                    clean.length in 10..12 && clean.startsWith("09") -> NumberType.MOBILE
+                    clean.length in 10..12 && clean.startsWith("0") -> NumberType.LANDLINE
+                    clean.length == 10 -> NumberType.TRACKING
+                    clean.length == 16 -> NumberType.BANK_CARD
+                    else -> NumberType.GENERAL
                 }
+                val luhn = if (clean.length == 16) isValidLuhn(clean) else false
+                results.add(
+                    DetectedNumber(
+                        originalText = original,
+                        normalizedText = clean,
+                        type = inferredType,
+                        isValidLuhn = luhn,
+                        range = range
+                    )
+                )
             }
         }
 
         // Sort all detected items by their exact start offset in the message text
         return results.sortedBy { it.range.first }
     }
+}
+
+/**
+ * Stark HUD Glass Dialog asking whether to strip hyphens, dots, spaces, and symbols
+ * or copy the exact original text to clipboard.
+ */
+@Composable
+fun CopySeparatorDialog(
+    item: SmartNumberDetector.DetectedNumber,
+    onDismiss: () -> Unit,
+    onCopy: (textToCopy: String, isCleaned: Boolean) -> Unit
+) {
+    val cleanText = item.cleanWithoutSeparators()
+    val originalText = item.originalText
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xF2090F1B),
+        tonalElevation = 6.dp,
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.padding(16.dp),
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.ContentCopy,
+                    contentDescription = null,
+                    tint = Color(0xFFFFCC00),
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = "کپی به کلیپ‌بورد",
+                    color = Color(0xFFFFCC00),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 17.sp
+                )
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = "آیا مایلید علامت‌ها، فاصله‌ها و خطوط تیره از متن حذف شوند؟",
+                    color = Color(0xFFE2E8F0),
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp
+                )
+
+                // Option 1 Preview: Cleaned without separators
+                Card(
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0x3300E5FF)),
+                    border = BorderStroke(1.dp, Color(0x6600E5FF)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
+                        Text(
+                            text = "حالت خالص (بدون علامت و خط فاصله):",
+                            color = Color(0xFF81E6D9),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = cleanText,
+                            color = Color(0xFFE6FFFA),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                // Option 2 Preview: Original with separators
+                Card(
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0x33FFCC00)),
+                    border = BorderStroke(1.dp, Color(0x66FFCC00)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
+                        Text(
+                            text = "حالت اصلی (با علامت و خط فاصله):",
+                            color = Color(0xFFFFD54F),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = originalText,
+                            color = Color(0xFFFFF8E1),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onCopy(cleanText, true) },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF00E5FF),
+                    contentColor = Color(0xFF04070B)
+                ),
+                shape = RoundedCornerShape(6.dp)
+            ) {
+                Text("کپی بدون علامت", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            }
+        },
+        dismissButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                OutlinedButton(
+                    onClick = { onCopy(originalText, false) },
+                    border = BorderStroke(1.dp, Color(0xFFFFCC00)),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFFCC00)),
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text("کپی با علامت", fontSize = 13.sp)
+                }
+                TextButton(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF94A3B8))
+                ) {
+                    Text("انصراف", fontSize = 13.sp)
+                }
+            }
+        }
+    )
 }

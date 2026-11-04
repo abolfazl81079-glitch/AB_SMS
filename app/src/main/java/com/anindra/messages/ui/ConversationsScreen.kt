@@ -1086,16 +1086,8 @@ internal fun ConversationRow(
                     .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // High-tech HUD boxed avatar frame
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .border(1.2.dp, Color(0xAAFFCC00), RoundedCornerShape(6.dp))
-                        .padding(2.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    PersonAvatar(convo.groupTitle.ifBlank { convo.address }, size = 40.dp)
-                }
+                // Clean avatar without border
+                PersonAvatar(convo.groupTitle.ifBlank { convo.address }, size = 44.dp)
 
                 Spacer(Modifier.width(12.dp))
 
