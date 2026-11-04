@@ -31,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -290,6 +291,8 @@ fun SmartNumberActionRow(
                 SmartNumberDetector.NumberType.OTP ->
                     Icons.Rounded.Security to Color(0xFFFFCC00)
                 SmartNumberDetector.NumberType.TRACKING, SmartNumberDetector.NumberType.GENERAL ->
+                    Icons.Rounded.Numbers to Color(0xFFFFCC00)
+                else ->
                     Icons.Rounded.Numbers to Color(0xFFFFCC00)
             }
 
