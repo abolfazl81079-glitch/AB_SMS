@@ -1041,15 +1041,15 @@ internal fun ConversationRow(
     val cs = MaterialTheme.colorScheme
     val isUnread = convo.unreadCount > 0
     val cardBorderColor = when {
-        selected && selectionMode -> cs.primary
-        isUnread -> cs.primary.copy(alpha = 0.85f)
-        convo.pinned && settings.pinnedEnabled -> cs.secondary.copy(alpha = 0.6f)
-        else -> cs.outline.copy(alpha = 0.3f)
+        selected && selectionMode -> Color(0xFFFFCC00)
+        isUnread -> Color(0xFFFFCC00)
+        convo.pinned && settings.pinnedEnabled -> Color(0xFFFFA000)
+        else -> Color(0x66FFCC00)
     }
     val cardBg = when {
-        selected && selectionMode -> cs.surfaceContainerHighest
-        convo.pinned && settings.pinnedEnabled -> cs.surfaceContainerHigh.copy(alpha = 0.95f)
-        else -> cs.surfaceContainer.copy(alpha = 0.88f)
+        selected && selectionMode -> Color(0xFF221A05)
+        convo.pinned && settings.pinnedEnabled -> Color(0xF2141C28)
+        else -> Color(0xF2090F1B)
     }
 
     Box(
@@ -1058,7 +1058,7 @@ internal fun ConversationRow(
             .padding(horizontal = 10.dp, vertical = 4.dp)
     ) {
         Surface(
-            shape = RoundedCornerShape(4.dp),
+            shape = RoundedCornerShape(8.dp),
             color = cardBg,
             border = BorderStroke(1.dp, cardBorderColor),
             modifier = Modifier.fillMaxWidth()
@@ -1090,7 +1090,7 @@ internal fun ConversationRow(
                 Box(
                     modifier = Modifier
                         .size(44.dp)
-                        .border(1.dp, cardBorderColor, RoundedCornerShape(4.dp))
+                        .border(1.2.dp, Color(0xAAFFCC00), RoundedCornerShape(6.dp))
                         .padding(2.dp),
                     contentAlignment = Alignment.Center
                 ) {

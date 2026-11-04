@@ -6,50 +6,24 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Call
-import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.ContentCopy
-import androidx.compose.material.icons.rounded.CreditCard
-import androidx.compose.material.icons.rounded.Numbers
-import androidx.compose.material.icons.rounded.Security
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.anindra.messages.data.JalaliCalendar
 
 /**
- * Intelligent number sequence detector, normalizer, and smart actions for AB/SMS.
+ * Intelligent Code, Number, USSD, and Entity Detector for AB/SMS.
+ * Detects USSD codes, discount/voucher codes, amounts with commas, dates,
+ * bank cards, IBANs, phone numbers, and arbitrary numeric runs.
  */
 object SmartNumberDetector {
 
     enum class NumberType(val label: String) {
+        USSD("USSD Code"),
+        URL("Link"),
         BANK_CARD("Bank Card"),
         IBAN("Sheba / IBAN"),
+        AMOUNT("Amount"),
+        DATE("Date"),
+        PROMO_CODE("Code"),
         MOBILE("Mobile Phone"),
         LANDLINE("Phone"),
         OTP("Verification Code"),
@@ -106,55 +80,198 @@ object SmartNumberDetector {
     }
 
     /**
-     * Scans message body and detects all numeric sequences and entities.
+     * Copies detected entity to clipboard and displays appropriate Toast.
+     */
+    fun copyToClipboard(context: Context, item: DetectedNumber) {
+        try {
+            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            clipboard.setPrimaryClip(ClipData.newPlainText(item.type.label, item.normalizedText))
+            val msg = when (item.type) {
+                NumberType.USSD -> "کد دستوری کپی شد: ${item.normalizedText}"
+                NumberType.PROMO_CODE -> "کد تخفیف کپی شد: ${item.normalizedText}"
+                NumberType.BANK_CARD -> "شماره کارت کپی شد: ${item.normalizedText}"
+                NumberType.IBAN -> "شماره شبا کپی شد: ${item.normalizedText}"
+                NumberType.AMOUNT -> "مبلغ کپی شد: ${item.normalizedText}"
+                NumberType.DATE -> "تاریخ کپی شد: ${item.normalizedText}"
+                NumberType.MOBILE, NumberType.LANDLINE -> "شماره کپی شد: ${item.normalizedText}"
+                else -> "کپی شد: ${item.normalizedText}"
+            }
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        } catch (_: Exception) {}
+    }
+
+    /**
+     * Scans message body and detects all numeric sequences, codes, USSD, amounts, and entities.
      */
     fun detectNumbers(text: String): List<DetectedNumber> {
         if (text.isBlank()) return emptyList()
 
         val results = mutableListOf<DetectedNumber>()
-        // Normalize text digits for regex scanning
+        // Normalize text digits for accurate regex scanning while keeping character offsets identical
         val normalizedBody = JalaliCalendar.toEnglishDigits(text)
 
-        // 1. Bank Card: 16 digits, with optional spaces or dashes
-        val cardRegex = Regex("""(?<!\d)(\d{4}[ -]?\d{4}[ -]?\d{4}[ -]?\d{4})(?!\d)""")
-        for (m in cardRegex.findAll(normalizedBody)) {
-            val original = text.substring(m.range)
-            val digitsOnly = m.groupValues[1].filter { it.isDigit() }
-            if (digitsOnly.length == 16) {
-                val luhn = isValidLuhn(digitsOnly)
+        fun overlaps(range: IntRange): Boolean {
+            return results.any { existing ->
+                !(range.last < existing.range.first || range.first > existing.range.last)
+            }
+        }
+
+        // 1. USSD Codes (e.g. *4444*2*3#, *100*1#, *555#)
+        val ussdRegex = Regex("""(?<![0-9*#])(\*[\d*#]{2,25}#)(?![0-9*#])""")
+        for (m in ussdRegex.findAll(normalizedBody)) {
+            val range = m.range
+            if (!overlaps(range)) {
+                val original = text.substring(range)
+                val clean = JalaliCalendar.toEnglishDigits(original).trim()
                 results.add(
                     DetectedNumber(
                         originalText = original,
-                        normalizedText = digitsOnly,
-                        type = NumberType.BANK_CARD,
-                        isValidLuhn = luhn,
+                        normalizedText = clean,
+                        type = NumberType.USSD,
+                        range = range
+                    )
+                )
+            }
+        }
+
+        // 2. Formatted Currency / Amounts with commas or dots (e.g. 3,750,000, 5,200,675, 2,050,000)
+        val amountRegex = Regex("""(?<!\d)(\d{1,3}(?:[,،]\d{3})+(?:\.\d+)?)(?!\d)""")
+        for (m in amountRegex.findAll(normalizedBody)) {
+            val range = m.range
+            if (!overlaps(range)) {
+                val original = text.substring(range)
+                val digitsOnly = original.filter { it.isDigit() || it in '۰'..'۹' || it in '٠'..'٩' }
+                val clean = JalaliCalendar.toEnglishDigits(digitsOnly)
+                results.add(
+                    DetectedNumber(
+                        originalText = original,
+                        normalizedText = clean,
+                        type = NumberType.AMOUNT,
+                        range = range
+                    )
+                )
+            }
+        }
+
+        // 3. Dates with dots, slashes, or dashes (e.g. 1405.08.12, 1403/11/04, 2026-11-04)
+        val dateRegex = Regex("""(?<!\d)(\d{2,4}[./-]\d{1,2}[./-]\d{1,2})(?!\d)""")
+        for (m in dateRegex.findAll(normalizedBody)) {
+            val range = m.range
+            if (!overlaps(range)) {
+                val original = text.substring(range)
+                val clean = JalaliCalendar.toEnglishDigits(original)
+                results.add(
+                    DetectedNumber(
+                        originalText = original,
+                        normalizedText = clean,
+                        type = NumberType.DATE,
+                        range = range
+                    )
+                )
+            }
+        }
+
+        // 4. Bank Card: 16 digits, with optional spaces or dashes
+        val cardRegex = Regex("""(?<!\d)(\d{4}[ -]?\d{4}[ -]?\d{4}[ -]?\d{4})(?!\d)""")
+        for (m in cardRegex.findAll(normalizedBody)) {
+            val range = m.range
+            if (!overlaps(range)) {
+                val original = text.substring(range)
+                val digitsOnly = m.groupValues[1].filter { it.isDigit() }
+                if (digitsOnly.length == 16) {
+                    val luhn = isValidLuhn(digitsOnly)
+                    results.add(
+                        DetectedNumber(
+                            originalText = original,
+                            normalizedText = digitsOnly,
+                            type = NumberType.BANK_CARD,
+                            isValidLuhn = luhn,
+                            range = range
+                        )
+                    )
+                }
+            }
+        }
+
+        // 5. Sheba / IBAN (IR followed by 24 digits)
+        val ibanRegex = Regex("""(?i)\b(IR[ -]?(?:\d[ -]?){24})(?!\d)""")
+        for (m in ibanRegex.findAll(normalizedBody)) {
+            val range = m.range
+            if (!overlaps(range)) {
+                val original = text.substring(range)
+                val cleanIban = "IR" + m.groupValues[1].filter { it.isDigit() }
+                results.add(
+                    DetectedNumber(
+                        originalText = original,
+                        normalizedText = cleanIban,
+                        type = NumberType.IBAN,
+                        range = range
+                    )
+                )
+            }
+        }
+
+        // 6. Alphanumeric Promo / Discount / Voucher / OTP Codes
+        // A. Keyword-preceded codes (e.g. "کد: LDMM7X", "کد: X4W2VT", "کد تخفیف: OKALA50")
+        val promoKeywordRegex = Regex("""(?i)(?:کد|رمز|code|coupon|voucher|pin|تخفیف|شناسه)[:\s-]*([A-Za-z0-9]{3,16})(?![A-Za-z0-9])""")
+        for (m in promoKeywordRegex.findAll(text)) {
+            val group = m.groups[1] ?: continue
+            val range = group.range
+            if (!overlaps(range)) {
+                val code = text.substring(range)
+                results.add(
+                    DetectedNumber(
+                        originalText = code,
+                        normalizedText = code.trim(),
+                        type = NumberType.PROMO_CODE,
+                        range = range
+                    )
+                )
+            }
+        }
+
+        // B. Standalone mixed alphanumeric codes containing letters AND digits (e.g. LDMM7X, X4W2VT)
+        val standaloneAlphaNumRegex = Regex("""(?<![A-Za-z0-9])([A-Za-z0-9]{4,14})(?![A-Za-z0-9])""")
+        for (m in standaloneAlphaNumRegex.findAll(text)) {
+            val token = m.groupValues[1]
+            // Must contain at least one letter and at least one digit
+            val hasLetter = token.any { it.isLetter() }
+            val hasDigit = token.any { it.isDigit() }
+            if (hasLetter && hasDigit && !overlaps(m.range)) {
+                results.add(
+                    DetectedNumber(
+                        originalText = token,
+                        normalizedText = token.trim(),
+                        type = NumberType.PROMO_CODE,
                         range = m.range
                     )
                 )
             }
         }
 
-        // 2. Sheba / IBAN (IR followed by 24 digits)
-        val ibanRegex = Regex("""(?i)\b(IR[ -]?(?:\d[ -]?){24})(?!\d)""")
-        for (m in ibanRegex.findAll(normalizedBody)) {
-            val original = text.substring(m.range)
-            val cleanIban = "IR" + m.groupValues[1].filter { it.isDigit() }
-            results.add(
-                DetectedNumber(
-                    originalText = original,
-                    normalizedText = cleanIban,
-                    type = NumberType.IBAN,
-                    range = m.range
+        // 7. Unsubscribe Codes (e.g. "لغو11", "لغو 11")
+        val unsubRegex = Regex("""(?i)(?:لغو|laghv|off)[:\s-]*([0-9\u06F0-\u06F9]{1,6})""")
+        for (m in unsubRegex.findAll(text)) {
+            val group = m.groups[1] ?: continue
+            val range = group.range
+            if (!overlaps(range)) {
+                val original = text.substring(range)
+                results.add(
+                    DetectedNumber(
+                        originalText = original,
+                        normalizedText = normalize(original),
+                        type = NumberType.OTP,
+                        range = range
+                    )
                 )
-            )
+            }
         }
 
-        // 3. Mobile phone numbers:
-        // Iranian: 09..., +989..., or international: +\d{9,14}
+        // 8. Mobile & Landline Phone Numbers
         val phoneRegex = Regex("""(?<!\d)(\+?\d{1,4}[ -]?)?(0?9\d{2}[ -]?\d{3}[ -]?\d{4})(?!\d)""")
         for (m in phoneRegex.findAll(normalizedBody)) {
             val range = m.range
-            if (results.none { it.range.first <= range.first && it.range.last >= range.last }) {
+            if (!overlaps(range)) {
                 val original = text.substring(range)
                 val normalized = normalize(original, isPhone = true)
                 if (normalized.length in 10..15) {
@@ -170,11 +287,10 @@ object SmartNumberDetector {
             }
         }
 
-        // 4. Landlines (e.g. 021..., 031..., etc.)
-        val landlineRegex = Regex("""(?<!\d)(0\d{2,3}[ -]?\d{7,8})(?!\d)""")
+        val landlineRegex = Regex("""(?<!\d)(0\d{2,3}[ -]?\d{7,9})(?!\d)""")
         for (m in landlineRegex.findAll(normalizedBody)) {
             val range = m.range
-            if (results.none { it.range.first <= range.first && it.range.last >= range.last }) {
+            if (!overlaps(range)) {
                 val original = text.substring(range)
                 val normalized = normalize(original, isPhone = true)
                 results.add(
@@ -188,54 +304,16 @@ object SmartNumberDetector {
             }
         }
 
-        // 5. Verification Codes / OTP (4 to 8 digits near code keywords)
-        val otpRegex = Regex("""(?i)(?:code|otp|رمز|کد|تایید|verification|pin)[:\s-]*(\d{4,8})(?!\d)""")
-        for (m in otpRegex.findAll(normalizedBody)) {
-            val group = m.groups[1] ?: continue
-            val range = group.range
-            if (results.none { it.range.first <= range.first && it.range.last >= range.last }) {
-                val original = text.substring(range)
-                results.add(
-                    DetectedNumber(
-                        originalText = original,
-                        normalizedText = normalize(original),
-                        type = NumberType.OTP,
-                        range = range
-                    )
-                )
-            }
-        }
-
-        // 6. Postal code / National ID / Tracking codes (10 to 24 digits not captured above)
-        val trackingRegex = Regex("""(?<!\d)(\d{10,24})(?!\d)""")
-        for (m in trackingRegex.findAll(normalizedBody)) {
-            val range = m.range
-            if (results.none { !(range.last < it.range.first || range.first > it.range.last) }) {
-                val original = text.substring(range)
-                results.add(
-                    DetectedNumber(
-                        originalText = original,
-                        normalizedText = normalize(original),
-                        type = NumberType.TRACKING,
-                        range = range
-                    )
-                )
-            }
-        }
-
-        // 7. General Numeric Sequences: Detect ANY 4 or more digits (4-digit, 10-digit, any length)
-        val generalNumRegex = Regex("""(?<!\d)(\d(?:[ -]?\d){3,29})(?!\d)""")
+        // 9. All Other Numeric Runs (2 or more digits: e.g. ۷۳۸, 1405, 50000, 80, 400, etc.)
+        val generalNumRegex = Regex("""(?<!\d)(\d(?:[ -]?\d){1,29})(?!\d)""")
         for (m in generalNumRegex.findAll(normalizedBody)) {
             val range = m.range
-            val overlaps = results.any { existing ->
-                !(range.last < existing.range.first || range.first > existing.range.last)
-            }
-            if (!overlaps) {
+            if (!overlaps(range)) {
                 val original = text.substring(range)
                 val clean = normalize(original)
-                if (clean.length >= 4) {
+                if (clean.length >= 2) {
                     val inferredType = when {
-                        clean.length in 4..8 && (text.contains("کد", ignoreCase = true) || text.contains("رمز", ignoreCase = true) || text.contains("otp", ignoreCase = true)) ->
+                        clean.length in 4..6 && (text.contains("کد", ignoreCase = true) || text.contains("رمز", ignoreCase = true) || text.contains("otp", ignoreCase = true)) ->
                             NumberType.OTP
                         clean.length in 10..12 && clean.startsWith("09") -> NumberType.MOBILE
                         clean.length in 10..12 && clean.startsWith("0") -> NumberType.LANDLINE
@@ -257,103 +335,7 @@ object SmartNumberDetector {
             }
         }
 
+        // Sort all detected items by their exact start offset in the message text
         return results.sortedBy { it.range.first }
-    }
-}
-
-/**
- * Cyberpunk styled Smart Action Pills row for detected numbers under a message bubble.
- */
-@Composable
-fun SmartNumberActionRow(
-    detectedNumbers: List<SmartNumberDetector.DetectedNumber>,
-    modifier: Modifier = Modifier
-) {
-    if (detectedNumbers.isEmpty()) return
-    val context = LocalContext.current
-    val uniqueNumbers = remember(detectedNumbers) { detectedNumbers.distinctBy { it.normalizedText } }
-
-    Row(
-        modifier = modifier
-            .padding(top = 4.dp, bottom = 2.dp)
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        for (item in uniqueNumbers) {
-            val (icon, badgeColor) = when (item.type) {
-                SmartNumberDetector.NumberType.BANK_CARD ->
-                    Icons.Rounded.CreditCard to (if (item.isValidLuhn) Color(0xFFFFCC00) else Color(0xFFFFB4AB))
-                SmartNumberDetector.NumberType.IBAN ->
-                    Icons.Rounded.Numbers to Color(0xFF00E5FF)
-                SmartNumberDetector.NumberType.MOBILE, SmartNumberDetector.NumberType.LANDLINE ->
-                    Icons.Rounded.Call to Color(0xFF00E5FF)
-                SmartNumberDetector.NumberType.OTP ->
-                    Icons.Rounded.Security to Color(0xFFFFCC00)
-                SmartNumberDetector.NumberType.TRACKING, SmartNumberDetector.NumberType.GENERAL ->
-                    Icons.Rounded.Numbers to Color(0xFFFFCC00)
-                else ->
-                    Icons.Rounded.Numbers to Color(0xFFFFCC00)
-            }
-
-            // Glass action chip with cyber border
-            Surface(
-                color = Color(0x33101827),
-                shape = RoundedCornerShape(4.dp),
-                border = BorderStroke(1.dp, badgeColor.copy(alpha = 0.7f)),
-                modifier = Modifier.clickable {
-                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    clipboard.setPrimaryClip(ClipData.newPlainText(item.type.label, item.normalizedText))
-                    Toast.makeText(context, "کپی شد: ${item.normalizedText}", Toast.LENGTH_SHORT).show()
-                }
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = badgeColor,
-                        modifier = Modifier.size(13.dp)
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text(
-                        text = item.normalizedText,
-                        color = Color(0xFFF0F6FC),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    if (item.type == SmartNumberDetector.NumberType.BANK_CARD) {
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            text = if (item.isValidLuhn) "✓" else "✕",
-                            color = badgeColor,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    if (item.type == SmartNumberDetector.NumberType.MOBILE || item.type == SmartNumberDetector.NumberType.LANDLINE) {
-                        Spacer(Modifier.width(6.dp))
-                        Box(
-                            modifier = Modifier
-                                .clickable {
-                                    try {
-                                        val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${item.normalizedText}"))
-                                        context.startActivity(intent)
-                                    } catch (_: Exception) {}
-                                }
-                        ) {
-                            Text(
-                                text = "CALL",
-                                color = Color(0xFF00E5FF),
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
-            }
-        }
     }
 }

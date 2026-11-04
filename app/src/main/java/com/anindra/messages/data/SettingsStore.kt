@@ -16,6 +16,7 @@ class SettingsStore(context: Context) {
     val revision: StateFlow<Int> = _revision.asStateFlow()
 
     companion object {
+        const val THEME_STARK = "stark"
         const val THEME_SYSTEM = "system"
         const val THEME_LIGHT = "light"
         const val THEME_DARK = "dark"
@@ -102,7 +103,7 @@ class SettingsStore(context: Context) {
     }
 
     var themeMode: String
-        get() = prefs.getString(KEY_THEME, THEME_SYSTEM) ?: THEME_SYSTEM
+        get() = prefs.getString(KEY_THEME, THEME_STARK) ?: THEME_STARK
         set(v) { prefs.edit().putString(KEY_THEME, v).apply(); _revision.value++ }
 
     var notificationsEnabled: Boolean
@@ -194,7 +195,7 @@ class SettingsStore(context: Context) {
      * Both read this same store, so data stays in sync either way.
      */
     var useNewUi: Boolean
-        get() = prefs.getBoolean(KEY_USE_NEW_UI, false)
+        get() = prefs.getBoolean(KEY_USE_NEW_UI, true)
         set(v) { prefs.edit().putBoolean(KEY_USE_NEW_UI, v).apply(); _revision.value++ }
 
     /** Legacy chat surfaces still gate on this. */

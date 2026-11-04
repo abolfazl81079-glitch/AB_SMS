@@ -1265,18 +1265,7 @@ class MainActivity : FragmentActivity() {
                 val navFade = motionTween<Float>(reduceMotion, Motion.DURATION_SHORT4)
 
                 androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
-                    if (useNewUi) ConversationsScreen(
-                        vm = vm,
-                        onOpenConversation = { id, query ->
-                            com.anindra.messages.sms.NotificationHelper
-                                .clearConversationNotification(this@MainActivity, id)
-                            chatId = id
-                            chatSearchQuery = handoffSearchQuery(query)
-                            navRoute = "chat"
-                        },
-                        onNewChat = { navRoute = "new" },
-                        onOpenSettings = { navRoute = "settings" },
-                    ) else com.anindra.messages.ui.legacy.ConversationsScreen(
+                    ConversationsScreen(
                         vm = vm,
                         onOpenConversation = { id, query ->
                             com.anindra.messages.sms.NotificationHelper

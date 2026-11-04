@@ -275,12 +275,7 @@ val ChatMetaWeight: FontWeight = FontWeight.Medium
  * black, and it does not follow the system, so picking it under a light system
  * must still give a black page.
  */
-internal fun themeIsDark(mode: String, systemIsDark: Boolean): Boolean = when (mode) {
-    SettingsStore.THEME_DARK, SettingsStore.THEME_AMOLED -> true
-    SettingsStore.THEME_LIGHT -> false
-    // "dynamic" and "system" both follow the device's night setting.
-    else -> systemIsDark
-}
+internal fun themeIsDark(mode: String, systemIsDark: Boolean): Boolean = (mode != SettingsStore.THEME_LIGHT)
 
 /**
  * The wallpaper-derived scheme Android 12+ can supply, or null where it does not
@@ -324,7 +319,7 @@ internal fun schemeFor(
 
 @Composable
 fun MessagesTheme(
-    mode: String = "system",   // system | light | dark | amoled
+    mode: String = SettingsStore.THEME_STARK,   // system | light | dark | amoled
     font: String = SettingsStore.FONT_SYSTEM,
     a11y: A11yOptions = A11yOptions.DISABLED,
     content: @Composable () -> Unit

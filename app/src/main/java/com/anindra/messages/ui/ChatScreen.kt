@@ -358,23 +358,23 @@ internal fun ChatBubble(
     } else if (isSearchFocus) {
         BorderStroke(2.dp, cs.primary.copy(alpha = searchHighlightAlpha))
     } else if (msg.isMe) {
-        BorderStroke(1.dp, Color(0x66FFCC00))
+        BorderStroke(1.2.dp, Color(0xFFFFCC00))
     } else {
-        BorderStroke(1.dp, Color(0x4400E5FF))
+        BorderStroke(1.2.dp, Color(0xCCFFB800))
     }
 
     val hudBackground = if (isSelected) {
         cs.selectedBubble
     } else if (msg.isMe) {
-        Color(0xFF161205)
+        Color(0xF0181305)
     } else {
-        Color(0xFF070F19)
+        Color(0xF0080E18)
     }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 3.dp)
+            .padding(horizontal = 8.dp, vertical = 5.dp)
             .graphicsLayer {
                 val p = entrance.value
                 alpha = BubbleEntrance.alpha(p)
@@ -408,7 +408,7 @@ internal fun ChatBubble(
                         if (msg.body.isNotBlank()) {
                             Surface(
                                 color = hudBackground,
-                                shape = RoundedCornerShape(6.dp),
+                                shape = RoundedCornerShape(8.dp),
                                 border = hudBorder,
                                 modifier = Modifier.widthIn(max = 260.dp).padding(top = 2.dp)
                                     .combinedClickable(
@@ -434,7 +434,7 @@ internal fun ChatBubble(
                 } else {
                     Surface(
                         color = hudBackground,
-                        shape = RoundedCornerShape(6.dp),
+                        shape = RoundedCornerShape(8.dp),
                         border = hudBorder,
                         modifier = Modifier.widthIn(max = 300.dp).combinedClickable(
                             onClick = { onTap() },
@@ -493,14 +493,7 @@ internal fun ChatBubble(
                 )
             }
 
-            // AB/SMS Smart Number Detection & Smart Copy Action Chips
-            val detectedNums = remember(msg.body) { SmartNumberDetector.detectNumbers(msg.body) }
-            if (detectedNums.isNotEmpty()) {
-                SmartNumberActionRow(
-                    detectedNumbers = detectedNums,
-                    modifier = Modifier.padding(start = if (msg.isMe) 0.dp else 4.dp, end = if (msg.isMe) 4.dp else 0.dp)
-                )
-            }
+
 
             if (msg.status == "failed" && msg.isMe) {
                 Row(
@@ -642,7 +635,7 @@ internal fun ReactionChips(
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
         ) {
             ordered.take(3).forEach { (emoji, _) ->
                 Text(text = emoji, fontSize = 14.sp)
@@ -2451,9 +2444,7 @@ private fun styledBody(
                         url = "copy:${item.normalizedText}",
                         linkInteractionListener = {
                             if (context != null) {
-                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                clipboard.setPrimaryClip(ClipData.newPlainText("AB/SMS", item.normalizedText))
-                                Toast.makeText(context, "کپی شد: ${item.normalizedText}", Toast.LENGTH_SHORT).show()
+                                SmartNumberDetector.copyToClipboard(context, item)
                             }
                             onLinkClick?.invoke("copy:${item.normalizedText}")
                         }
@@ -2707,14 +2698,14 @@ fun MessageRow(
     val hudBackground = if (isSelected) {
         cs.selectedBubble
     } else if (msg.isMe) {
-        Color(0xFF161205)
+        Color(0xF0181305)
     } else {
-        Color(0xFF070F19)
+        Color(0xF0080E18)
     }
 
     Column(
         horizontalAlignment = if (msg.isMe) Alignment.End else Alignment.Start,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 3.dp)
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 5.dp)
     ) {
         Box {
             if (msg.mediaType == "image" && msg.mediaUri.isNotBlank()) {
@@ -2729,7 +2720,7 @@ fun MessageRow(
                     if (msg.body.isNotBlank()) {
                         Surface(
                             color = hudBackground,
-                            shape = RoundedCornerShape(6.dp),
+                            shape = RoundedCornerShape(8.dp),
                             border = hudBorder,
                             modifier = Modifier.widthIn(max = 260.dp).padding(top = 2.dp)
                                 .combinedClickable(
@@ -2750,7 +2741,7 @@ fun MessageRow(
             } else {
                 Surface(
                     color = hudBackground,
-                    shape = RoundedCornerShape(6.dp),
+                    shape = RoundedCornerShape(8.dp),
                     border = hudBorder,
                     modifier = Modifier.widthIn(max = 300.dp).combinedClickable(
                         onClick = {},
