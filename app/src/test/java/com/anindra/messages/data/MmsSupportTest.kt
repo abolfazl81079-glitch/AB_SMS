@@ -1,0 +1,198 @@
+package com.anindra.messages.data
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class MmsSupportTest {
+    @Test
+    fun importsRetrievedInboxAndSentMessagesOnly() {
+        assertTrue(MmsSupport.isImportable(1, 132))
+        assertTrue(MmsSupport.isImportable(2, 128))
+        assertFalse(MmsSupport.isImportable(1, 130))
+        assertFalse(MmsSupport.isImportable(3, 128))
+        assertFalse(MmsSupport.isImportable(4, 128))
+    }
+
+    @Test
+    fun detectsAnnouncedButUndownloadedInboxMms() {
+        assertTrue(MmsSupport.isPendingDownload(1, MmsSupport.PDU_NOTIFICATION_IND))
+        assertFalse(MmsSupport.isPendingDownload(1, MmsSupport.PDU_RETRIEVE_CONF))
+        assertFalse(MmsSupport.isPendingDownload(1, MmsSupport.PDU_SEND_REQ))
+        assertFalse(MmsSupport.isPendingDownload(2, MmsSupport.PDU_NOTIFICATION_IND))
+        assertFalse(MmsSupport.isPendingDownload(3, MmsSupport.PDU_NOTIFICATION_IND))
+        assertEquals("msg_box=1 AND m_type=130", MmsSupport.PENDING_DOWNLOAD_SELECTION)
+        assertEquals("content://mms/42", MmsSupport.messageContentUri(42))
+    }
+
+    @Test
+    fun resolvesAttachmentMimeWhenTheProviderIsSilent() {
+        assertEquals("image/png", MmsSupport.defaultAttachmentMime("image/png", "content://x/a"))
+        assertEquals("image/jpeg", MmsSupport.defaultAttachmentMime("image/jpeg; charset=binary", "content://x/a"))
+        assertEquals("video/mp4", MmsSupport.defaultAttachmentMime(null, "content://x/clip.MP4"))
+        assertEquals("audio/mp4", MmsSupport.defaultAttachmentMime("  ", "content://x/clip.m4a"))
+        assertEquals("image/jpeg", MmsSupport.defaultAttachmentMime(null, "content://x/photo"))
+    }
+
+    @Test
+    fun buildsAttachmentPlusOptionalTextPart() {
+        val withCaption = MmsSupport.outgoingParts("image/png", "hello")
+        assertEquals(2, withCaption.size)
+        assertEquals("image", withCaption[0].name)
+        assertEquals("image/png", withCaption[0].mimeType)
+        assertFalse(withCaption[0].isText)
+        assertEquals("text/plain", withCaption[1].mimeType)
+        assertTrue(withCaption[1].isText)
+        assertEquals(1, MmsSupport.outgoingParts("image/png", "  ").size)
+    }
+
+    @Test
+    fun namesSavedAttachmentsSafely() {
+        assertEquals(
+            "Marek Nowak_1700000000000.jpg",
+            MmsSupport.savedAttachmentName("Marek Nowak", 1_700_000_000_000L, "image/jpeg")
+        )
+        assertEquals(
+            "message_1700000000000.png",
+            MmsSupport.savedAttachmentName("   ", 1_700_000_000_000L, "image/png")
+        )
+        assertEquals(
+            "a_b_1700000000000.jpg",
+            MmsSupport.savedAttachmentName("a/b", 1_700_000_000_000L, "image/jpeg")
+        )
+        assertEquals(
+            "Sara_1700000000000.jpg",
+            MmsSupport.savedAttachmentName("Sara", 1_700_000_000_000L, "application/octet-stream")
+        )
+    }
+
+    @Test
+    fun resolvesSavedAttachmentMimeByExtension() {
+        assertEquals("image/png", MmsSupport.mimeForSavedAttachment("content://mms/part/9", "image/png"))
+        assertEquals("image/png", MmsSupport.mimeForSavedAttachment("content://x/a.PNG", null))
+        assertEquals("video/mp4", MmsSupport.mimeForSavedAttachment("content://x/clip.mp4", null))
+        assertEquals("image/jpeg", MmsSupport.mimeForSavedAttachment("content://mms/part/9", null))
+    }
+
+    @Test
+    fun convertsSecondsWithoutOverflow() {
+        assertEquals(1_700_000_000_000L, MmsSupport.milliseconds(1_700_000_000L))
+        assertNull(MmsSupport.milliseconds(-1))
+        assertNull(MmsSupport.milliseconds(Long.MAX_VALUE))
+    }
+
+    @Test
+    fun leavesAProviderDateThatIsAlreadyMilliseconds() {
+        // Some carriers store the MMS `date` in milliseconds. Scaling it again
+        // put the conversation in the year 58000, where it sorted above every
+        // real message in the list forever (#317).
+        val alreadyMs = 1_791_706_107_000L
+        assertEquals(alreadyMs, MmsSupport.milliseconds(alreadyMs))
+        assertEquals(
+            "a millisecond date must not move a day",
+            "2026-10-11",
+            java.time.Instant.ofEpochMilli(MmsSupport.milliseconds(alreadyMs)!!)
+                .atZone(java.time.ZoneOffset.UTC).toLocalDate().toString()
+        )
+    }
+
+    @Test
+    fun secondsAndMillisecondsMapToTheSameInstant() {
+        // The point of the unit-aware reader: one instant, two provider
+        // encodings, one stored value.
+        assertEquals(
+            MmsSupport.milliseconds(1_700_000_000L),
+            MmsSupport.milliseconds(1_700_000_000_000L)
+        )
+    }
+
+    @Test
+    fun theMigrationFloorSeparatesMillisecondsFromSeconds() {
+        val floor = MmsSupport.timestampMillisecondsFloor()
+        assertTrue("a real millisecond timestamp must be above the floor", 1_700_000_000_000L > floor)
+        assertTrue("seconds-valued timestamps must stay below it", 1_700_000_000L < floor)
+    }
+
+    @Test
+    fun resolvesIncomingSenderAndOutgoingRecipient() {
+        val incoming = listOf(MmsSupport.Address(137, "+15551234567/TYPE=PLMN"))
+        val outgoing = listOf(MmsSupport.Address(137, "insert-address-token"),
+            MmsSupport.Address(151, "+15551234567"))
+        assertEquals("+15551234567", MmsSupport.peer(1, incoming, 1))
+        assertEquals("+15551234567", MmsSupport.peer(2, outgoing, 1))
+        // A thread with several recipients is a group, but the *sender* of an
+        // incoming MMS is still unambiguous, so it is attributed rather than
+        // discarded. This used to return null, which silently threw away every
+        // group MMS unread; MmsPeerTest covers the group cases in detail.
+        assertEquals("+15551234567", MmsSupport.peer(1, incoming, 2))
+        assertEquals("+15551234567", MmsSupport.peer(1, incoming, null))
+        assertNull(MmsSupport.phoneAddress("sender@example.test"))
+    }
+
+    @Test
+    fun combinesTextAndReportsAttachmentsNotDisplayed() {
+        val content = MmsSupport.content(listOf(
+            MmsSupport.Part(1, "application/smil"),
+            MmsSupport.Part(2, "text/plain", "Caption"),
+            MmsSupport.Part(3, "IMAGE/JPEG; name=photo.jpg"),
+            MmsSupport.Part(4, "image/png"),
+            MmsSupport.Part(5, "video/mp4")
+        ))
+        assertEquals(3L, content.imageId)
+        assertEquals(2, content.omittedParts)
+        assertTrue(content.body.startsWith("Caption\n"))
+        assertTrue(content.body.contains("2 additional/unsupported"))
+    }
+
+    @Test
+    fun boundsStreamedTextAndDecodesCharset() {
+        assertTrue(MmsSupport.acceptsTextChunk(0, MmsSupport.MAX_TEXT_BYTES))
+        assertFalse(MmsSupport.acceptsTextChunk(MmsSupport.MAX_TEXT_BYTES, 1))
+        assertFalse(MmsSupport.acceptsTextChunk(-1, 1))
+        assertEquals("café", MmsSupport.decodeText(byteArrayOf(99, 97, 102, -23), 4))
+    }
+
+    @Test
+    fun distinguishesProviderNamespaces() {
+        assertEquals("content://sms", MmsSupport.providerUri(MmsSupport.TRANSPORT_SMS))
+        assertEquals("content://mms", MmsSupport.providerUri(MmsSupport.TRANSPORT_MMS))
+        assertNull(MmsSupport.providerUri("unknown"))
+    }
+
+    @Test
+    fun recognizesWapPushesByActionAndTypeAlone() {
+        val action = android.provider.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION
+        assertTrue(MmsSupport.isMmsWapPush(action, MmsSupport.WAP_PUSH_MIME))
+        assertFalse(MmsSupport.isMmsWapPush(null, MmsSupport.WAP_PUSH_MIME))
+        assertFalse(MmsSupport.isMmsWapPush(action, null))
+        assertFalse(MmsSupport.isMmsWapPush(action, "text/plain"))
+        assertFalse(
+            MmsSupport.isMmsWapPush(
+                android.provider.Telephony.Sms.Intents.WAP_PUSH_RECEIVED_ACTION,
+                MmsSupport.WAP_PUSH_MIME
+            )
+        )
+    }
+
+    @Test
+    fun resolvesTheLocationAnAnnouncedMmsCanBeFetchedFrom() {
+        assertEquals(
+            "http://mmsc.example/msg/42",
+            MmsSupport.downloadLocation("http://mmsc.example/msg/42")
+        )
+        assertNull(MmsSupport.downloadLocation(null))
+        assertNull(MmsSupport.downloadLocation(""))
+        assertNull(MmsSupport.downloadLocation("   "))
+    }
+
+    @Test
+    fun anOwnMessageIsLabelledByWhatItCarries() {
+        // A picture leaves as an MMS even while its row is still stored as sms,
+        // so the label cannot come from the transport column alone.
+        assertEquals("MMS", MmsSupport.outgoingKind("image", MmsSupport.TRANSPORT_SMS))
+        assertEquals("MMS", MmsSupport.outgoingKind("text", MmsSupport.TRANSPORT_MMS))
+        assertEquals("SMS", MmsSupport.outgoingKind("text", MmsSupport.TRANSPORT_SMS))
+    }
+}

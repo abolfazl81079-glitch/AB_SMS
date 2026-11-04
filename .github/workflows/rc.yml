@@ -1,0 +1,341 @@
+name: RC Build
+
+# Quick bug-fix release candidate from a `v*-rc*` tag: build a release-signed
+# APK, prove it is signed by the real key, scan it with VirusTotal, and only
+# then publish it as a GitHub pre-release.
+#
+# The tag is the identity of the release. It is never derived from
+# versionName, because versionName lags: a run against a tag whose base version
+# already shipped would have republished the live release as a pre-release.
+#
+# Start it by pushing the tag:
+#     git tag v1.0.28-rc1 && git push origin v1.0.28-rc1
+# or from Actions -> "RC Build" -> Run workflow, passing the same tag.
+# It is intentionally NOT wired to every develop push, since each run consumes
+# VirusTotal quota.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "RC tag to build, e.g. v1.0.28-rc1"
+        required: true
+        type: string
+  push:
+    tags:
+      - "v*-rc*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rc-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: true
+
+env:
+  VT_API_KEY: ${{ secrets.VIRUSTOTAL_API_KEY }}
+
+jobs:
+  build-rc:
+    name: Build RC and scan with VirusTotal
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      # A dispatch takes the tag as free text, and actions/checkout on a tag that
+      # does not exist fails with a bare git exit code. Check first so the run
+      # says what is wrong.
+      - name: Verify the RC tag exists
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${INPUT_TAG:-$REF_NAME}"
+          if ! printf '%s' "$TAG" | grep -qE '^v[0-9]+(\.[0-9]+)+-rc[0-9]+$'; then
+            echo "::error::'$TAG' is not an RC tag (expected v1.2.3-rc1)"
+            exit 1
+          fi
+          if ! curl -sf -o /dev/null -H "Authorization: Bearer $GH_TOKEN" \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG"; then
+            echo "::error::tag $TAG does not exist - create it and push it first (git tag $TAG && git push origin $TAG)"
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+          persist-credentials: false
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Validate Gradle wrapper & set up Gradle
+        uses: gradle/actions/setup-gradle@67621b124fd2e251c5e8a0e6e3b91318f2287669 # v6.3.0
+        with:
+          validate-wrappers: true
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+        with:
+          packages: 'platform-tools'
+
+      # An RC is handed to testers who already have the released build
+      # installed, so the version it claims has to be the one the tag names and
+      # it must not already be published. Both checks are cheap and both
+      # prevent publishing over a live release.
+      - name: Validate RC tag and version
+        id: rc
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            TAG="$INPUT_TAG"
+          else
+            TAG="$REF_NAME"
+          fi
+          if ! printf '%s' "$TAG" | grep -qE '^v[0-9]+(\.[0-9]+)+-rc[0-9]+$'; then
+            echo "::error::'$TAG' is not an RC tag (expected v1.2.3-rc1)"
+            exit 1
+          fi
+          BASE="${TAG#v}"
+          BASE="${BASE%-rc*}"
+          NAME=$(grep -oE 'versionName = "[^"]+"' app/build.gradle.kts | cut -d '"' -f2)
+          CODE=$(grep -oE 'versionCode = [0-9]+' app/build.gradle.kts | head -1 | grep -oE '[0-9]+')
+          if [ "$BASE" != "$NAME" ]; then
+            echo "::error::tag $TAG says $BASE but versionName is $NAME - bump versionName/versionCode and commit before tagging"
+            exit 1
+          fi
+          if curl -sf -o /dev/null -H "Authorization: Bearer $GH_TOKEN" \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/releases/tags/v$NAME"; then
+            echo "::error::release v$NAME is already published - this RC would overwrite it"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$NAME" >> "$GITHUB_OUTPUT"
+          echo "code=$CODE" >> "$GITHUB_OUTPUT"
+          echo "Building $NAME ($CODE) as $TAG from $(git rev-parse --short HEAD)"
+
+      # No debug fallback. A debug-signed APK has a different certificate than
+      # the release key, so it cannot install over v1.0.27 on a tester's phone;
+      # shipping one as an RC strands them until they uninstall.
+      - name: Restore keystore
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -z "$RELEASE_KEYSTORE_BASE64" ]; then
+            echo "::error::RELEASE_KEYSTORE_BASE64 secret is not set"
+            exit 1
+          fi
+          if [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_PASSWORD" ]; then
+            echo "::error::KEYSTORE_PASSWORD and KEY_PASSWORD secrets must be set together with the keystore"
+            exit 1
+          fi
+          echo "$RELEASE_KEYSTORE_BASE64" | base64 -d > release.keystore
+
+      - name: Build APK and run unit tests
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          LC_ALL: C
+          TZ: UTC
+        run: ./gradlew --no-daemon assembleRelease testDebugUnitTest
+
+      - name: Remove keystore
+        if: always()
+        run: rm -f release.keystore
+
+      - name: Collect APK
+        id: apk
+        env:
+          TAG: ${{ steps.rc.outputs.tag }}
+        run: |
+          set -euo pipefail
+          src=$(ls app/build/outputs/apk/release/*.apk)
+          name="Messages-$TAG.apk"
+          cp "$src" "$name"
+          echo "file=$name" >> "$GITHUB_OUTPUT"
+          echo "APK: $name"
+
+      # release.yml pins the same digest. Without it an RC can be signed with
+      # the debug key or a throwaway keystore and testers install a build they
+      # can never upgrade from.
+      - name: Verify APK signature
+        env:
+          FILE: ${{ steps.apk.outputs.file }}
+          CODE: ${{ steps.rc.outputs.code }}
+          VERSION: ${{ steps.rc.outputs.version }}
+        run: |
+          set -euo pipefail
+          BT="$(ls -d "${ANDROID_HOME}"/build-tools/*/ | sort -V | tail -1)"
+          expected="cf860ec345a6810230629e24a66adaa58c311ef2dae2d77da02b85d4022bf608"
+          got="$("$BT/apksigner" verify --print-certs "$FILE" \
+            | grep 'SHA-256 digest' | head -1 | sed 's/.*digest: *//' | tr -d ' :' | tr 'A-F' 'a-f')"
+          echo "Signing certificate SHA-256: $got"
+          if [ -z "$got" ]; then
+            echo "::error::APK has no verifiable signature (unsigned?)"
+            exit 1
+          fi
+          if [ "$got" != "$expected" ]; then
+            echo "::error::APK signed with unexpected certificate (expected $expected)"
+            exit 1
+          fi
+          # Not sed: `.*versionCode.\([0-9]*\)` lets the capture match empty,
+          # so it returned a blank and the comparison failed on a good APK.
+          got_code="$("$BT/aapt" dump badging "$FILE" | grep -oE "versionCode='[0-9]+'" | head -1 | tr -dc '0-9')"
+          if [ "$got_code" != "$CODE" ]; then
+            echo "::error::APK versionCode is '$got_code' but build.gradle.kts says '$CODE'"
+            exit 1
+          fi
+          got_name="$("$BT/aapt" dump badging "$FILE" | grep -oE "versionName='[^']+'" | head -1 | cut -d"'" -f2)"
+          if [ "$got_name" != "$VERSION" ]; then
+            echo "::error::APK versionName is '$got_name' but the tag says '$VERSION'"
+            exit 1
+          fi
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: rc-${{ steps.rc.outputs.tag }}
+          path: ${{ steps.apk.outputs.file }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Check VirusTotal API key
+        run: |
+          if [ -z "$VT_API_KEY" ]; then
+            echo "::error::Set the VIRUSTOTAL_API_KEY secret"
+            exit 1
+          fi
+
+      - name: Upload to VirusTotal
+        id: upload
+        run: |
+          APK="${{ steps.apk.outputs.file }}"
+          echo "Uploading $APK ($(stat -c%s "$APK") bytes)"
+          RESP=$(curl -sf -H "x-apikey: $VT_API_KEY" -F "file=@$APK" \
+            https://www.virustotal.com/api/v3/files)
+          ID=$(echo "$RESP" | python3 -c "import sys,json;print(json.load(sys.stdin)['data']['id'])")
+          SHA=$(sha256sum "$APK" | cut -d' ' -f1)
+          echo "analysis_id=$ID" >> "$GITHUB_OUTPUT"
+          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+          echo "Analysis id: $ID"
+
+      - name: Wait for analysis and extract stats
+        id: result
+        run: |
+          ANALY="${{ steps.upload.outputs.analysis_id }}"
+          mkdir -p /tmp/vt
+          for i in $(seq 1 60); do
+            if RESP=$(curl -sf -H "x-apikey: $VT_API_KEY" \
+              "https://www.virustotal.com/api/v3/analyses/$ANALY"); then
+              ST=$(echo "$RESP" | python3 -c \
+                "import sys,json;print(json.load(sys.stdin)['data']['attributes']['status'])")
+              if [ "$ST" = "completed" ]; then
+                echo "$RESP" > /tmp/vt/result.json
+                break
+              fi
+            fi
+            sleep 15
+          done
+          test -f /tmp/vt/result.json || { echo "::error::Analysis did not finish in time"; exit 1; }
+          python3 - "$GITHUB_OUTPUT" <<'PY'
+          import json,sys
+          d=json.load(open('/tmp/vt/result.json'))
+          attr=d['data']['attributes']
+          st=attr.get('stats',{})
+          fi=d.get('meta',{}).get('file_info',{})
+          total=sum(st.values())
+          with open(sys.argv[1],'a') as f:
+              for k in ('harmless','malicious','suspicious','undetected','timeout',
+                        'confirmed-timeout','failure','type-unsupported'):
+                  f.write(f"{k}={st.get(k,0)}\n")
+              f.write(f"total={total}\n")
+              f.write(f"sha256={fi.get('sha256','')}\n")
+          print(f"engines={total} malicious={st.get('malicious',0)} suspicious={st.get('suspicious',0)}")
+          PY
+
+      # The APK is world-downloadable the moment the release exists, so the
+      # scan has to finish before this step, not after it.
+      - name: Flag malware detections
+        if: steps.result.outputs.malicious != '' && steps.result.outputs.malicious != '0'
+        run: |
+          echo "::error::VirusTotal reported ${{ steps.result.outputs.malicious }} malicious detection(s) for this RC APK - not publishing"
+          exit 1
+
+      - name: Publish RC pre-release
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
+        with:
+          tag_name: ${{ steps.rc.outputs.tag }}
+          name: RC ${{ steps.rc.outputs.version }}
+          prerelease: true
+          generate_release_notes: true
+          files: ${{ steps.apk.outputs.file }}
+
+      - name: Post scan report to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.rc.outputs.tag }}
+          FILE: ${{ steps.apk.outputs.file }}
+          SHA: ${{ steps.result.outputs.sha256 }}
+          MAL: ${{ steps.result.outputs.malicious }}
+          SUS: ${{ steps.result.outputs.suspicious }}
+          GOOD: ${{ steps.result.outputs.harmless }}
+          UNDET: ${{ steps.result.outputs.undetected }}
+          TOTAL: ${{ steps.result.outputs.total }}
+        run: |
+          GUILINK="https://www.virustotal.com/gui/file/$SHA"
+          REPORT=$(cat <<EOF
+          ## VirusTotal Scan Report
+
+          Results for **\`$FILE\`** - SHA-256: \`$SHA\`
+
+          | Result | Count |
+          |---|---|
+          | Malicious | **$MAL** |
+          | Suspicious | $SUS |
+          | Harmless | $GOOD |
+          | Undetected | $UNDET |
+          | Total engines | $TOTAL |
+
+          [View the full report on VirusTotal]($GUILINK)
+          EOF
+          )
+          # The release notes can be rewritten by the release pipeline a short
+          # while after publishing (eventual consistency), which would clobber
+          # an append done once. Re-check and re-append until the report sticks,
+          # then stop -- polling for a fixed count just burns six minutes.
+          for i in $(seq 1 12); do
+            BODY=$(gh release view "$TAG" --json body --jq .body)
+            if printf '%s' "$BODY" | grep -qF "## VirusTotal Scan Report"; then
+              echo "VirusTotal report present (check $i)"
+              break
+            fi
+            printf '%s\n\n%s\n' "$BODY" "$REPORT" > /tmp/vt/notes.md
+            gh release edit "$TAG" --notes-file /tmp/vt/notes.md
+            echo "Appended VirusTotal report (attempt $i)"
+            sleep 30
+          done
+          {
+            echo "## VirusTotal Scan Report"
+            echo ""
+            echo "Results for **$FILE** - [full report]($GUILINK)"
+            echo ""
+            echo "| Result | Count |"
+            echo "|---|---|"
+            echo "| Malicious | **$MAL** |"
+            echo "| Suspicious | $SUS |"
+            echo "| Harmless | $GOOD |"
+            echo "| Undetected | $UNDET |"
+            echo "| Total engines | $TOTAL |"
+          } >> "$GITHUB_STEP_SUMMARY"

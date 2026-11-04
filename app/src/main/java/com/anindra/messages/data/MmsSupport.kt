@@ -1,0 +1,236 @@
+package com.anindra.messages.data
+
+import java.nio.charset.Charset
+import java.util.Locale
+
+object MmsSupport {
+    const val TRANSPORT_SMS = "sms"
+    const val TRANSPORT_MMS = "mms"
+    const val PROVIDER_SELECTION = "(msg_box=1 AND m_type=132) OR (msg_box=2 AND m_type=128)"
+    const val MAX_TEXT_BYTES = 1_048_576
+
+    /** Inbox/outbox PDU types. 130 is an incoming MMS the carrier has only
+     *  announced; it has no parts until the default SMS app downloads it. */
+    const val PDU_SEND_REQ = 128
+    const val PDU_NOTIFICATION_IND = 130
+    const val PDU_RETRIEVE_CONF = 132
+    const val PENDING_DOWNLOAD_SELECTION = "msg_box=1 AND m_type=$PDU_NOTIFICATION_IND"
+
+    /** The line a message belongs to. A single-SIM provider has no such column,
+     *  so a query naming it fails and the caller has to be able to ask again
+     *  without it. */
+    const val PROVIDER_SUBSCRIPTION_ID = "sub_id"
+
+    fun acceptsTextChunk(currentBytes: Int, nextBytes: Int): Boolean =
+        currentBytes in 0..MAX_TEXT_BYTES && nextBytes in 0..(MAX_TEXT_BYTES - currentBytes)
+
+    data class Address(val type: Int, val value: String)
+    data class Part(val id: Long, val mime: String, val text: String? = null)
+    data class Content(val body: String, val imageId: Long?, val omittedParts: Int)
+    data class InboundMms(
+        val address: String,
+        val body: String,
+        val timestamp: Long,
+        /** The picture of a picture MMS, or null. A picture-only MMS has a blank [body]. */
+        val imageUri: String? = null
+    )
+    /** [subscriptionId] is the line the announcement was filed under, or -1 when the
+     *  provider does not record one. The downloaded message keeps it. */
+    data class PendingDownload(val id: Long, val contentLocation: String?, val subscriptionId: Int = -1)
+
+    /**
+     * The label for a message this account sent.
+     *
+     * Anything carrying media goes out as an MMS, whatever it is stored as, so
+     * the label follows the message rather than the table it lives in.
+     */
+    fun outgoingKind(mediaType: String, transport: String): String =
+        if (mediaType != "text" || transport == TRANSPORT_MMS) "MMS" else "SMS"
+
+    fun isImportable(box: Int, pduType: Int): Boolean =
+        (box == 1 && pduType == PDU_RETRIEVE_CONF) || (box == 2 && pduType == PDU_SEND_REQ)
+
+    /** An announced-but-undownloaded incoming MMS: the platform hands the row
+     *  to the default SMS app, which must download it before it can be read. */
+    fun isPendingDownload(box: Int, pduType: Int): Boolean =
+        box == 1 && pduType == PDU_NOTIFICATION_IND
+
+    fun messageContentUri(id: Long): String = "content://mms/$id"
+
+    const val WAP_PUSH_MIME = "application/vnd.wap.mms-message"
+
+    /** A WAP push is recognized by action and MIME type alone: the platform
+     *  has already filed the announced provider row, so nothing else from the
+     *  broadcast is needed to fetch it. The PDU rides in the "data" extra and
+     *  there is no data URI at all. */
+    fun isMmsWapPush(action: String?, type: String?): Boolean =
+        action == android.provider.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION &&
+            type == WAP_PUSH_MIME
+
+    /** The Content-Location an announced MMS can be fetched from, or null when
+     *  it does not have one — there is nowhere to point the platform's
+     *  downloader at, so it cannot be requested at all. */
+    fun downloadLocation(contentLocation: String?): String? =
+        contentLocation?.takeIf { it.isNotBlank() }
+
+    /** ContentResolver often reports no type for FileProvider URIs; MMS still
+     *  needs a concrete content type on the wire. */
+    fun defaultAttachmentMime(contentType: String?, uri: String): String {
+        if (!contentType.isNullOrBlank()) return contentType.substringBefore(';').trim()
+        val lower = uri.lowercase()
+        return when {
+            lower.contains("video") || VIDEO_EXTENSIONS.any { lower.endsWith(it) } -> "video/mp4"
+            lower.contains("audio") || AUDIO_EXTENSIONS.any { lower.endsWith(it) } -> "audio/mp4"
+            else -> "image/jpeg"
+        }
+    }
+
+    private val VIDEO_EXTENSIONS = listOf(".mp4", ".3gp", ".mkv", ".webm")
+    private val AUDIO_EXTENSIONS = listOf(".m4a", ".mp3", ".amr", ".ogg", ".aac")
+
+    data class OutgoingPart(val name: String, val mimeType: String, val isText: Boolean)
+    /** Attachment first, then an optional text part. A SMIL part is prepended
+     *  separately because several carriers reject an MMS without one. */
+    fun outgoingParts(attachmentMime: String, caption: String): List<OutgoingPart> = buildList {
+        add(OutgoingPart("image", attachmentMime, false))
+        if (caption.isNotBlank()) add(OutgoingPart("text", "text/plain", true))
+    }
+
+    /**
+     * Normalises an MMS provider `date` to milliseconds.
+     *
+     * The column is seconds on most carriers but already milliseconds on
+     * others. Multiplying an already-millisecond value by 1000 produced a date
+     * far in the future, which sorts that conversation to the top of the list
+     * permanently and buries every message sent afterwards (#317).
+     */
+    fun milliseconds(raw: Long): Long? = when {
+        raw < 0 -> null
+        // A date already in milliseconds is kept, but only within the range a
+        // real date occupies: an absurd value is a unit this cannot vouch for,
+        // not a timestamp to store.
+        raw >= MILLISECOND_FLOOR -> raw.takeIf { it <= PLAUSIBLE_DATE_CEILING }
+        raw <= Long.MAX_VALUE / 1000 -> raw * 1000
+        else -> null
+    }
+
+    /** Below this a provider `date` can only already be milliseconds. */
+    private const val MILLISECOND_FLOOR = 1_000_000_000_000L
+
+    /**
+     * Above this (year ~2286 in milliseconds) nothing real is stored, so the
+     * value is rejected rather than kept. Guards against an overflowing or
+     * already-scaled date reaching the list.
+     */
+    private const val PLAUSIBLE_DATE_CEILING = 9_999_999_999_999L
+
+    /** The same threshold, for migrating rows that were already written wrong. */
+    fun timestampMillisecondsFloor(): Long = MILLISECOND_FLOOR
+
+    fun phoneAddress(raw: String): String? {
+        val value = raw.trim().replace(Regex("/TYPE=PLMN$", RegexOption.IGNORE_CASE), "")
+        if (!value.matches(Regex("\\+?[0-9 ()\\-.]+"))) return null
+        val digits = value.filter { it in '0'..'9' }
+        return digits.takeIf { it.length in 3..15 }?.let { if (value.startsWith('+')) "+$it" else it }
+    }
+
+    /**
+     * Who an MMS is attributed to, or null when it cannot be trusted.
+     *
+     * A group MMS has several To/From entries, so the old single-participant
+     * rule rejected every one of them and group MMS was silently discarded
+     * unread. What is actually needed is the *sender*: the one From on an
+     * incoming message, or the recipient on one we sent, so the message can be
+     * filed against the right conversation and labelled.
+     *
+     * Types 137 and 151 are the PDU originator and destination;
+     * "insert-address-token" is the PDU's own placeholder, not a participant.
+     */
+    fun peer(box: Int, addresses: List<Address>, threadRecipientCount: Int?): String? {
+        if (box !in 1..2) return null
+        if (addresses.any { it.type !in setOf(137, 151) }) return null
+        val real = addresses.filter { it.value != "insert-address-token" }
+        if (real.any { phoneAddress(it.value) == null }) return null
+        return when (box) {
+            // Incoming: the single sender, even inside a group thread.
+            1 -> addresses.filter { it.type == 137 && it.value != "insert-address-token" }
+                .singleOrNull()?.value?.let(::phoneAddress)
+            // Outgoing: a 1:1 has one recipient; a group send has several and is
+            // already filed under its conversation, so the first is enough.
+            else -> addresses.filter { it.type == 151 }
+                .let { if (threadRecipientCount == 1) it.singleOrNull() else it.firstOrNull() }
+                ?.value?.let(::phoneAddress)
+        }
+    }
+
+    /** Every distinct phone recipient of an outgoing group MMS. */
+    fun participants(addresses: List<Address>): List<String> =
+        addresses.filter { it.type == 151 }
+            .mapNotNull { phoneAddress(it.value) }
+            .filter { it.isNotBlank() }
+            .distinct()
+
+    fun mime(raw: String): String = raw.substringBefore(';').trim().lowercase(Locale.ROOT)
+
+    fun isImage(raw: String): Boolean = mime(raw) in setOf(
+        "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/bmp", "image/heic", "image/heif"
+    )
+
+    fun content(parts: List<Part>): Content {
+        val image = parts.firstOrNull { it.id > 0 && isImage(it.mime) }
+        val text = parts.filter { mime(it.mime) == "text/plain" }.mapNotNull { it.text }
+            .filter { it.isNotBlank() }.joinToString("\n")
+        val omitted = parts.count {
+            mime(it.mime) !in setOf("text/plain", "application/smil") && it !== image
+        }
+        val notice = if (omitted > 0) "[MMS: $omitted additional/unsupported attachment(s) not displayed]" else ""
+        return Content(listOf(text, notice).filter { it.isNotEmpty() }.joinToString("\n"), image?.id, omitted)
+    }
+
+    fun decodeText(bytes: ByteArray, charset: Int): String {
+        val name = when (charset) {
+            0, 106 -> "UTF-8"
+            3 -> "US-ASCII"
+            4 -> "ISO-8859-1"
+            17 -> "Shift_JIS"
+            1000 -> "UTF-16BE"
+            1013 -> "UTF-16BE"
+            1014 -> "UTF-16LE"
+            1015 -> "UTF-16"
+            2026 -> "Big5"
+            else -> throw IllegalArgumentException("Unsupported MMS text charset")
+        }
+        return String(bytes, Charset.forName(name))
+    }
+
+    fun providerUri(transport: String): String? = when (transport) {
+        TRANSPORT_SMS -> "content://sms"
+        TRANSPORT_MMS -> "content://mms"
+        else -> null
+    }
+
+    private val EXTENSIONS = mapOf(
+        "image/jpeg" to "jpg", "image/jpg" to "jpg", "image/png" to "png",
+        "image/gif" to "gif", "image/webp" to "webp", "image/bmp" to "bmp",
+        "image/heic" to "heic", "image/heif" to "heif", "video/mp4" to "mp4"
+    )
+
+    /** Fallback mime for a saved attachment when the resolver reports none. */
+    fun mimeForSavedAttachment(uri: String, resolved: String?): String {
+        if (!resolved.isNullOrBlank()) return resolved.substringBefore(';').trim()
+        val lower = uri.lowercase()
+        return EXTENSIONS.entries.firstOrNull { lower.endsWith(".${it.value}") }?.key ?: "image/jpeg"
+    }
+
+    /** Filename for a saved attachment: "<contact>_<timestamp>.<ext>". Spaces are
+     *  kept (the gallery shows them); only path-unsafe characters are dropped. */
+    fun savedAttachmentName(contactName: String, timestamp: Long, mime: String): String {
+        val safe = contactName.trim()
+            .replace(Regex("[/\\\\:*?\"<>|\\x00-\\x1F]"), "_")
+            .trim('_', ' ')
+            .take(32)
+            .ifBlank { "message" }
+        val ext = EXTENSIONS[mime.substringBefore(';').trim()] ?: "jpg"
+        return "${safe}_$timestamp.$ext"
+    }
+}

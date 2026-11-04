@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AB/SMS</string>
+
+    <!-- App lock & permissions -->
+    <string name="lock_title">برای دسترسی به پیام‌ها احراز هویت کنید</string>
+    <string name="lock_unlock_title">قفل‌گشایی AB/SMS</string>
+    <string name="lock_auth_subtitle">جهت مشاهده پیام‌ها هویت خود را تایید کنید</string>
+    <string name="lock_change_app_lock_title">تغییر قفل برنامه</string>
+    <string name="lock_got_it">متوجه شدم</string>
+    <string name="lock_not_now">اکنون نه</string>
+    <string name="lock_off">قفل برنامه خاموش است</string>
+
+    <!-- Default SMS app prompt -->
+    <string name="default_sms_title">تنظیم به عنوان پیام‌رسان پیش‌فرض؟</string>
+    <string name="default_sms_message">برای ارسال و دریافت پیامک، AB/SMS باید برنامه پیش‌فرض پیامک دستگاه باشد.</string>
+    <string name="default_sms_set">انتخاب به عنوان پیش‌فرض</string>
+    <string name="default_sms_not_now">بعداً</string>
+
+    <!-- General navigation & headers -->
+    <string name="conversations_messages">پیام‌ها</string>
+    <string name="conversations_archived">آرشیو شده</string>
+    <string name="conversations_search">جستجو در گفتگوها و پیام‌ها…</string>
+    <string name="conversations_start_chat">گفتگوی جدید</string>
+    <string name="access_start_chat">شروع گفتگو</string>
+    <string name="icon_search">جستجو</string>
+    <string name="icon_close_search">بستن جستجو</string>
+    <string name="icon_back">بازگشت</string>
+    <string name="icon_back_to_inbox">بازگشت به صندوق ورودی</string>
+
+    <!-- Chat & Sending -->
+    <string name="chat_type_message">نوشتن پیامک…</string>
+    <string name="chat_send">ارسال</string>
+    <string name="chat_cancel">لغو</string>
+    <string name="chat_sending_countdown">ارسال تا %d ثانیه دیگر…</string>
+    <string name="chat_status_not_sent">ارسال ناموفق</string>
+    <string name="chat_status_retry">تلاش مجدد</string>
+    <string name="status_delivered">تحویل داده شد</string>
+    <string name="message_status_sending">در حال ارسال…</string>
+    <string name="message_status_delivered">تحویل داده شد</string>
+    <string name="message_status_received">دریافت شد</string>
+    <string name="message_status_failed">ناموفق</string>
+    <string name="message_status_sent">ارسال شد</string>
+    <string name="message_detail_delivered">زمان تحویل:</string>
+    <string name="message_detail_status">وضعیت:</string>
+    <string name="sim_slot_suffix">سیم‌کارت %d</string>
+
+    <!-- Settings & Sections -->
+    <string name="settings_title">تنظیمات</string>
+    <string name="settings_general">عمومی</string>
+    <string name="settings_appearance">ظاهر و پوسته</string>
+    <string name="settings_themes">پوسته‌های سایبری</string>
+    <string name="settings_conversations">گفتگوها</string>
+    <string name="settings_sending">ارسال پیامک</string>
+    <string name="settings_delayed_sending">ارسال با تاخیر</string>
+    <string name="settings_scheduled_messages">پیامک‌های زمان‌بندی شده</string>
+    <string name="settings_delivery_reports">گزارش تحویل پیامک</string>
+    <string name="settings_notifications">اعلان‌ها</string>
+    <string name="settings_contacts">مخاطبین</string>
+    <string name="settings_number_detection">تشخیص هوشمند اعداد</string>
+    <string name="settings_smart_copy">کپی هوشمند و تبدیل ارقام</string>
+    <string name="settings_blocking">مسدودسازی و هرزنامه</string>
+    <string name="settings_privacy">حریم خصوصی</string>
+    <string name="settings_security">امنیت</string>
+    <string name="settings_backup_restore">پشتیبان‌گیری و بازیابی</string>
+    <string name="settings_language">زبان و منطقه</string>
+    <string name="settings_about">درباره AB/SMS</string>
+    <string name="settings_check_updates">بررسی نسخه جدید</string>
+
+    <!-- Themes -->
+    <string name="theme_cyber_blue">سایبر بلو (پیش‌فرض)</string>
+    <string name="theme_blackout">بلک‌اوت (سیاه مطلق OLED)</string>
+    <string name="theme_neon_matrix">نئون ماتریکس (سبز هکری)</string>
+    <string name="theme_arctic_glass">آرکتیک گلس (شیشه‌ای یخی)</string>
+    <string name="theme_ghost_protocol">گوست پروتکل (سیاه و نقره‌ای)</string>
+    <string name="theme_deep_ocean">دیپ اوشن (سرمه‌ای اقیانوسی)</string>
+    <string name="theme_crimson_hacker">کریمسون هکر (سیاه و سرخ)</string>
+    <string name="theme_quantum">کوانتوم (بنفش سایبری)</string>
+    <string name="theme_minimal_glass">مینیمال گلس (شیشه‌ای شفاف)</string>
+</resources>

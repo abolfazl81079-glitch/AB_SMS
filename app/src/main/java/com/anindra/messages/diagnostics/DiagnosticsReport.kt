@@ -1,0 +1,666 @@
+package com.anindra.messages.diagnostics
+
+import android.Manifest
+import android.app.ActivityManager
+import android.app.role.RoleManager
+import android.content.Context
+import android.content.pm.PackageManager
+import android.content.res.Configuration
+import android.content.res.Resources
+import android.app.KeyguardManager
+import android.app.NotificationManager
+import android.hardware.display.DisplayManager
+import android.os.BatteryManager
+import android.os.Build
+import android.os.StatFs
+import android.provider.Telephony
+import android.telephony.TelephonyManager
+import android.view.Display
+import com.anindra.messages.crash.CrashAppInfo
+import com.anindra.messages.crash.CrashDeviceInfo
+import com.anindra.messages.crash.CrashReporter
+import com.anindra.messages.sms.NotificationHelper
+import com.anindra.messages.data.BackupHealth
+import com.anindra.messages.data.DownloadsStore
+import com.anindra.messages.data.SettingsStore
+import com.anindra.messages.data.SimCard
+import com.anindra.messages.data.SimCards
+import com.anindra.messages.data.TransferEntry
+import com.anindra.messages.data.TransferLog
+import com.anindra.messages.data.TransferLogStore
+import com.anindra.messages.data.TransferOperation
+import com.anindra.messages.ui.theme.A11yOptions
+import com.anindra.messages.ui.theme.schemeFor
+import com.anindra.messages.ui.theme.startChatContainer
+import com.anindra.messages.ui.theme.startChatContent
+import com.anindra.messages.ui.theme.themeIsDark
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
+
+data class PermissionState(
+    val name: String,
+    val granted: Boolean
+)
+
+data class AppDetails(
+    val defaultSms: Boolean,
+    val permissions: List<PermissionState>,
+    val locale: String,
+    val timeZone: String,
+    val themeMode: String,
+    /**
+     * The page colour the theme mode actually resolves to, as #RRGGBB.
+     *
+     * The stored mode string on its own does not say what is on screen: a
+     * theme that was wired up to fall through to the dark scheme would still
+     * report "amoled" here while painting #131314. Reporting the resolved
+     * colour makes that visible without a screenshot.
+     */
+    val resolvedBackground: String = "",
+    /** The "Start chat" pill's content on its container, as "#RRGGBB on #RRGGBB". */
+    val resolvedStartChat: String = "",
+    val notificationsEnabled: Boolean,
+    val fontFamily: String = "",
+    val sendSound: Boolean = false,
+    val receiveSound: Boolean = false,
+    val privacyMode: Boolean = false,
+    val appLock: Boolean = false,
+    val drafts: Boolean = false,
+    val blockedKeywords: Int = 0,
+    val accessibilityMode: Boolean = false,
+    val a11yFontScale: Int = 100,
+    val a11yBold: Boolean = false,
+    val a11yHighContrast: Boolean = false,
+    val a11yReduceMotion: Boolean = false,
+    val a11yLargeTouch: Boolean = false,
+    /**
+     * Live state of the incoming-message wake chain, so a screen that stayed
+     * asleep can be attributed to the app or to the device config without a
+     * screenshot. Reads the same permission and channel the notifier does.
+     */
+    val fullScreenIntentGranted: Boolean = false,
+    val channelImportance: Int = 0,
+    val channelImportanceLabel: String = "",
+    val keyguardLocked: Boolean = false,
+    val wakeEligible: Boolean = false
+)
+
+data class DeviceExtra(
+    val release: String = "",
+    val codename: String = "",
+    val incremental: String = "",
+    val securityPatch: String = "",
+    val baseOs: String = "",
+    val device: String = "",
+    val product: String = "",
+    val hardware: String = "",
+    val board: String = "",
+    val bootloader: String = "",
+    val id: String = "",
+    val display: String = "",
+    val type: String = "",
+    val tags: String = "",
+    val host: String = "",
+    val user: String = "",
+    val abis: String = "",
+    val abis32: String = "",
+    val abis64: String = "",
+    val buildTime: Long = 0L,
+    val isEmulator: Boolean = false,
+    val kernel: String = "",
+    val vmVersion: String = "",
+    val processors: Int = 0,
+    val fontScale: Float = 1f
+)
+
+data class AppExtra(
+    val packageName: String = "",
+    val targetSdk: Int = 0,
+    val firstInstallTime: Long = 0L,
+    val lastUpdateTime: Long = 0L
+)
+
+data class SystemInfo(
+    val memoryTotalBytes: Long = 0L,
+    val memoryAvailBytes: Long = 0L,
+    val lowMemory: Boolean = false,
+    val heapMaxBytes: Long = 0L,
+    val heapUsedBytes: Long = 0L,
+    val storageTotalBytes: Long = 0L,
+    val storageFreeBytes: Long = 0L,
+    val batteryLevel: Int = -1,
+    val batteryCharging: Boolean = false,
+    val dbSizeBytes: Long = 0L,
+    val conversationCount: Int = 0,
+    val messageCount: Int = 0,
+    val pendingCrashReports: Int = 0
+)
+
+data class BackupHealthInfo(
+    val enabled: Boolean = false,
+    val lastAt: Long = 0L,
+    val lastOk: Boolean = true,
+    val detail: String = "",
+    val retryPending: Boolean = false,
+    val interval: String = ""
+)
+
+data class DisplayModeInfo(
+    val modeId: Int,
+    val width: Int,
+    val height: Int,
+    val refreshRate: Float
+)
+
+data class DisplayInfo(
+    val modeId: Int,
+    val width: Int,
+    val height: Int,
+    val refreshRate: Float,
+    val densityDpi: Int,
+    val configDensityDpi: Int,
+    val preferredModeId: Int,
+    val supportedModes: List<DisplayModeInfo>
+)
+
+data class DiagnosticsData(
+    val device: CrashDeviceInfo,
+    val app: CrashAppInfo,
+    val appDetails: AppDetails,
+    val deviceExtra: DeviceExtra = DeviceExtra(),
+    val appExtra: AppExtra = AppExtra(),
+    val system: SystemInfo = SystemInfo(),
+    val selectedSubId: Int,
+    val phoneStateGranted: Boolean,
+    val multiSim: Boolean,
+    val phoneCount: Int,
+    val sims: List<SimCard>,
+    val display: DisplayInfo,
+    val timestamp: Long,
+    /** MMS carrier-config values per subscriptionId; see SimMmsProbe.carrierFacts. */
+    val mmsFacts: Map<Int, List<String>> = emptyMap(),
+    /**
+     * Recent MMS stack events, oldest first.
+     *
+     * Read from the recorder the `:mms` stack writes to, never re-derived: the
+     * question "did the send reach the transport, and what did the carrier
+     * answer?" has exactly one answer, and a report that recomputed it would
+     * eventually contradict the log.
+     */
+    val mmsTrace: List<String> = emptyList(),
+    /**
+     * Recent import/export runs, newest last.
+     *
+     * Read from [TransferLogStore] rather than recomputed: a report that
+     * re-derived an import's outcome would eventually disagree with the log the
+     * user is looking at.
+     */
+    val transfers: List<TransferEntry> = emptyList(),
+    /** Automatic-backup health, read from the settings the worker writes. */
+    val backupHealth: BackupHealthInfo = BackupHealthInfo()
+)
+
+object DiagnosticsReport {
+    const val FILE_NAME = "messages-diagnostics.txt"
+
+    fun format(data: DiagnosticsData): String {
+        val time = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date(data.timestamp))
+        return buildString {
+            appendLine("Messages diagnostics report")
+            appendLine("Time: $time")
+            appendLine()
+            appendLine("--- App ---")
+            appendLine("Version: ${data.app.versionName} (${data.app.versionCode})")
+            appendLine("Package: ${data.appExtra.packageName}")
+            appendLine("Target SDK: ${data.appExtra.targetSdk}")
+            appendLine("First install: ${date(data.appExtra.firstInstallTime)}")
+            appendLine("Last update: ${date(data.appExtra.lastUpdateTime)}")
+            appendLine("Default SMS handler: ${data.appDetails.defaultSms}")
+            appendLine("Locale: ${data.appDetails.locale}")
+            appendLine("Time zone: ${data.appDetails.timeZone}")
+            appendLine("Theme mode: ${data.appDetails.themeMode}")
+            appendLine("Resolved page colour: ${data.appDetails.resolvedBackground}")
+            appendLine("Resolved Start chat colours: ${data.appDetails.resolvedStartChat}")
+            appendLine("Font: ${data.appDetails.fontFamily}")
+            appendLine("Accessibility mode: ${data.appDetails.accessibilityMode}")
+            if (data.appDetails.accessibilityMode) {
+                appendLine("  Font scale: ${data.appDetails.a11yFontScale}%")
+                appendLine("  Bold text: ${data.appDetails.a11yBold}")
+                appendLine("  High contrast: ${data.appDetails.a11yHighContrast}")
+                appendLine("  Reduce motion: ${data.appDetails.a11yReduceMotion}")
+                appendLine("  Larger touch targets: ${data.appDetails.a11yLargeTouch}")
+            }
+            appendLine("Notifications enabled: ${data.appDetails.notificationsEnabled}")
+            appendLine("Full-screen intent: ${if (data.appDetails.fullScreenIntentGranted) "granted" else "denied"}")
+            appendLine("Channel importance: ${data.appDetails.channelImportanceLabel}")
+            appendLine("Keyguard locked: ${if (data.appDetails.keyguardLocked) "yes" else "no"}")
+            appendLine("Wake screen for new messages: ${if (data.appDetails.wakeEligible) "will wake" else "headsup only"}")
+            if (!data.appDetails.fullScreenIntentGranted) {
+                appendLine("  A denied full-screen intent means no app can wake this screen for a message.")
+                appendLine("  Check Settings > Notifications for a full-screen/full app access toggle.")
+            } else if (!data.appDetails.wakeEligible) {
+                appendLine("  Waking is also gated by the channel importance and Do Not Disturb above.")
+            }
+            appendLine("Send sound: ${data.appDetails.sendSound}")
+            appendLine("Receive sound: ${data.appDetails.receiveSound}")
+            appendLine("Privacy mode: ${data.appDetails.privacyMode}")
+            appendLine("App lock: ${data.appDetails.appLock}")
+            appendLine("Drafts: ${data.appDetails.drafts}")
+            appendLine("Blocked keywords: ${data.appDetails.blockedKeywords}")
+            appendLine("Permissions:")
+            data.appDetails.permissions.forEach { p ->
+                appendLine("  ${p.name}: ${if (p.granted) "granted" else "denied"}")
+            }
+            appendLine()
+            appendLine("--- Device ---")
+            appendLine("Android: ${data.deviceExtra.release} (SDK ${data.device.sdkInt}, codename ${data.deviceExtra.codename})")
+            appendLine("Incremental: ${data.deviceExtra.incremental}")
+            appendLine("Security patch: ${data.deviceExtra.securityPatch}")
+            appendLine("Base OS: ${data.deviceExtra.baseOs}")
+            appendLine("Model: ${data.device.manufacturer} ${data.device.model} (${data.device.brand})")
+            appendLine("Device: ${data.deviceExtra.device}")
+            appendLine("Product: ${data.deviceExtra.product}")
+            appendLine("Hardware: ${data.deviceExtra.hardware}")
+            appendLine("Board: ${data.deviceExtra.board}")
+            appendLine("Bootloader: ${data.deviceExtra.bootloader}")
+            appendLine("Build ID: ${data.deviceExtra.id}")
+            appendLine("Build display: ${data.deviceExtra.display}")
+            appendLine("Build type: ${data.deviceExtra.type}")
+            appendLine("Build tags: ${data.deviceExtra.tags}")
+            appendLine("Build host: ${data.deviceExtra.host}")
+            appendLine("Build user: ${data.deviceExtra.user}")
+            appendLine("ABIs: ${data.deviceExtra.abis}")
+            appendLine("ABIs 32: ${data.deviceExtra.abis32}")
+            appendLine("ABIs 64: ${data.deviceExtra.abis64}")
+            appendLine("Build time: ${date(data.deviceExtra.buildTime)}")
+            appendLine("Emulator: ${data.deviceExtra.isEmulator}")
+            appendLine("Kernel: ${data.deviceExtra.kernel}")
+            appendLine("Java VM: ${data.deviceExtra.vmVersion}")
+            appendLine("CPU cores: ${data.deviceExtra.processors}")
+            appendLine("Font scale: ${data.deviceExtra.fontScale}")
+            appendLine("Fingerprint: ${data.device.fingerprint}")
+            appendLine()
+            appendLine("--- System ---")
+            appendLine("Memory: ${mb(data.system.memoryAvailBytes)} / ${mb(data.system.memoryTotalBytes)} MB free")
+            appendLine("Low memory: ${data.system.lowMemory}")
+            appendLine("App heap: ${mb(data.system.heapUsedBytes)} / ${mb(data.system.heapMaxBytes)} MB used")
+            appendLine("Storage: ${mb(data.system.storageFreeBytes)} / ${mb(data.system.storageTotalBytes)} MB free")
+            appendLine("Battery: ${data.system.batteryLevel}% (${if (data.system.batteryCharging) "charging" else "discharging"})")
+            appendLine()
+            appendLine("--- Data ---")
+            appendLine("Conversations: ${data.system.conversationCount}")
+            appendLine("Messages: ${data.system.messageCount}")
+            appendLine("Database size: ${kb(data.system.dbSizeBytes)} KB")
+            appendLine("Pending crash reports: ${data.system.pendingCrashReports}")
+            appendLine()
+            appendLine("--- Transfers ---")
+            if (data.transfers.isEmpty()) {
+                appendLine("No imports or exports recorded")
+            } else {
+                data.transfers.takeLast(5).forEach { t ->
+                    appendLine(
+                        "${date(t.timestamp)} ${if (t.operation == TransferOperation.EXPORT) "export" else "import"} " +
+                            "(${t.format}, ${t.mode}): ${if (t.succeeded) "ok" else "FAILED"} — ${t.detail}"
+                    )
+                    if (t.added > 0 || t.skipped > 0) {
+                        appendLine("  added=${t.added} seen=${t.seen} skipped=${t.skipped}")
+                    }
+                    t.conflicts.forEach { (reason, count) -> appendLine("  conflict: $reason = $count") }
+                }
+                appendLine("Recorded runs: ${data.transfers.size} of ${TransferLog.MAX_ENTRIES} kept")
+            }
+            appendLine()
+            appendLine("--- Backup ---")
+            appendLine("Periodic backup: ${if (data.backupHealth.enabled) data.backupHealth.interval else "off"}")
+            appendLine(
+                "Last automatic backup: ${date(data.backupHealth.lastAt)} " +
+                    "${if (data.backupHealth.lastOk) "ok" else "FAILED"}"
+            )
+            if (data.backupHealth.detail.isNotBlank()) {
+                appendLine("  detail: ${data.backupHealth.detail}")
+            }
+            appendLine("Retry pending: ${data.backupHealth.retryPending}")
+            appendLine()
+            appendLine("--- SIM ---")
+            appendLine("READ_PHONE_STATE granted: ${data.phoneStateGranted}")
+            appendLine("Multi-SIM: ${data.multiSim}, phoneCount: ${data.phoneCount}")
+            appendLine("Selected subscriptionId: ${data.selectedSubId}")
+            if (data.sims.isEmpty()) {
+                appendLine("Active subscriptions: none")
+            } else {
+                data.sims.forEach { s ->
+                    appendLine("Subscription ${s.subscriptionId}:")
+                    appendLine("  slotIndex: ${s.slotIndex}")
+                    appendLine("  carrierName: ${s.carrierName ?: "null"}")
+                    appendLine("  displayName: ${s.displayName ?: "null"}")
+                    appendLine("  mccMnc: ${s.mccMnc ?: "null"}")
+                    appendLine("  countryIso: ${s.countryIso ?: "null"}")
+                    appendLine("  embedded: ${s.embedded}")
+                    appendLine("  MMS carrier config:")
+                    data.mmsFacts[s.subscriptionId].orEmpty().forEach {
+                        appendLine("    $it")
+                    }
+                }
+            }
+            appendLine()
+            appendLine("--- MMS activity ---")
+            if (data.mmsTrace.isEmpty()) {
+                appendLine("No MMS events recorded this session.")
+            } else {
+                data.mmsTrace.forEach { appendLine("  $it") }
+            }
+            appendLine()
+            appendLine("--- Display ---")
+            appendLine("Current mode: id=${data.display.modeId} ${data.display.width}x${data.display.height} @ ${data.display.refreshRate}Hz")
+            appendLine("Density: ${data.display.densityDpi}dpi (config ${data.display.configDensityDpi}dpi)")
+            appendLine("Preferred display mode id: ${data.display.preferredModeId}")
+            appendLine("Supported modes:")
+            data.display.supportedModes.forEach { m ->
+                appendLine("  id=${m.modeId} ${m.width}x${m.height} @ ${m.refreshRate}Hz")
+            }
+        }
+    }
+
+    private fun date(millis: Long): String =
+        if (millis <= 0) "unknown"
+        else SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date(millis))
+
+    private fun mb(bytes: Long): Long = bytes / (1024 * 1024)
+
+    private fun kb(bytes: Long): Long = bytes / 1024
+
+    private fun isEmulator(): Boolean =
+        Build.FINGERPRINT.startsWith("generic") ||
+            Build.FINGERPRINT.lowercase().contains("emulator") ||
+            Build.MODEL.contains("Emulator") ||
+            Build.MODEL.contains("Android SDK built for") ||
+            Build.MANUFACTURER.contains("Genymotion") ||
+            (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic")) ||
+            Build.PRODUCT == "google_sdk" ||
+            Build.HARDWARE.contains("goldfish") ||
+            Build.HARDWARE.contains("ranchu")
+
+    fun collect(
+        context: Context,
+        selectedSubId: Int,
+        settings: SettingsStore,
+        conversationCount: Int,
+        messageCount: Int
+    ): String {
+        val phoneStateGranted = context.checkSelfPermission(Manifest.permission.READ_PHONE_STATE) ==
+            PackageManager.PERMISSION_GRANTED
+        val tm = context.getSystemService(TelephonyManager::class.java)
+        val sims = SimCards.load(context)
+
+        val display = context.getSystemService(DisplayManager::class.java)
+            ?.getDisplay(Display.DEFAULT_DISPLAY)
+        val mode = display?.mode
+        val displayInfo = DisplayInfo(
+            modeId = mode?.modeId ?: -1,
+            width = mode?.physicalWidth ?: 0,
+            height = mode?.physicalHeight ?: 0,
+            refreshRate = mode?.refreshRate ?: 0f,
+            densityDpi = context.resources.displayMetrics.densityDpi,
+            configDensityDpi = context.resources.configuration.densityDpi,
+            preferredModeId = (context as? android.app.Activity)?.window?.attributes?.preferredDisplayModeId ?: 0,
+            supportedModes = display?.supportedModes?.map {
+                DisplayModeInfo(it.modeId, it.physicalWidth, it.physicalHeight, it.refreshRate)
+            } ?: emptyList()
+        )
+
+        val phoneCount = if (Build.VERSION.SDK_INT >= 30) {
+            phoneCountForSdk(30, tm?.activeModemCount, null)
+        } else {
+            val subscriptionManager =
+                context.getSystemService(android.telephony.SubscriptionManager::class.java)
+            phoneCountForSdk(
+                29, null,
+                subscriptionManager?.activeSubscriptionInfoCountMax
+            )
+        }
+
+        val dbFile = context.getDatabasePath("messages.db")
+        val stat = try { StatFs(context.filesDir.path) } catch (_: Exception) { null }
+        val memory = ActivityManager.MemoryInfo()
+        context.getSystemService(ActivityManager::class.java)?.getMemoryInfo(memory)
+        val runtime = Runtime.getRuntime()
+        val battery = context.getSystemService(BatteryManager::class.java)
+        val packageInfo = try {
+            val pm = context.packageManager
+            if (Build.VERSION.SDK_INT >= 33) {
+                pm.getPackageInfo(context.packageName, PackageManager.PackageInfoFlags.of(0))
+            } else {
+                @Suppress("DEPRECATION")
+                pm.getPackageInfo(context.packageName, 0)
+            }
+        } catch (_: Exception) {
+            null
+        }
+
+        return format(
+            DiagnosticsData(
+                device = CrashReporter.deviceInfo(),
+                app = CrashReporter.appInfo(context),
+                appDetails = appDetails(context, settings),
+                deviceExtra = DeviceExtra(
+                    release = Build.VERSION.RELEASE ?: "",
+                    codename = Build.VERSION.CODENAME ?: "",
+                    incremental = Build.VERSION.INCREMENTAL ?: "",
+                    securityPatch = Build.VERSION.SECURITY_PATCH ?: "",
+                    baseOs = Build.VERSION.BASE_OS ?: "",
+                    device = Build.DEVICE ?: "",
+                    product = Build.PRODUCT ?: "",
+                    hardware = Build.HARDWARE ?: "",
+                    board = Build.BOARD ?: "",
+                    bootloader = Build.BOOTLOADER ?: "",
+                    id = Build.ID ?: "",
+                    display = Build.DISPLAY ?: "",
+                    type = Build.TYPE ?: "",
+                    tags = Build.TAGS ?: "",
+                    host = Build.HOST ?: "",
+                    user = Build.USER ?: "",
+                    abis = Build.SUPPORTED_ABIS?.joinToString(", ") ?: "",
+                    abis32 = Build.SUPPORTED_32_BIT_ABIS?.joinToString(", ") ?: "",
+                    abis64 = Build.SUPPORTED_64_BIT_ABIS?.joinToString(", ") ?: "",
+                    buildTime = Build.TIME,
+                    isEmulator = isEmulator(),
+                    kernel = System.getProperty("os.version") ?: "",
+                    vmVersion = System.getProperty("java.vm.version") ?: "",
+                    processors = Runtime.getRuntime().availableProcessors(),
+                    fontScale = context.resources.configuration.fontScale
+                ),
+                appExtra = AppExtra(
+                    packageName = context.packageName,
+                    targetSdk = context.applicationInfo.targetSdkVersion,
+                    firstInstallTime = packageInfo?.firstInstallTime ?: 0L,
+                    lastUpdateTime = packageInfo?.lastUpdateTime ?: 0L
+                ),
+                system = SystemInfo(
+                    memoryTotalBytes = memory.totalMem,
+                    memoryAvailBytes = memory.availMem,
+                    lowMemory = memory.lowMemory,
+                    heapMaxBytes = runtime.maxMemory(),
+                    heapUsedBytes = runtime.totalMemory() - runtime.freeMemory(),
+                    storageTotalBytes = stat?.totalBytes ?: 0L,
+                    storageFreeBytes = stat?.availableBytes ?: 0L,
+                    batteryLevel = battery?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY) ?: -1,
+                    batteryCharging = battery?.isCharging ?: false,
+                    dbSizeBytes = if (dbFile != null && dbFile.exists()) dbFile.length() else 0L,
+                    conversationCount = conversationCount,
+                    messageCount = messageCount,
+                    pendingCrashReports = CrashReporter.pending(context).size
+                ),
+                selectedSubId = selectedSubId,
+                phoneStateGranted = phoneStateGranted,
+                multiSim = phoneCount > 1,
+                phoneCount = phoneCount,
+                sims = sims,
+                display = displayInfo,
+                timestamp = System.currentTimeMillis(),
+                mmsFacts = sims.associate { s ->
+                    s.subscriptionId to
+                        com.anindra.messages.sms.SimMmsProbe.carrierFacts(context, s.subscriptionId)
+                },
+                mmsTrace = com.anindra.messages.sms.MmsFacade.trace().map { it.toString() },
+                transfers = TransferLogStore.read(context),
+                backupHealth = BackupHealthInfo(
+                    enabled = settings.periodicBackupEnabled,
+                    lastAt = settings.lastBackupAt,
+                    lastOk = settings.lastBackupOk,
+                    detail = settings.lastBackupDetail,
+                    retryPending = BackupHealth.isRetryDue(
+                        settings.periodicBackupEnabled,
+                        settings.lastBackupAt,
+                        settings.lastBackupOk
+                    ),
+                    interval = settings.periodicBackupInterval
+                )
+            )
+        )
+    }
+
+    private fun importanceLabel(importance: Int): String =
+        when (importance) {
+            NotificationManager.IMPORTANCE_NONE -> "0 (none)"
+            NotificationManager.IMPORTANCE_MIN -> "1 (min)"
+            NotificationManager.IMPORTANCE_LOW -> "2 (low)"
+            NotificationManager.IMPORTANCE_DEFAULT -> "3 (default)"
+            NotificationManager.IMPORTANCE_HIGH -> "4 (high)"
+            NotificationManager.IMPORTANCE_MAX -> "5 (max)"
+            else -> "$importance (unknown)"
+        }
+
+    private fun fullScreenIntentGranted(context: Context): Boolean =
+        context.checkSelfPermission(Manifest.permission.USE_FULL_SCREEN_INTENT) ==
+            PackageManager.PERMISSION_GRANTED
+
+    private fun appDetails(context: Context, settings: SettingsStore): AppDetails {
+        val defaultSms = try {
+            val rm = context.getSystemService(RoleManager::class.java)
+            (rm?.isRoleHeld(RoleManager.ROLE_SMS) ?: false) ||
+                Telephony.Sms.getDefaultSmsPackage(context) == context.packageName
+        } catch (_: Exception) {
+            false
+        }
+        val permissions = listOf(
+            Manifest.permission.SEND_SMS,
+            Manifest.permission.RECEIVE_SMS,
+            Manifest.permission.READ_SMS,
+            Manifest.permission.READ_CONTACTS,
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.POST_NOTIFICATIONS
+        ).map {
+            PermissionState(
+                it.substringAfterLast('.'),
+                context.checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED
+            )
+        }
+        return AppDetails(
+            defaultSms = defaultSms,
+            permissions = permissions,
+            locale = Locale.getDefault().toString(),
+            timeZone = TimeZone.getDefault().id,
+            themeMode = settings.themeMode,
+            resolvedBackground = resolvedBackgroundHex(
+                settings.themeMode,
+                systemIsDark(),
+                // The same wallpaper scheme the app renders through, so a
+                // dynamic build reports the colour it actually paints.
+                com.anindra.messages.ui.theme.dynamicSchemeOrNull(
+                    context, settings.themeMode, themeIsDark(settings.themeMode, systemIsDark())
+                )
+            ),
+            resolvedStartChat = resolvedStartChatHex(
+                settings.themeMode,
+                systemIsDark(),
+                com.anindra.messages.ui.theme.dynamicSchemeOrNull(
+                    context, settings.themeMode, themeIsDark(settings.themeMode, systemIsDark())
+                )
+            ),
+            notificationsEnabled = settings.notificationsEnabled,
+            fontFamily = settings.fontFamily,
+            sendSound = settings.sendSoundEnabled,
+            receiveSound = settings.receiveSoundEnabled,
+            privacyMode = settings.privacyModeEnabled,
+            appLock = settings.appLockEnabled,
+            drafts = true,
+            blockedKeywords = settings.blockedKeywords.size,
+            accessibilityMode = settings.a11yEnabled,
+            a11yFontScale = settings.a11yFontScalePercent,
+            a11yBold = settings.a11yBold,
+            a11yHighContrast = settings.a11yHighContrast,
+            a11yReduceMotion = settings.a11yReduceMotion,
+            a11yLargeTouch = settings.a11yLargeTouch,
+            fullScreenIntentGranted = fullScreenIntentGranted(context),
+            channelImportance = NotificationHelper.channelImportance(context),
+            channelImportanceLabel = importanceLabel(NotificationHelper.channelImportance(context)),
+            keyguardLocked = context.getSystemService(KeyguardManager::class.java)
+                ?.isKeyguardLocked == true,
+            wakeEligible = NotificationHelper.shouldWake(
+                settings,
+                context.getSystemService(KeyguardManager::class.java)?.isKeyguardLocked == true
+            )
+        )
+    }
+}
+
+internal fun phoneCountForSdk(sdkInt: Int, activeModemCount: Int?, maxSubscriptions: Int?): Int =
+    if (sdkInt >= 30) activeModemCount ?: 0 else maxSubscriptions ?: 0
+
+/**
+ * The page colour a theme mode resolves to, as #RRGGBB, mirroring the branch
+ * MessagesTheme uses. [systemIsDark] stands in for `isSystemInDarkTheme()`,
+ * which is composable-only and cannot be called from here.
+ *
+ * Kept in step with Theme.kt deliberately: a theme wired up to fall through to
+ * the dark scheme would still store "amoled", and this is what would show it.
+ */
+/**
+ * The page colour a theme mode resolves to, as #RRGGBB.
+ *
+ * Deliberately built on the same [schemeFor] the app renders through, rather
+ * than repeating the branch: a second copy here would keep reporting black
+ * after the theme itself stopped selecting it, which is exactly the failure
+ * the regression script exists to catch.
+ */
+internal fun resolvedBackgroundHex(
+    mode: String,
+    systemIsDark: Boolean,
+    dynamic: androidx.compose.material3.ColorScheme? = null
+): String {
+    val color = schemeFor(
+        mode, A11yOptions.DISABLED, themeIsDark(mode, systemIsDark), dynamic
+    ).background
+    // Compose's Color channels are Floats in 0..1, not the packed ARGB Int, so
+    // each has to be scaled and rounded before it can be formatted as hex.
+    fun channel(v: Float) = (v * 255f + 0.5f).toInt().coerceIn(0, 255)
+    return "#%02X%02X%02X".format(channel(color.red), channel(color.green), channel(color.blue))
+}
+
+/**
+ * The "Start chat" pill's content and container as "#RRGGBB on #RRGGBB", read
+ * through the same [startChatContent]/[startChatContainer] pair the FAB paints
+ * with. A wallpaper palette can hand back a dark container and a dark primary,
+ * which is legible in no screenshot-free way except by checking the pair's
+ * contrast here.
+ */
+internal fun resolvedStartChatHex(
+    mode: String,
+    systemIsDark: Boolean,
+    dynamic: androidx.compose.material3.ColorScheme? = null
+): String {
+    val scheme = schemeFor(
+        mode, A11yOptions.DISABLED, themeIsDark(mode, systemIsDark), dynamic
+    )
+    fun channel(v: Float) = (v * 255f + 0.5f).toInt().coerceIn(0, 255)
+    fun hex(c: androidx.compose.ui.graphics.Color) =
+        "#%02X%02X%02X".format(channel(c.red), channel(c.green), channel(c.blue))
+    return "${hex(scheme.startChatContent)} on ${hex(scheme.startChatContainer)}"
+}
+
+/** The device's night setting, read without a Context. */
+private fun systemIsDark(): Boolean =
+    Resources.getSystem().configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK ==
+        Configuration.UI_MODE_NIGHT_YES

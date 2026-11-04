@@ -1,0 +1,23 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+/app/build
+/mms/build
+.kotlin
+screenshots/*
+release.keystore
+*.apk
+.commandcode/
+.cache/
+.opencode/
+demo.keystore
+
+# throwaway key for local demo/personal builds
+demo-sign.keystore
