@@ -874,60 +874,40 @@ internal fun ConversationRow(
         if (convo.pinned && settings.pinnedEnabled) context.getString(R.string.access_pinned) else null,
         if (selectionMode && selected) context.getString(R.string.contact_selected) else null
     )
-    val cs = MaterialTheme.colorScheme
-    val cardBorder = if (selected && selectionMode) {
-        androidx.compose.foundation.BorderStroke(1.5.dp, androidx.compose.ui.graphics.Color(0xFFFFCC00))
-    } else if (convo.unreadCount > 0) {
-        androidx.compose.foundation.BorderStroke(1.dp, androidx.compose.ui.graphics.Color(0xCCFFCC00))
-    } else {
-        androidx.compose.foundation.BorderStroke(1.dp, androidx.compose.ui.graphics.Color(0x44FFCC00))
-    }
-    val cardBg = if (selected && selectionMode) {
-        androidx.compose.ui.graphics.Color(0xFF1E1705)
-    } else {
-        androidx.compose.ui.graphics.Color(0xDD090F1B)
-    }
+    Box(modifier = modifier.fillMaxWidth()) {
+        val pinnedTint = when {
+            selected && selectionMode -> MaterialTheme.colorScheme.surfaceContainerHighest
+            convo.pinned && settings.pinnedEnabled ->
+                MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.6f)
+            else -> MaterialTheme.colorScheme.background
+        }
 
-    Box(modifier = modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 4.dp)) {
-        androidx.compose.material3.Surface(
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
-            color = cardBg,
-            border = cardBorder,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clearAndSetSemantics {
-                        contentDescription = a11yLabel
-                        role = Role.Button
-                        onClick(label = context.getString(R.string.access_open_conversation)) {
-                            onClick()
-                            true
-                        }
-                        onLongClick(label = context.getString(R.string.access_conversation_options)) {
-                            onLongClick()
-                            true
-                        }
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .clearAndSetSemantics {
+                    contentDescription = a11yLabel
+                    role = Role.Button
+                    onClick(label = context.getString(R.string.access_open_conversation)) {
+                        onClick()
+                        true
                     }
-                    .combinedClickable(
-                        onClickLabel = context.getString(R.string.access_open_conversation),
-                        onClick = onClick,
-                        onLongClick = onLongClick
-                    )
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .border(1.dp, androidx.compose.ui.graphics.Color(0x88FFCC00), androidx.compose.foundation.shape.RoundedCornerShape(6.dp))
-                        .padding(2.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    PersonAvatar(convo.address, size = 40.dp)
+                    onLongClick(label = context.getString(R.string.access_conversation_options)) {
+                        onLongClick()
+                        true
+                    }
                 }
-                Spacer(Modifier.width(12.dp))
+                .combinedClickable(
+                    onClickLabel = context.getString(R.string.access_open_conversation),
+                    onClick = onClick,
+                    onLongClick = onLongClick
+                )
+                .background(pinnedTint)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            PersonAvatar(convo.address)
+            Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
