@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="settings_title">Settings</string>
     <string name="settings_general">General settings</string>
     <string name="settings_choose_theme">Choose theme</string>
     <string name="settings_pin_enter">4-16 digit PIN</string>
