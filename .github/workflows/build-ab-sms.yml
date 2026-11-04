@@ -78,7 +78,7 @@ jobs:
           echo "=========================================="
 
       - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: AB_SMS_v1.0.0_APK
           path: output/
