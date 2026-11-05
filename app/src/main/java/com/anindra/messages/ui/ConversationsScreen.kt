@@ -1129,16 +1129,21 @@ internal fun ConversationRow(
     ) {
         val isVipMechTheme = settings.themeMode in listOf(
             "vip_cyber_mech_deck", "vip_tactical_hud_amber", "vip_classified_crimson",
-            "vip_classified_cyan", "vip_stark_cockpit_hud", "stark"
+            "vip_classified_cyan", "vip_stark_cockpit_hud", "stark",
+            "vip_military_hud_gold", "vip_cyber_waveform_stealth", "vip_biometric_pulse_orange",
+            "vip_tactical_teal_overwatch", "vip_holographic_crimson_tape"
         )
 
         val resolvedShapeType = when {
             isDividerMode -> "divider"
+            settings.cellShape == "hud_panel" -> "hud_panel"
             settings.cellShape == "chamfer" -> "chamfer"
             settings.cellShape == "mech_pod" -> "mech_pod"
             settings.cellShape == "rounded" -> "rounded"
             settings.cellShape == "smart" && isVipMechTheme -> {
                 when (settings.themeMode) {
+                    "vip_military_hud_gold", "vip_cyber_waveform_stealth", "vip_biometric_pulse_orange",
+                    "vip_tactical_teal_overwatch", "vip_holographic_crimson_tape" -> "hud_panel"
                     "vip_cyber_mech_deck" -> "mech_pod"
                     "vip_tactical_hud_amber" -> "chamfer"
                     "vip_classified_crimson", "vip_classified_cyan" -> "chamfer"
@@ -1149,6 +1154,7 @@ internal fun ConversationRow(
         }
 
         val cellShapeObj: Shape = when (resolvedShapeType) {
+            "hud_panel" -> CutCornerShape(topStart = 14.dp, bottomEnd = 14.dp, topEnd = 4.dp, bottomStart = 4.dp)
             "chamfer" -> CutCornerShape(topStart = 11.dp, bottomEnd = 11.dp, topEnd = 3.dp, bottomStart = 3.dp)
             "mech_pod" -> RoundedCornerShape(topStart = 13.dp, bottomEnd = 13.dp, topEnd = 5.dp, bottomStart = 5.dp)
             "divider" -> RoundedCornerShape(4.dp)
@@ -1163,7 +1169,7 @@ internal fun ConversationRow(
                 .fillMaxWidth()
                 .drawWithContent {
                     drawContent()
-                    if (!isDividerMode && (resolvedShapeType == "chamfer" || resolvedShapeType == "mech_pod" || isVipMechTheme)) {
+                    if (!isDividerMode && (resolvedShapeType == "chamfer" || resolvedShapeType == "mech_pod" || resolvedShapeType == "hud_panel" || isVipMechTheme)) {
                         val w = size.width
                         val h = size.height
                         val bracketLen = 10.dp.toPx()

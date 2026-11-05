@@ -45,6 +45,10 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
@@ -276,7 +280,8 @@ internal fun ChatBubble(
     searchQuery: String? = null,
     isSearchFocus: Boolean = false,
     searchHighlightAlpha: Float = 0f,
-    cardShape: String = com.anindra.messages.data.SettingsStore.SHAPE_ROUNDED
+    cardShape: String = com.anindra.messages.data.SettingsStore.SHAPE_ROUNDED,
+    themeMode: String = "stark"
 ) {
     val cs = MaterialTheme.colorScheme
     val context = LocalContext.current
@@ -376,10 +381,17 @@ internal fun ChatBubble(
         )
     }
 
+    val isMilitaryHud = themeMode in listOf(
+        "vip_military_hud_gold", "vip_cyber_waveform_stealth", "vip_biometric_pulse_orange",
+        "vip_tactical_teal_overwatch", "vip_holographic_crimson_tape"
+    )
+
     val hudBorder = if (isSelected) {
         BorderStroke(1.2.dp, cs.primary)
     } else if (isSearchFocus) {
         BorderStroke(1.5.dp, cs.primary.copy(alpha = searchHighlightAlpha))
+    } else if (isMilitaryHud) {
+        BorderStroke(1.dp, if (msg.isMe) cs.primary.copy(alpha = 0.85f) else cs.secondary.copy(alpha = 0.70f))
     } else if (msg.isMe) {
         BorderStroke(0.8.dp, cs.primary.copy(alpha = 0.65f))
     } else {
@@ -388,17 +400,24 @@ internal fun ChatBubble(
 
     val hudBackground = if (isSelected) {
         cs.primary.copy(alpha = 0.20f)
+    } else if (isMilitaryHud) {
+        if (msg.isMe) cs.surfaceVariant.copy(alpha = 0.92f) else cs.surfaceContainerHigh.copy(alpha = 0.88f)
     } else if (msg.isMe) {
         cs.surfaceVariant.copy(alpha = 0.85f)
     } else {
         cs.surfaceContainerHigh.copy(alpha = 0.75f)
     }
 
-    val bubbleShape = when (cardShape) {
-        com.anindra.messages.data.SettingsStore.SHAPE_CYBER -> RoundedCornerShape(4.dp)
-        com.anindra.messages.data.SettingsStore.SHAPE_BUBBLE -> if (msg.isMe) RoundedCornerShape(18.dp, 18.dp, 2.dp, 18.dp) else RoundedCornerShape(18.dp, 18.dp, 18.dp, 2.dp)
-        com.anindra.messages.data.SettingsStore.SHAPE_MINIMAL -> RoundedCornerShape(2.dp)
-        com.anindra.messages.data.SettingsStore.SHAPE_CAPSULE -> RoundedCornerShape(22.dp)
+    val bubbleShape: Shape = when {
+        isMilitaryHud -> if (msg.isMe) {
+            CutCornerShape(topStart = 11.dp, topEnd = 3.dp, bottomStart = 11.dp, bottomEnd = 3.dp)
+        } else {
+            CutCornerShape(topStart = 3.dp, topEnd = 11.dp, bottomStart = 3.dp, bottomEnd = 11.dp)
+        }
+        cardShape == com.anindra.messages.data.SettingsStore.SHAPE_CYBER -> RoundedCornerShape(4.dp)
+        cardShape == com.anindra.messages.data.SettingsStore.SHAPE_BUBBLE -> if (msg.isMe) RoundedCornerShape(18.dp, 18.dp, 2.dp, 18.dp) else RoundedCornerShape(18.dp, 18.dp, 18.dp, 2.dp)
+        cardShape == com.anindra.messages.data.SettingsStore.SHAPE_MINIMAL -> RoundedCornerShape(2.dp)
+        cardShape == com.anindra.messages.data.SettingsStore.SHAPE_CAPSULE -> RoundedCornerShape(22.dp)
         else -> RoundedCornerShape(12.dp)
     }
 
@@ -467,23 +486,54 @@ internal fun ChatBubble(
                         color = hudBackground,
                         shape = bubbleShape,
                         border = hudBorder,
-                        modifier = Modifier.widthIn(max = 300.dp).combinedClickable(
-                            onClick = { onTap() },
-                            onLongClick = { onLongPress() }
-                        )
-                    ) {
-                        Text(
-                            text = bodyText,
-                            style = MaterialTheme.typography.bodyLarge.merge(
-                                TextStyle(color = bubbleTextColor)
-                            ),
-                            modifier = Modifier
-                                .padding(horizontal = 14.dp, vertical = 8.dp)
-                                .semantics {
-                                    if (isSearchFocus) contentDescription =
-                                        A11y.describe(bodyText.text, searchResultLabel)
+                        modifier = Modifier.widthIn(max = 300.dp)
+                            .drawWithContent {
+                                drawContent()
+                                if (isMilitaryHud) {
+                                    val w = size.width
+                                    val h = size.height
+                                    val bLen = 7.dp.toPx()
+                                    val bStroke = 1.2.dp.toPx()
+                                    val bColor = if (msg.isMe) cs.primary.copy(alpha = 0.90f) else cs.secondary.copy(alpha = 0.80f)
+                                    // Top-Left corner bracket
+                                    drawLine(bColor, Offset(0f, bLen), Offset(0f, 0f), bStroke)
+                                    drawLine(bColor, Offset(0f, 0f), Offset(bLen, 0f), bStroke)
+                                    // Bottom-Right corner bracket
+                                    drawLine(bColor, Offset(w - bLen, h), Offset(w, h), bStroke)
+                                    drawLine(bColor, Offset(w, h - bLen), Offset(w, h), bStroke)
                                 }
-                        )
+                            }
+                            .combinedClickable(
+                                onClick = { onTap() },
+                                onLongClick = { onLongPress() }
+                            )
+                    ) {
+                        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
+                            if (isMilitaryHud) {
+                                val hudTag = if (msg.isMe) stringResource(R.string.msg_hud_outgoing) else stringResource(R.string.msg_hud_incoming)
+                                Text(
+                                    text = hudTag,
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 9.sp,
+                                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                        letterSpacing = 0.8.sp
+                                    ),
+                                    color = if (msg.isMe) cs.primary.copy(alpha = 0.85f) else cs.secondary.copy(alpha = 0.85f),
+                                    modifier = Modifier.padding(bottom = 3.dp)
+                                )
+                            }
+                            Text(
+                                text = bodyText,
+                                style = MaterialTheme.typography.bodyLarge.merge(
+                                    TextStyle(color = bubbleTextColor)
+                                ),
+                                modifier = Modifier
+                                    .semantics {
+                                        if (isSearchFocus) contentDescription =
+                                            A11y.describe(bodyText.text, searchResultLabel)
+                                    }
+                            )
+                        }
                     }
                 }
 
@@ -1636,6 +1686,7 @@ fun ChatScreen(
                         ChatBubble(
                             msg = msg,
                             cardShape = vm.settings.messageCardShape,
+                            themeMode = vm.settings.themeMode,
                             showTime = isLastMessage || isRevealed,
                             // Only a group needs a sender: in a 1:1 chat there is
                             // only one other person and the header names them.

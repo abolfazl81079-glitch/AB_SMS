@@ -41,6 +41,11 @@ fun CyberBackground(
     // Resolve the active background type
     val resolvedType = when {
         backgroundType != "default" -> backgroundType
+        themeMode == "vip_military_hud_gold" -> "military_hud"
+        themeMode == "vip_tactical_teal_overwatch" -> "military_hud"
+        themeMode == "vip_cyber_waveform_stealth" -> "waveform_scope"
+        themeMode == "vip_biometric_pulse_orange" -> "waveform_scope"
+        themeMode == "vip_holographic_crimson_tape" -> "waveform_scope"
         themeMode == "vip_cyber_mech_deck" -> "circuit"
         themeMode == "vip_tactical_hud_amber" -> "grid"
         themeMode == "vip_classified_crimson" -> "cityscape"
@@ -62,6 +67,8 @@ fun CyberBackground(
                         "cityscape" -> drawCityscapeSilhouette(accentColor)
                         "carbon" -> drawCarbonFiber()
                         "hud_blueprint" -> drawHudBlueprint(accentColor)
+                        "military_hud" -> drawMilitaryHud(accentColor, cs.secondary)
+                        "waveform_scope" -> drawWaveformScope(accentColor, cs.secondary)
                     }
                 }
             }
@@ -281,4 +288,151 @@ private fun DrawScope.drawHudBlueprint(accent: Color) {
         center = Offset(w * 0.5f, 0f),
         style = Stroke(width = 1.0f)
     )
+}
+
+/**
+ * 6. Tactical Military HUD Background (Recreated from Images 4 & 5).
+ * Features:
+ * - Tactical perimeter polygon border with tick marks
+ * - Circular targeting radar reticle with crosshairs
+ * - Glowing conduit cable connecting interface modules
+ * - World map telemetry silhouette
+ * - System information indicators
+ */
+private fun DrawScope.drawMilitaryHud(accent: Color, secondary: Color) {
+    val w = size.width
+    val h = size.height
+    val frameCol = accent.copy(alpha = 0.08f)
+    val radarCol = secondary.copy(alpha = 0.12f)
+    val conduitCol = accent.copy(alpha = 0.15f)
+
+    // 1. Tactical perimeter angular boundary lines
+    val margin = 8.dp.toPx()
+    val chamfer = 24.dp.toPx()
+    val framePath = Path().apply {
+        moveTo(margin + chamfer, margin)
+        lineTo(w - margin - chamfer, margin)
+        lineTo(w - margin, margin + chamfer)
+        lineTo(w - margin, h - margin - chamfer)
+        lineTo(w - margin - chamfer, h - margin)
+        lineTo(margin + chamfer, h - margin)
+        lineTo(margin, h - margin - chamfer)
+        lineTo(margin, margin + chamfer)
+        close()
+    }
+    drawPath(framePath, frameCol, style = Stroke(width = 1.2f))
+
+    // 2. Circular Targeting Radar Reticle in upper-right
+    val radarCenter = Offset(w * 0.78f, h * 0.22f)
+    val rRadius = 42.dp.toPx()
+    drawCircle(radarCol, radius = rRadius, center = radarCenter, style = Stroke(width = 1.0f))
+    drawCircle(radarCol, radius = rRadius * 0.60f, center = radarCenter, style = Stroke(width = 0.8f))
+    drawCircle(accent.copy(alpha = 0.35f), radius = 3.dp.toPx(), center = radarCenter) // Target lock dot
+    // Crosshairs
+    drawLine(radarCol, Offset(radarCenter.x - rRadius - 6.dp.toPx(), radarCenter.y), Offset(radarCenter.x + rRadius + 6.dp.toPx(), radarCenter.y), 0.8f)
+    drawLine(radarCol, Offset(radarCenter.x, radarCenter.y - rRadius - 6.dp.toPx()), Offset(radarCenter.x, radarCenter.y + rRadius + 6.dp.toPx()), 0.8f)
+
+    // 3. Illuminated Conduit Cable curling across components (from Images 4 & 5)
+    val conduitPath = Path().apply {
+        moveTo(w * 0.15f, h * 0.35f)
+        cubicTo(w * 0.08f, h * 0.42f, w * 0.22f, h * 0.48f, w * 0.12f, h * 0.55f)
+        lineTo(w * 0.12f, h * 0.62f)
+        lineTo(w * 0.28f, h * 0.62f)
+    }
+    drawPath(conduitPath, conduitCol, style = Stroke(width = 1.5f))
+    drawCircle(accent.copy(alpha = 0.45f), radius = 3.5.dp.toPx(), center = Offset(w * 0.28f, h * 0.62f))
+
+    // 4. Stylized Tactical World Map landmass silhouette in lower portion
+    val mapBaseY = h * 0.80f
+    val mapCol = accent.copy(alpha = 0.06f)
+    // Americas
+    drawRect(mapCol, Offset(w * 0.18f, mapBaseY - 30.dp.toPx()), Size(w * 0.14f, 22.dp.toPx()))
+    drawRect(mapCol, Offset(w * 0.22f, mapBaseY - 5.dp.toPx()), Size(w * 0.10f, 28.dp.toPx()))
+    // Eurasia / Africa
+    drawRect(mapCol, Offset(w * 0.42f, mapBaseY - 36.dp.toPx()), Size(w * 0.35f, 26.dp.toPx()))
+    drawRect(mapCol, Offset(w * 0.48f, mapBaseY - 8.dp.toPx()), Size(w * 0.16f, 32.dp.toPx()))
+    // Target marker over region
+    drawCircle(secondary.copy(alpha = 0.30f), radius = 7.dp.toPx(), center = Offset(w * 0.55f, mapBaseY - 14.dp.toPx()), style = Stroke(1.0f))
+
+    // 5. Digital telemetry boxes [01] [54] [28] at bottom left
+    var boxX = margin + 12.dp.toPx()
+    val boxY = h - margin - 22.dp.toPx()
+    val boxW = 18.dp.toPx()
+    val boxH = 12.dp.toPx()
+    val boxCol = accent.copy(alpha = 0.10f)
+    for (i in 0..2) {
+        drawRect(boxCol, Offset(boxX, boxY), Size(boxW, boxH))
+        drawRect(accent.copy(alpha = 0.20f), Offset(boxX, boxY), Size(boxW, boxH), style = Stroke(0.8f))
+        boxX += boxW + 4.dp.toPx()
+    }
+}
+
+/**
+ * 7. Cyber Waveform & Oscilloscope Background (Recreated from Image 2).
+ * Features:
+ * - Illuminated sine wave oscilloscope waveform
+ * - ECG heartbeat pulse telemetry
+ * - LED matrix dot grid
+ * - Warning hazard indicator blocks
+ */
+private fun DrawScope.drawWaveformScope(accent: Color, secondary: Color) {
+    val w = size.width
+    val h = size.height
+    val scopeCol = secondary.copy(alpha = 0.14f)
+    val ledCol = Color.White.copy(alpha = 0.08f)
+    val wireCol = accent.copy(alpha = 0.12f)
+
+    // 1. Oscilloscope Sine Wave Trace in middle section
+    val waveY = h * 0.32f
+    val wavePath = Path().apply {
+        moveTo(w * 0.05f, waveY)
+        val segments = 8
+        val segW = (w * 0.90f) / segments
+        var curX = w * 0.05f
+        for (i in 0 until segments) {
+            val amp = if (i % 2 == 0) -16.dp.toPx() else 16.dp.toPx()
+            cubicTo(
+                curX + segW * 0.33f, waveY + amp,
+                curX + segW * 0.66f, waveY + amp,
+                curX + segW, waveY
+            )
+            curX += segW
+        }
+    }
+    drawPath(wavePath, scopeCol, style = Stroke(width = 1.4f))
+
+    // 2. ECG Heartbeat Pulse Trace below sine wave (from Image 2 left phone)
+    val ecgY = h * 0.68f
+    val ecgPath = Path().apply {
+        moveTo(w * 0.08f, ecgY)
+        lineTo(w * 0.35f, ecgY)
+        lineTo(w * 0.38f, ecgY - 6.dp.toPx())
+        lineTo(w * 0.41f, ecgY + 8.dp.toPx())
+        lineTo(w * 0.44f, ecgY - 26.dp.toPx()) // QRS peak
+        lineTo(w * 0.47f, ecgY + 12.dp.toPx())
+        lineTo(w * 0.50f, ecgY - 4.dp.toPx())
+        lineTo(w * 0.53f, ecgY)
+        lineTo(w * 0.92f, ecgY)
+    }
+    drawPath(ecgPath, accent.copy(alpha = 0.20f), style = Stroke(width = 1.5f))
+
+    // 3. LED Array Matrix (from Image 2 right phone)
+    val matrixStartX = w * 0.20f
+    val matrixStartY = h * 0.50f
+    val dotStep = 7.dp.toPx()
+    val dotR = 1.2.dp.toPx()
+    for (r in 0..2) {
+        for (c in 0..15) {
+            drawCircle(ledCol, radius = dotR, center = Offset(matrixStartX + c * dotStep, matrixStartY + r * dotStep))
+        }
+    }
+
+    // 4. Connecting wire conduit with illuminated termination
+    val wirePath = Path().apply {
+        moveTo(w * 0.12f, waveY)
+        lineTo(w * 0.12f, h * 0.48f)
+        lineTo(matrixStartX - 6.dp.toPx(), h * 0.48f)
+    }
+    drawPath(wirePath, wireCol, style = Stroke(width = 1.2f))
+    drawCircle(secondary.copy(alpha = 0.40f), radius = 3.dp.toPx(), center = Offset(matrixStartX - 6.dp.toPx(), h * 0.48f))
 }

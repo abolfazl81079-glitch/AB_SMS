@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name_placeholder">placeholder</string>
     <string name="translation_help">Translations are community-powered and may contain errors. If you find any inaccurate or missing translations, please open a new GitHub issue at github.com/an1ndra/Messages to help us improve.</string>
@@ -69,6 +69,16 @@
     <string name="vip_theme_classified_crimson_desc">Direct recreation of classified red HUD: cyberpunk skyline backdrop, crimson laser framing, and tactical radar reticle</string>
     <string name="vip_theme_classified_cyan_title">Classified Stealth Teal (Night City &amp; Electric Cyan)</string>
     <string name="vip_theme_classified_cyan_desc">Direct recreation of classified teal HUD: dark teal skyline backdrop, electric cyan laser borders, and targeting brackets</string>
+    <string name="vip_theme_military_hud_gold_title">Tactical Classified Gold (Classified Military HUD)</string>
+    <string name="vip_theme_military_hud_gold_desc">Direct recreation of Classified HUD: pale gold luminous framing, angular cut-corner cards, hazard stripe header, and world map telemetry</string>
+    <string name="vip_theme_cyber_waveform_stealth_title">Cyber Waveform Stealth (Sine Oscilloscope OS)</string>
+    <string name="vip_theme_cyber_waveform_stealth_desc">Direct recreation of right phone: sine wave oscilloscope, yellow warning bar, LED array matrix, and illuminated cable conduits</string>
+    <string name="vip_theme_biometric_pulse_orange_title">Biometric Pulse Orange (ECG Pulse &amp; Amber Console)</string>
+    <string name="vip_theme_biometric_pulse_orange_desc">Direct recreation of left phone: glowing ECG heartbeat monitor, fiery orange illuminated conduits, and dark obsidian pods</string>
+    <string name="vip_theme_tactical_teal_overwatch_title">Tactical Teal Overwatch (Overwatch Radar &amp; Teal)</string>
+    <string name="vip_theme_tactical_teal_overwatch_desc">Tactical overwatch military display: electric cyan laser borders, circular targeting radar, and multi-level slider gauges</string>
+    <string name="vip_theme_holographic_crimson_tape_title">Holographic Crimson Tape (Crimson Telemetry HUD)</string>
+    <string name="vip_theme_holographic_crimson_tape_desc">Deep crimson holographic interface with emerald digital counters, audio/data telemetry reels, and frequency channels</string>
 
     <!-- App Main Background Settings -->
     <string name="settings_app_background_title">Main App Background</string>
@@ -80,6 +90,8 @@
     <string name="background_carbon">Tactical Carbon Fiber Mesh</string>
     <string name="background_hud_blueprint">HUD Cockpit Blueprint</string>
     <string name="background_blackout">Pure AMOLED Black</string>
+    <string name="background_military_hud">Tactical Radar &amp; World Map</string>
+    <string name="background_waveform_scope">Sine Waveform &amp; Oscilloscope</string>
 
     <!-- Cell Geometric Shape Settings -->
     <string name="settings_cell_shape_title">Cell Geometric Shape</string>
@@ -89,4 +101,9 @@
     <string name="cell_shape_mech_pod">Mech Pod Console</string>
     <string name="cell_shape_rounded">Classic Rounded Card</string>
     <string name="cell_shape_divider">Minimal Linear Divider</string>
+    <string name="cell_shape_hud_panel">Tactical HUD Angular Panel</string>
+
+    <!-- Military HUD Message Headers -->
+    <string name="msg_hud_incoming">[IN_COMM // ENCRYPTED]</string>
+    <string name="msg_hud_outgoing">[OUT_COMM // VERIFIED]</string>
 </resources>

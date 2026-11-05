@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">A/SMS</string>
     <string name="app_name_placeholder">A/SMS</string>
@@ -678,33 +678,44 @@
     <string name="vip_theme_liquid_glass_dark_desc">شیشه مایع آبسیدین با هایلایت‌های آبی نئونی و رفلکس‌های شیشه‌ای براق</string>
     <string name="vip_theme_crimson_reactor_title">Cyber Crimson Reactor (رآکتور اتمی قرمز)</string>
     <string name="vip_theme_crimson_reactor_desc">رآکتور اتمی فوق‌العاده تاریک با خطوط طلای استارک و هسته نئونی پلاسما</string>
-    <!-- New Sci-Fi Mech & Tactical Dark VIP Themes (Recreated from Photos) -->
-    <string name="vip_theme_cyber_mech_deck_title">Cyber Mech Deck 2077 (Ú©Ù†Ø³ÙˆÙ„ Ù…Ú©Ø§Ù†ÛŒÚ©ÛŒ Ø³Ø¨Ø² Ùˆ Ø³Ø§ÛŒØ§Ù†)</string>
-    <string name="vip_theme_cyber_mech_deck_desc">Ú©Ù†Ø³ÙˆÙ„ ØªÛŒØªØ§Ù†ÛŒÙˆÙ…ÛŒ ÙÙˆÙ‚ Ù¾ÛŒØ´Ø±ÙØªÙ‡ Ø¨Ø§ Ú©Ø§Ø¯Ø±Ù‡Ø§ÛŒ Ù…Ú©Ø§Ù†ÛŒÚ©ÛŒ Ù¾Ø§Ø¯ØŒ Ø¨Ø±Ø¯Ù‡Ø§ÛŒ Ù…Ø¯Ø§Ø± Ú†Ø§Ù¾ÛŒ Ùˆ Ù†ÙˆØ± Ù†Ø¦ÙˆÙ†ÛŒ Ø³Ø¨Ø² Ùˆ ÙÛŒØ±ÙˆØ²Ù‡â€ŒØ§ÛŒ (Ø·Ø±Ø§Ø­ÛŒ Ø¯Ù‚ÛŒÙ‚ ØªØµÙˆÛŒØ± Ú©Ù†Ø³ÙˆÙ„)</string>
-    <string name="vip_theme_tactical_hud_amber_title">Tactical HUD Amber (Ù‡Ø§Ø¯ ØªØ§Ú©ØªÛŒÚ©Ø§Ù„ Ú©Ù‡Ø±Ø¨Ø§ÛŒÛŒ)</string>
-    <string name="vip_theme_tactical_hud_amber_desc">Ø·Ø±Ø§Ø­ÛŒ Ø¯Ù‚ÛŒÙ‚ ØªØµÙˆÛŒØ± Ù‡Ø§Ø¯ ØªØ§Ú©ØªÛŒÚ©Ø§Ù„ Ø¨Ø§ Ù¾Ø³â€ŒØ²Ù…ÛŒÙ†Ù‡ Ú¯Ø±ÛŒØ¯ ÙÙ†ÛŒØŒ Ù„Ø§Ù…Ù¾â€ŒÙ‡Ø§ÛŒ Ø®Ù„Ø§Ø¡ Ú©Ù‡Ø±Ø¨Ø§ÛŒÛŒ Ùˆ Ú©Ø§Ø¯Ø±Ù‡Ø§ÛŒ Ú¯ÙˆØ´Ù‡â€ŒÙ¾Ø® Ø·Ù„Ø§ÛŒÛŒ Ø§Ø³ØªØ§Ø±Ú©</string>
-    <string name="vip_theme_classified_crimson_title">Classified Red Alert (ÙˆØ¶Ø¹ÛŒØª Ù‚Ø±Ù…Ø² Ù…Ø­Ø±Ù…Ø§Ù†Ù‡)</string>
-    <string name="vip_theme_classified_crimson_desc">Ø·Ø±Ø§Ø­ÛŒ Ø¯Ù‚ÛŒÙ‚ ØªØµÙˆÛŒØ± Ú¯ÙˆØ´ÛŒ Ú†Ù¾: Ø§ÙÙ‚ ØªØ§Ø±ÛŒÚ© Ø´Ù‡Ø± Ø³Ø§ÛŒØ¨Ø±Ù¾Ø§Ù†Ú©ØŒ Ø®Ø·ÙˆØ· Ù‚Ø±Ù…Ø² Ù†Ø¦ÙˆÙ†ÛŒØŒ Ú©Ø§Ø¯Ø±Ù‡Ø§ÛŒ Ø²Ø§ÙˆÛŒÙ‡â€ŒØ¯Ø§Ø± Ùˆ Ø±Ø§Ø¯Ø§Ø± Ù†Ø¸Ø§Ù…ÛŒ</string>
-    <string name="vip_theme_classified_cyan_title">Classified Stealth Teal (ÙˆØ¶Ø¹ÛŒØª Ù…Ø­Ø±Ù…Ø§Ù†Ù‡ ÙÛŒØ±ÙˆØ²Ù‡â€ŒØ§ÛŒ)</string>
-    <string name="vip_theme_classified_cyan_desc">Ø·Ø±Ø§Ø­ÛŒ Ø¯Ù‚ÛŒÙ‚ ØªØµÙˆÛŒØ± Ú¯ÙˆØ´ÛŒ Ø±Ø§Ø³Øª: Ø§ÙÙ‚ ØªØ§Ø±ÛŒÚ© Ø³Ø§ÛŒØ§Ù†ØŒ Ø±Ø§Ø¯Ø§Ø± Ø¯Ø§ÛŒØ±Ù‡â€ŒØ§ÛŒ ÙÛŒØ±ÙˆØ²Ù‡â€ŒØ§ÛŒØŒ Ú©Ø§Ø¯Ø±Ù‡Ø§ÛŒ Ú©Ø§Øªâ€ŒÚ©Ø±Ù†Ø± Ùˆ Ù†Ø´Ø§Ù†Ú¯Ø±Ù‡Ø§ÛŒ Ù‡Ø´Ø¯Ø§Ø±</string>
-
-    <!-- App Main Background Settings -->
-    <string name="settings_app_background_title">Ù¾Ø³â€ŒØ²Ù…ÛŒÙ†Ù‡ Ø§ØµÙ„ÛŒ Ø¨Ø±Ù†Ø§Ù…Ù‡</string>
-    <string name="settings_app_background_subtitle">Ø§Ù†ØªØ®Ø§Ø¨ Ø·Ø±Ø­ Ú¯Ø±Ø§ÙÛŒÚ©ÛŒØŒ Ú¯Ø±ÛŒØ¯ ÛŒØ§ Ø¨Ø§ÙØª Ù¾Ø³â€ŒØ²Ù…ÛŒÙ†Ù‡ Ø§ØµÙ„ÛŒ ØµÙØ­Ø§Øª</string>
-    <string name="background_default">Ù¾ÛŒØ´â€ŒÙØ±Ø¶ (Ù‡Ù…Ø§Ù‡Ù†Ú¯ Ø¨Ø§ ØªÙ…)</string>
-    <string name="background_grid">Ú¯Ø±ÛŒØ¯ ÙÙ†ÛŒ Ù…Ù‡Ù†Ø¯Ø³ÛŒ (Schematic Grid)</string>
-    <string name="background_circuit">Ù…Ø¯Ø§Ø±Ù‡Ø§ÛŒ Ø§Ù„Ú©ØªØ±ÙˆÙ†ÛŒÚ©ÛŒ (Circuit Traces)</string>
-    <string name="background_cityscape">Ø§ÙÙ‚ Ø´Ù‡Ø± Ø³Ø§ÛŒØ¨Ø±Ù¾Ø§Ù†Ú© (Cyber Cityscape)</string>
-    <string name="background_carbon">Ú©Ø±Ø¨Ù† ÙÛŒØ¨Ø± ØªØ§Ú©ØªÛŒÚ©Ø§Ù„ (Carbon Fiber)</string>
-    <string name="background_hud_blueprint">Ù†Ù‚Ø´Ù‡ Ú©Ø§Ú©Ù¾ÛŒØª Ù‡Ø§Ø¯ (HUD Blueprint)</string>
-    <string name="background_blackout">Ø³ÛŒØ§Ù‡ÛŒ Ø®Ø§Ù„Øµ Ø§ÙˆÙ„Ø¯ (Pure AMOLED)</string>
-
-    <!-- Cell Geometric Shape Settings -->
-    <string name="settings_cell_shape_title">Ø§Ø³ØªØ§ÛŒÙ„ Ù‡Ù†Ø¯Ø³ÛŒ Ú©Ø§Ø¯Ø± Ø³Ù„ÙˆÙ„â€ŒÙ‡Ø§</string>
-    <string name="settings_cell_shape_subtitle">ØªÙ†Ø¸ÛŒÙ… Ø§Ø´Ú©Ø§Ù„ Ù‡Ù†Ø¯Ø³ÛŒØŒ Ù¾Ø® Ú¯ÙˆØ´Ù‡â€ŒÙ‡Ø§ Ùˆ Ø¨Ø±Ø§Ú©Øªâ€ŒÙ‡Ø§ÛŒ ÙÙ†ÛŒ Ù¾ÛŒØ§Ù…â€ŒÙ‡Ø§</string>
-    <string name="cell_shape_smart">Ù‡ÙˆØ´Ù…Ù†Ø¯ (Ù‡Ù…Ø§Ù‡Ù†Ú¯ Ø¨Ø§ Ù¾ÙˆØ³ØªÙ‡ ØªÙ…)</string>
-    <string name="cell_shape_chamfer">Ú¯ÙˆØ´Ù‡â€ŒÙ‡Ø§ÛŒ Ù¾Ø®â€ŒØ®ÙˆØ±Ø¯Ù‡ Ù…Ù‡Ù†Ø¯Ø³ÛŒ (Chamfered Tech)</string>
-    <string name="cell_shape_mech_pod">Ú©Ù†Ø³ÙˆÙ„ Ù…Ú©Ø§Ù†ÛŒÚ©ÛŒ Ù¾Ø§Ø¯ (Mech Pod)</string>
-    <string name="cell_shape_rounded">Ú©Ø§Ø±Øª Ú©Ù„Ø§Ø³ÛŒÚ© Ú¯ÙˆØ´Ù‡â€ŒÚ¯Ø±Ø¯ (Classic Rounded)</string>
-    <string name="cell_shape_divider">Ø¯ÛŒÙˆØ§ÛŒØ¯Ø± Ø®Ø·ÛŒ Ù…ÛŒÙ†ÛŒÙ…Ø§Ù„ (Linear Divider)</string>
+        <!-- New Sci-Fi Mech & Tactical Dark VIP Themes (Recreated from Photos) -->
+    <string name="vip_theme_cyber_mech_deck_title">Cyber Mech Deck 2077 (کنسول مکانیکی سبز و سایان)</string>
+    <string name="vip_theme_cyber_mech_deck_desc">کنسول تیتانیومی فوق پیشرفته با کادرهای مکانیکی پاد، بردهای مدار چاپی و نور نئونی سبز و فیروزه‌ای</string>
+    <string name="vip_theme_tactical_hud_amber_title">Tactical HUD Amber (هاد تاکتیکال کهربایی)</string>
+    <string name="vip_theme_tactical_hud_amber_desc">طراحی دقیق تصویر هاد تاکتیکال با پس‌زمینه گرید فنی، لامپ‌های خلاء کهربایی و کادرهای گوشه‌پخ طلایی استارک</string>
+    <string name="vip_theme_classified_crimson_title">Classified Red Alert (وضعیت قرمز محرمانه)</string>
+    <string name="vip_theme_classified_crimson_desc">طراحی دقیق تصویر گوشی چپ: افق تاریک شهر سایبرپانک، خطوط قرمز نئونی، کادرهای زاویه‌دار و رادار نظامی</string>
+    <string name="vip_theme_classified_cyan_title">Classified Stealth Teal (وضعیت محرمانه فیروزه‌ای)</string>
+    <string name="vip_theme_classified_cyan_desc">طراحی دقیق تصویر گوشی راست: افق تاریک سایان، رادار دایره‌ای فیروزه‌ای، کادرهای کات‌کرنر و نشانگرهای هشدار</string>
+    <string name="vip_theme_military_hud_gold_title">Tactical Classified Gold (هاد نظامی محرمانه طلایی)</string>
+    <string name="vip_theme_military_hud_gold_desc">کنسول نظامی محرمانه با فریم طلای کم‌رنگ، کادرهای زاویه‌دار پخ‌خورده و مانیتورینگ ماهواره‌ای (الهام دقیق از تصاویر ۴ و ۵)</string>
+    <string name="vip_theme_cyber_waveform_stealth_title">Cyber Waveform Stealth (عرشه اسیلوسکوپ سفید/سبز)</string>
+    <string name="vip_theme_cyber_waveform_stealth_desc">سیستم عامل نظامی تیره با اسیلوسکوپ موج سینوسی، هشدار زرد، آرایه ماتریسی ال‌ای‌دی و خطوط کابل نوری (الهام دقیق از تصویر ۲)</string>
+    <string name="vip_theme_biometric_pulse_orange_title">Biometric Pulse Orange (پالس بیومتریک و قلب نارنجی)</string>
+    <string name="vip_theme_biometric_pulse_orange_desc">نمایشگر وضعیت حیاتی و پالس الکتروکاردیوگرام با نوارهای نارنجی درخشان، کادرهای مکانیکی و بدنه تیره آبسیدین (الهام دقیق از تصویر ۲)</string>
+    <string name="vip_theme_tactical_teal_overwatch_title">Tactical Teal Overwatch (رادار اورواچ و مانیتورینگ فیروزه‌ای)</string>
+    <string name="vip_theme_tactical_teal_overwatch_desc">رادار نظامی ردیابی هدف با خطوط لیزری فیروزه‌ای نئونی، نقشه موقعیت جهانی و نوارهای مدرج سطح دسترسی (الهام دقیق از تصاویر ۳ و ۴)</string>
+    <string name="vip_theme_holographic_crimson_tape_title">Holographic Crimson Tape (تله‌متری هولوگرافیک قرمز)</string>
+    <string name="vip_theme_holographic_crimson_tape_desc">کنسول هولوگرافیک تیره با طیف فرکانسی سبز، کانال‌های داده، شمارنده دیجیتالی و خطوط لیزری قرمز (الهام دقیق از تصویر ۳)</string>
+    <string name="settings_app_background_title">پس‌زمینه اصلی برنامه</string>
+    <string name="settings_app_background_subtitle">انتخاب طرح گرافیکی، گرید یا بافت پس‌زمینه اصلی صفحات</string>
+    <string name="background_default">پیش‌فرض (هماهنگ با تم)</string>
+    <string name="background_grid">گرید فنی مهندسی (Schematic Grid)</string>
+    <string name="background_circuit">مدارهای الکترونیکی (Circuit Traces)</string>
+    <string name="background_cityscape">افق شهر سایبرپانک (Cyber Cityscape)</string>
+    <string name="background_carbon">کربن فیبر تاکتیکال (Carbon Fiber)</string>
+    <string name="background_hud_blueprint">نقشه کاکپیت هاد (HUD Blueprint)</string>
+    <string name="background_blackout">سیاهی خالص اولد (Pure AMOLED)</string>
+    <string name="background_military_hud">نقشه موقعیت نظامی و رادار (Tactical Radar Map)</string>
+    <string name="background_waveform_scope">اسیلوسکوپ و موج سیگنال (Waveform Scope)</string>
+    <string name="settings_cell_shape_title">استایل هندسی کادر سلول‌ها</string>
+    <string name="settings_cell_shape_subtitle">تنظیم اشکال هندسی، پخ گوشه‌ها و براکت‌های فنی پیام‌ها</string>
+    <string name="cell_shape_smart">هوشمند (هماهنگ با پوسته تم)</string>
+    <string name="cell_shape_chamfer">گوشه‌های پخ‌خورده مهندسی (Chamfered Tech)</string>
+    <string name="cell_shape_mech_pod">کنسول مکانیکی پاد (Mech Pod)</string>
+    <string name="cell_shape_rounded">کارت کلاسیک گوشه‌گرد (Classic Rounded)</string>
+    <string name="cell_shape_divider">دیوایدر خطی مینیمال (Linear Divider)</string>
+    <string name="cell_shape_hud_panel">پنل نظامی هاد زاویه‌دار (Tactical HUD Panel)</string>
+    <string name="msg_hud_incoming">[دریافتی // رمزنگاری‌شده]</string>
+    <string name="msg_hud_outgoing">[ارسالی // تأیید امنیت]</string>
 </resources>

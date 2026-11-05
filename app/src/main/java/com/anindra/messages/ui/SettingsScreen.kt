@@ -326,6 +326,8 @@ fun SettingsScreen(
         else -> stringResource(R.string.cell_color_theme)
     }
     val appBackgroundSubtitle = when (vm.settings.appBackground) {
+        "military_hud" -> stringResource(R.string.background_military_hud)
+        "waveform_scope" -> stringResource(R.string.background_waveform_scope)
         "grid" -> stringResource(R.string.background_grid)
         "circuit" -> stringResource(R.string.background_circuit)
         "cityscape" -> stringResource(R.string.background_cityscape)
@@ -335,6 +337,7 @@ fun SettingsScreen(
         else -> stringResource(R.string.background_default)
     }
     val cellShapeSubtitle = when (vm.settings.cellShape) {
+        "hud_panel" -> stringResource(R.string.cell_shape_hud_panel)
         "chamfer" -> stringResource(R.string.cell_shape_chamfer)
         "mech_pod" -> stringResource(R.string.cell_shape_mech_pod)
         "rounded" -> stringResource(R.string.cell_shape_rounded)
@@ -1634,6 +1637,11 @@ fun SettingsScreen(
                     )
 
                     val darkVipThemes = listOf(
+                        Triple("vip_military_hud_gold", R.string.vip_theme_military_hud_gold_title, R.string.vip_theme_military_hud_gold_desc),
+                        Triple("vip_cyber_waveform_stealth", R.string.vip_theme_cyber_waveform_stealth_title, R.string.vip_theme_cyber_waveform_stealth_desc),
+                        Triple("vip_biometric_pulse_orange", R.string.vip_theme_biometric_pulse_orange_title, R.string.vip_theme_biometric_pulse_orange_desc),
+                        Triple("vip_tactical_teal_overwatch", R.string.vip_theme_tactical_teal_overwatch_title, R.string.vip_theme_tactical_teal_overwatch_desc),
+                        Triple("vip_holographic_crimson_tape", R.string.vip_theme_holographic_crimson_tape_title, R.string.vip_theme_holographic_crimson_tape_desc),
                         Triple("vip_cyber_mech_deck", R.string.vip_theme_cyber_mech_deck_title, R.string.vip_theme_cyber_mech_deck_desc),
                         Triple("vip_tactical_hud_amber", R.string.vip_theme_tactical_hud_amber_title, R.string.vip_theme_tactical_hud_amber_desc),
                         Triple("vip_classified_crimson", R.string.vip_theme_classified_crimson_title, R.string.vip_theme_classified_crimson_desc),
@@ -1703,6 +1711,8 @@ fun SettingsScreen(
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     val bgOptions = listOf(
                         "default" to stringResource(R.string.background_default),
+                        "military_hud" to stringResource(R.string.background_military_hud),
+                        "waveform_scope" to stringResource(R.string.background_waveform_scope),
                         "grid" to stringResource(R.string.background_grid),
                         "circuit" to stringResource(R.string.background_circuit),
                         "cityscape" to stringResource(R.string.background_cityscape),
@@ -1753,7 +1763,8 @@ fun SettingsScreen(
                         "chamfer" to stringResource(R.string.cell_shape_chamfer),
                         "mech_pod" to stringResource(R.string.cell_shape_mech_pod),
                         "rounded" to stringResource(R.string.cell_shape_rounded),
-                        "divider" to stringResource(R.string.cell_shape_divider)
+                        "divider" to stringResource(R.string.cell_shape_divider),
+                        "hud_panel" to stringResource(R.string.cell_shape_hud_panel)
                     )
                     shapeOptions.forEach { (code, label) ->
                         Row(
@@ -2895,6 +2906,11 @@ private fun themeLabel(mode: String, context: android.content.Context): String {
         "vip_rose_gold_lux" -> context.getString(R.string.vip_theme_rose_gold_lux_title)
         "vip_blueprint_light" -> context.getString(R.string.vip_theme_blueprint_light_title)
         // 8 VIP Masterpiece Dark / Hacker Themes
+        "vip_military_hud_gold" -> context.getString(R.string.vip_theme_military_hud_gold_title)
+        "vip_cyber_waveform_stealth" -> context.getString(R.string.vip_theme_cyber_waveform_stealth_title)
+        "vip_biometric_pulse_orange" -> context.getString(R.string.vip_theme_biometric_pulse_orange_title)
+        "vip_tactical_teal_overwatch" -> context.getString(R.string.vip_theme_tactical_teal_overwatch_title)
+        "vip_holographic_crimson_tape" -> context.getString(R.string.vip_theme_holographic_crimson_tape_title)
         "vip_cyber_mech_deck" -> context.getString(R.string.vip_theme_cyber_mech_deck_title)
         "vip_tactical_hud_amber" -> context.getString(R.string.vip_theme_tactical_hud_amber_title)
         "vip_classified_crimson" -> context.getString(R.string.vip_theme_classified_crimson_title)

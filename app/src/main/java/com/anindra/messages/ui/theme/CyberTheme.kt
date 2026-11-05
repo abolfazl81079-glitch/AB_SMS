@@ -1,4 +1,4 @@
-﻿package com.anindra.messages.ui.theme
+package com.anindra.messages.ui.theme
 
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
@@ -875,6 +875,161 @@ object CyberTheme {
         surfaceContainerHighest = Color(0xFF153044)
     )
 
+    // ── VIP: Tactical Classified Gold (Pale Gold & Electric Blue Military HUD) ──
+    // Direct inspiration: Images 4 & 5 (Classified military tactical interface)
+    val VipMilitaryHudGold = darkColorScheme(
+        primary = Color(0xFFE5C378),             // Pale Luminous Gold
+        onPrimary = Color(0xFF1F1604),
+        primaryContainer = Color(0xFF382A0A),
+        onPrimaryContainer = Color(0xFFFDE8B5),
+        inversePrimary = Color(0xFFFFF0CA),
+        secondary = Color(0xFF00D2FF),           // Electric Telemetry Blue
+        onSecondary = Color(0xFF001F29),
+        secondaryContainer = Color(0xFF003847),
+        onSecondaryContainer = Color(0xFFB5F2FF),
+        tertiary = Color(0xFFFF9F1C),            // Tactical Amber Accent
+        onTertiary = Color(0xFF221100),
+        background = Color(0xFF050B14),          // Deep Midnight Navy
+        onBackground = Color(0xFFF0F4F8),        // Soft White Text
+        surface = Color(0xFF0A111E),             // Classified Terminal Slate
+        onSurface = Color(0xFFF0F4F8),
+        surfaceVariant = Color(0xFF0F1A2C),      // Tactical Card Body
+        onSurfaceVariant = Color(0xFF8295A8),    // Muted Gray-Blue Secondary
+        outline = Color(0xFFE5C378),             // Pale Gold Laser Outline
+        outlineVariant = Color(0xFF5A4920),      // Subdued Seam
+        error = Color(0xFFFF2A4A),
+        onError = Color(0xFFFFFFFF),
+        surfaceContainerLowest = Color(0xFF02050A),
+        surfaceContainerLow = Color(0xFF060D17),
+        surfaceContainer = Color(0xFF0A1424),    // Card Container
+        surfaceContainerHigh = Color(0xFF101E33),
+        surfaceContainerHighest = Color(0xFF182A45)
+    )
+
+    // ── VIP: Cyber Waveform Stealth (Sine Wave & White/Mint OS) ──
+    // Direct inspiration: Image 2 right phone (Sine oscilloscope, warning bar, LED array)
+    val VipCyberWaveformStealth = darkColorScheme(
+        primary = Color(0xFFE0F2FE),             // Crisp Luminous White/Pale Mint
+        onPrimary = Color(0xFF030C14),
+        primaryContainer = Color(0xFF182836),
+        onPrimaryContainer = Color(0xFFC7E8FA),
+        inversePrimary = Color(0xFFFFFFFF),
+        secondary = Color(0xFF00FF88),           // Sine Waveform Emerald
+        onSecondary = Color(0xFF00220F),
+        secondaryContainer = Color(0xFF00381A),
+        onSecondaryContainer = Color(0xFFB4FFD3),
+        tertiary = Color(0xFFFF7A00),            // Warning Hazard Amber
+        onTertiary = Color(0xFF240E00),
+        background = Color(0xFF020406),          // Pure Void Stealth Black
+        onBackground = Color(0xFFFFFFFF),        // High Contrast White
+        surface = Color(0xFF070C12),             // Console Panel
+        onSurface = Color(0xFFFFFFFF),
+        surfaceVariant = Color(0xFF0C141E),      // Waveform Card Container
+        onSurfaceVariant = Color(0xFF94A3B8),    // Tech Gray Secondary
+        outline = Color(0xFFE0F2FE),             // Crisp White Laser Outline
+        outlineVariant = Color(0xFF4A6578),
+        error = Color(0xFFFF3344),
+        onError = Color(0xFFFFFFFF),
+        surfaceContainerLowest = Color(0xFF010203),
+        surfaceContainerLow = Color(0xFF04080D),
+        surfaceContainer = Color(0xFF081018),
+        surfaceContainerHigh = Color(0xFF0E1A26),
+        surfaceContainerHighest = Color(0xFF142436)
+    )
+
+    // ── VIP: Biometric Pulse Orange (ECG Pulse & Fiery Amber Console) ──
+    // Direct inspiration: Image 2 left phone (ECG heartbeat pulse, amber capsule pod)
+    val VipBiometricPulseOrange = darkColorScheme(
+        primary = Color(0xFFFF6A00),             // Fiery Neon Conduit Orange
+        onPrimary = Color(0xFF240B00),
+        primaryContainer = Color(0xFF471A00),
+        onPrimaryContainer = Color(0xFFFFCCAA),
+        inversePrimary = Color(0xFFFF8833),
+        secondary = Color(0xFFFF3B00),           // ECG Heartbeat Red-Orange
+        onSecondary = Color(0xFF260500),
+        secondaryContainer = Color(0xFF4A0D00),
+        onSecondaryContainer = Color(0xFFFFB39E),
+        tertiary = Color(0xFF00E5FF),            // Status LED Cyan
+        onTertiary = Color(0xFF002026),
+        background = Color(0xFF07080B),          // Deep Obsidian Charcoal
+        onBackground = Color(0xFFFFF0E6),        // Warm Ivory White
+        surface = Color(0xFF0F1017),             // Pod Surface
+        onSurface = Color(0xFFFFF0E6),
+        surfaceVariant = Color(0xFF161822),      // Translucent ECG Card
+        onSurfaceVariant = Color(0xFFA39E93),    // Amber Muted Subtitle
+        outline = Color(0xFFFF6A00),             // Glowing Orange Conduit
+        outlineVariant = Color(0xFF6B3008),
+        error = Color(0xFFFF2A4A),
+        onError = Color(0xFFFFFFFF),
+        surfaceContainerLowest = Color(0xFF030305),
+        surfaceContainerLow = Color(0xFF0A0B10),
+        surfaceContainer = Color(0xFF11121C),
+        surfaceContainerHigh = Color(0xFF1A1C2A),
+        surfaceContainerHighest = Color(0xFF24273A)
+    )
+
+    // ── VIP: Tactical Teal Overwatch (Radar Targeting & Level Sliders) ──
+    // Direct inspiration: Images 3 & 4 (Targeting reticle, oceanic navy, teal laser)
+    val VipTacticalTealOverwatch = darkColorScheme(
+        primary = Color(0xFF00E5FF),             // Electric Overwatch Cyan
+        onPrimary = Color(0xFF001E24),
+        primaryContainer = Color(0xFF003842),
+        onPrimaryContainer = Color(0xFFB5F5FF),
+        inversePrimary = Color(0xFF5CF0FF),
+        secondary = Color(0xFF10B981),           // Radar Scope Emerald
+        onSecondary = Color(0xFF001F12),
+        secondaryContainer = Color(0xFF003D25),
+        onSecondaryContainer = Color(0xFFBAF7D8),
+        tertiary = Color(0xFFFF7A00),            // Alert Level Amber
+        onTertiary = Color(0xFF240E00),
+        background = Color(0xFF030C14),          // Midnight Oceanic Slate
+        onBackground = Color(0xFFF1F5F9),
+        surface = Color(0xFF071724),             // Targeting Instrument
+        onSurface = Color(0xFFF1F5F9),
+        surfaceVariant = Color(0xFF0B2233),      // Overwatch Card
+        onSurfaceVariant = Color(0xFF7DD3FC),
+        outline = Color(0xFF00E5FF),             // Cyan Targeting Frame
+        outlineVariant = Color(0xFF035E6B),
+        error = Color(0xFFFF2A4A),
+        onError = Color(0xFFFFFFFF),
+        surfaceContainerLowest = Color(0xFF01050A),
+        surfaceContainerLow = Color(0xFF04101B),
+        surfaceContainer = Color(0xFF081B2B),
+        surfaceContainerHigh = Color(0xFF0E283D),
+        surfaceContainerHighest = Color(0xFF163752)
+    )
+
+    // ── VIP: Holographic Crimson Tape (Crimson Telemetry & Emerald Meter) ──
+    // Direct inspiration: Image 3 left display (Crimson display with digital [03] meter)
+    val VipHolographicCrimsonTape = darkColorScheme(
+        primary = Color(0xFFFF1E40),             // Crimson Alert Laser
+        onPrimary = Color(0xFF260007),
+        primaryContainer = Color(0xFF4D0012),
+        onPrimaryContainer = Color(0xFFFFB3BE),
+        inversePrimary = Color(0xFFFF526E),
+        secondary = Color(0xFF00FF66),           // Emerald Digital Frequency Counter [03]
+        onSecondary = Color(0xFF00240B),
+        secondaryContainer = Color(0xFF004217),
+        onSecondaryContainer = Color(0xFFB4FFCD),
+        tertiary = Color(0xFFFFAA00),            // Golden Amber Telemetry
+        onTertiary = Color(0xFF241500),
+        background = Color(0xFF060408),          // Void Midnight
+        onBackground = Color(0xFFF8F9FA),
+        surface = Color(0xFF120A14),             // Holo Panel
+        onSurface = Color(0xFFF8F9FA),
+        surfaceVariant = Color(0xFF1B0E1E),      // Crimson Card
+        onSurfaceVariant = Color(0xFFE2C4C9),
+        outline = Color(0xFFFF1E40),             // Crimson Laser Outline
+        outlineVariant = Color(0xFF6B1220),
+        error = Color(0xFFFF3B30),
+        onError = Color(0xFFFFFFFF),
+        surfaceContainerLowest = Color(0xFF030104),
+        surfaceContainerLow = Color(0xFF0A050B),
+        surfaceContainer = Color(0xFF140B16),
+        surfaceContainerHigh = Color(0xFF201224),
+        surfaceContainerHighest = Color(0xFF2E1B33)
+    )
+
     /**
      * Resolves the requested theme mode into a ColorScheme.
      */
@@ -901,7 +1056,12 @@ object CyberTheme {
         "vip_rose_gold_lux" -> VipRoseGoldLux
         "vip_blueprint_light" -> VipBlueprintLight
 
-        // 8 VIP Premier Dark Themes (Sci-Fi Mech / Cockpit / Tactical)
+        // VIP Premier Military & Sci-Fi HUD Dark Themes
+        "vip_military_hud_gold" -> VipMilitaryHudGold
+        "vip_cyber_waveform_stealth" -> VipCyberWaveformStealth
+        "vip_biometric_pulse_orange" -> VipBiometricPulseOrange
+        "vip_tactical_teal_overwatch" -> VipTacticalTealOverwatch
+        "vip_holographic_crimson_tape" -> VipHolographicCrimsonTape
         "vip_cyber_mech_deck" -> VipCyberMechDeck
         "vip_tactical_hud_amber" -> VipTacticalHudAmber
         "vip_classified_crimson" -> VipClassifiedCrimson

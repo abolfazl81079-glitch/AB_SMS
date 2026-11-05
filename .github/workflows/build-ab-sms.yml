@@ -1,4 +1,4 @@
-name: Build AB/SMS APK
+﻿name: Build AB/SMS APK
 
 on:
   push:
@@ -60,28 +60,28 @@ jobs:
         run: |
             mkdir -p output
             if [ -f app/build/outputs/apk/release/app-release.apk ]; then
-              cp app/build/outputs/apk/release/app-release.apk output/AB_SMS_v1.5.0.apk
+              cp app/build/outputs/apk/release/app-release.apk output/AB_SMS_v1.6.0.apk
             elif [ -f app/build/outputs/apk/release/*.apk ]; then
-              cp app/build/outputs/apk/release/*.apk output/AB_SMS_v1.5.0.apk
+              cp app/build/outputs/apk/release/*.apk output/AB_SMS_v1.6.0.apk
             else
-              cp app/build/outputs/apk/debug/*.apk output/AB_SMS_v1.5.0.apk
+              cp app/build/outputs/apk/debug/*.apk output/AB_SMS_v1.6.0.apk
             fi
             
             if [ -f app/build/outputs/apk/debug/app-debug.apk ]; then
-              cp app/build/outputs/apk/debug/app-debug.apk output/AB_SMS_v1.5.0_debug.apk
+              cp app/build/outputs/apk/debug/app-debug.apk output/AB_SMS_v1.6.0_debug.apk
             fi
 
-            sha=$(sha256sum output/AB_SMS_v1.5.0.apk | cut -d' ' -f1)
+            sha=$(sha256sum output/AB_SMS_v1.6.0.apk | cut -d' ' -f1)
             echo "sha=$sha" >> "$GITHUB_OUTPUT"
             echo "=========================================="
             echo "AB/SMS Build Succeeded!"
-            echo "APK: AB_SMS_v1.5.0.apk"
+            echo "APK: AB_SMS_v1.6.0.apk"
             echo "SHA-256: $sha"
             echo "=========================================="
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: AB_SMS_v1.5.0_APK
+          name: AB_SMS_v1.6.0_APK
           path: output/
           retention-days: 30
