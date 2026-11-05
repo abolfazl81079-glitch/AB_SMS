@@ -2376,7 +2376,6 @@ private fun rememberLinkedText(
     searchQuery: String? = null,
     searchHighlightAlpha: Float = 1f
 ): AnnotatedString {
-    val linkColor = if (highlight) textColor.copy(alpha = 0.8f) else MaterialTheme.colorScheme.primary
     val cs = MaterialTheme.colorScheme
     val linkColor = if (highlight) textColor.copy(alpha = 0.8f) else cs.primary
     val hudPrimary = cs.primary

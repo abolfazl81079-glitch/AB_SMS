@@ -238,7 +238,9 @@ fun ConversationsScreen(
             swipeEnabled = leftSwipe || rightSwipe,
             swipeLeftAction = vm.settings.swipeLeftAction,
             swipeRightAction = vm.settings.swipeRightAction,
-            hideLinks = vm.settings.hideLinks
+            hideLinks = vm.settings.hideLinks,
+            previewLines = vm.settings.previewLines,
+            customCellColor = vm.settings.customCellColor
         )
     }
 
@@ -992,7 +994,9 @@ internal data class RowSettings(
     val swipeEnabled: Boolean,
     val swipeLeftAction: SwipeAction = SwipeAction.ARCHIVE,
     val swipeRightAction: SwipeAction = SwipeAction.DELETE,
-    val hideLinks: Boolean = false
+    val hideLinks: Boolean = false,
+    val previewLines: Int = 1,
+    val customCellColor: String = "theme"
 )
 
 @OptIn(ExperimentalFoundationApi::class)
