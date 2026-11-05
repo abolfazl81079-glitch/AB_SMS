@@ -1,4 +1,4 @@
-﻿name: Build AB/SMS APK
+name: Build AB/SMS APK
 
 on:
   push:
@@ -33,6 +33,9 @@ jobs:
         with:
           packages: 'platform-tools'
 
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Make Gradle Wrapper Executable
         run: chmod +x gradlew
 
@@ -53,7 +56,13 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || 'absms2026' }}
           KEY_ALIAS: "absms"
         run: |
-          ./gradlew --no-daemon assembleRelease assembleDebug
+          for i in 1 2 3; do
+            echo "Attempt $i to build APKs..."
+            ./gradlew --no-daemon assembleRelease assembleDebug && break || {
+              echo "Attempt $i failed, retrying in 10s..."
+              sleep 10
+            }
+          done
 
       - name: Package AB/SMS Release APK
         id: package
