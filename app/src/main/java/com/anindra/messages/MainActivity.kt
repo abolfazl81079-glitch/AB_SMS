@@ -974,6 +974,22 @@ class MainActivity : FragmentActivity() {
 
     private var lastResumeTime = 0L
 
+    override fun attachBaseContext(newBase: android.content.Context) {
+        val prefs = newBase.getSharedPreferences("messages_settings", android.content.Context.MODE_PRIVATE)
+        val lang = prefs.getString("app_language", "system") ?: "system"
+        val context = if (lang != "system") {
+            val locale = java.util.Locale(lang)
+            java.util.Locale.setDefault(locale)
+            val config = android.content.res.Configuration(newBase.resources.configuration)
+            config.setLocale(locale)
+            config.setLayoutDirection(java.util.Locale("en"))
+            newBase.createConfigurationContext(config)
+        } else {
+            newBase
+        }
+        super.attachBaseContext(context)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         applyFakeDualSim(intent)

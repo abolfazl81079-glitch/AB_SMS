@@ -1040,27 +1040,36 @@ internal fun ConversationRow(
     )
     val cs = MaterialTheme.colorScheme
     val isUnread = convo.unreadCount > 0
+    val customAccent = when (settings.customCellColor) {
+        "green" -> Color(0xFF00FF66)
+        "cyan" -> Color(0xFF00E5FF)
+        "gold" -> Color(0xFFFFCC00)
+        "red" -> Color(0xFFFF2A4A)
+        "purple" -> Color(0xFFC084FC)
+        "silver" -> Color(0xFFE2E8F0)
+        else -> cs.primary
+    }
     val cardBorderColor = when {
-        selected && selectionMode -> Color(0xFFFFCC00)
-        isUnread -> Color(0xFFFFCC00)
-        convo.pinned && settings.pinnedEnabled -> Color(0xFFFFA000)
-        else -> Color(0x66FFCC00)
+        selected && selectionMode -> customAccent
+        isUnread -> customAccent
+        convo.pinned && settings.pinnedEnabled -> cs.secondary
+        else -> customAccent.copy(alpha = 0.35f)
     }
     val cardBg = when {
-        selected && selectionMode -> Color(0xFF221A05)
-        convo.pinned && settings.pinnedEnabled -> Color(0xF2141C28)
-        else -> Color(0xF2090F1B)
+        selected && selectionMode -> customAccent.copy(alpha = 0.15f)
+        convo.pinned && settings.pinnedEnabled -> cs.surfaceVariant.copy(alpha = 0.70f)
+        else -> cs.surfaceContainer.copy(alpha = 0.65f)
     }
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 10.dp, vertical = 4.dp)
+            .padding(horizontal = 10.dp, vertical = 3.dp)
     ) {
         Surface(
             shape = RoundedCornerShape(8.dp),
             color = cardBg,
-            border = BorderStroke(1.dp, cardBorderColor),
+            border = BorderStroke(0.8.dp, cardBorderColor),
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
@@ -1122,7 +1131,7 @@ internal fun ConversationRow(
                             text = previewLabel,
                             style = MaterialTheme.typography.bodyMedium,
                             color = cs.secondary,
-                            maxLines = 1,
+                            maxLines = settings.previewLines,
                             overflow = TextOverflow.Ellipsis
                         )
                     } else {
@@ -1131,7 +1140,7 @@ internal fun ConversationRow(
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = if (isUnread) FontWeight.Medium else FontWeight.Normal,
                             color = if (isUnread) cs.onSurface else cs.onSurfaceVariant,
-                            maxLines = 1,
+                            maxLines = settings.previewLines,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
@@ -1147,7 +1156,7 @@ internal fun ConversationRow(
                     if (convo.unreadCount > 0) {
                         Box(
                             modifier = Modifier
-                                .background(cs.primary, RoundedCornerShape(2.dp))
+                                .background(customAccent, RoundedCornerShape(3.dp))
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Text(

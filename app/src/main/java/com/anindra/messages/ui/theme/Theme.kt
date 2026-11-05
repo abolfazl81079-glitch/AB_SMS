@@ -19,9 +19,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import com.anindra.messages.data.SettingsStore
 
 /**
@@ -356,7 +358,8 @@ fun MessagesTheme(
     CompositionLocalProvider(
         LocalDensity provides scaledDensity,
         LocalReduceMotion provides a11y.reduceMotionEnabled,
-        LocalLargeTouchTargets provides a11y.largeTouchTargetsEnabled
+        LocalLargeTouchTargets provides a11y.largeTouchTargetsEnabled,
+        LocalLayoutDirection provides LayoutDirection.Ltr
     ) {
         MaterialTheme(
             colorScheme = colorScheme,

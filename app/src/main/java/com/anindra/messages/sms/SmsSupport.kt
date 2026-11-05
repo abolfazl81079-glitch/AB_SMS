@@ -134,24 +134,28 @@ object NotificationHelper {
         // A picture-only MMS has a blank body: it gets a label instead of an
         // empty row, and the picture itself rides along as message data.
         val photoLabel = context.getString(R.string.notif_photo)
-        val lines = NotificationHistory.window(
-            if (history.isEmpty()) {
-                listOf(
-                    NotificationLine(
-                        fallbackText, System.currentTimeMillis(), false,
-                        isImage = imageUri != null, imageUri = imageUri
+        val lines = if (privacyMode) {
+            listOf(NotificationLine(fallbackText, System.currentTimeMillis(), false))
+        } else {
+            NotificationHistory.window(
+                if (history.isEmpty()) {
+                    listOf(
+                        NotificationLine(
+                            fallbackText, System.currentTimeMillis(), false,
+                            isImage = imageUri != null, imageUri = imageUri
+                        )
                     )
-                )
-            } else history.map {
-                NotificationLine(
-                    if (hideLinks) hideUrls(it.text) else it.text,
-                    it.timestamp,
-                    fromMe = false,
-                    isImage = it.isImage,
-                    imageUri = it.imageUri
-                )
-            }
-        )
+                } else history.map {
+                    NotificationLine(
+                        if (hideLinks) hideUrls(it.text) else it.text,
+                        it.timestamp,
+                        fromMe = false,
+                        isImage = it.isImage,
+                        imageUri = it.imageUri
+                    )
+                }
+            )
+        }
         // Only the newest picture is prepared: copying every one would be work
         // on a receiver thread for lines that sit below the visible one.
         val newestImage = lines.lastOrNull { it.isImage }
@@ -320,10 +324,11 @@ object NotificationHelper {
             0, context.getString(R.string.notif_action_delete), deleteIntent
         ).build()
 
+        val hideBodyInNotif = app.repository.settings.hideNotificationBody || privacyMode
         val senderName = app.repository.contactNameFor(from) ?: from
         val title = if (privacyMode) context.getString(R.string.notif_title_private) else senderName
         val text = when {
-            privacyMode -> context.getString(R.string.notif_body_private)
+            hideBodyInNotif -> context.getString(R.string.notif_body_private)
             // A picture-only MMS has no text; an empty text is what made the
             // whole notification blank.
             body.isBlank() && imageUri != null -> context.getString(R.string.notif_photo)
@@ -347,7 +352,7 @@ object NotificationHelper {
             // across the app's live notifications.
             .setNumber(BadgePolicy.badgeCount(app.repository.unreadCountFor(convoId)))
             .setContentIntent(tap)
-            .setStyle(groupedStyle(context, app, convoId, senderName, text, imageUri, privacyMode))
+            .setStyle(groupedStyle(context, app, convoId, senderName, text, imageUri, hideBodyInNotif))
         // A heads-up popup is a peek: on a locked screen the panel stays asleep.
         // Only a full-screen intent is treated as a user-initiated wake, so this
         // is what turns the screen on. Privacy mode suppresses it because the

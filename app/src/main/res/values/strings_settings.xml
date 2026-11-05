@@ -163,4 +163,31 @@
     <string name="settings_search_hint">Search settings</string>
     <string name="settings_search_none">No settings match</string>
     <string name="settings_theme_dynamic">Dynamic</string>
+
+    <!-- Language selection -->
+    <string name="settings_language_title">App Language</string>
+    <string name="settings_language_subtitle">Choose language (system, Persian, English)</string>
+    <string name="language_system">System default</string>
+    <string name="language_fa">Persian (فارسی)</string>
+    <string name="language_en">English</string>
+
+    <!-- Preview lines & Cell custom colors -->
+    <string name="settings_preview_lines_title">Message Preview Lines</string>
+    <string name="settings_preview_lines_subtitle">Height and lines shown in conversation list</string>
+    <string name="preview_lines_1">1 line (Compact)</string>
+    <string name="preview_lines_2">2 lines (Standard)</string>
+    <string name="preview_lines_3">3 lines (Expanded)</string>
+    <string name="settings_cell_color_title">Cell Border Color</string>
+    <string name="settings_cell_color_subtitle">Accent color for conversation cards</string>
+    <string name="cell_color_theme">Follow Theme (Default)</string>
+    <string name="cell_color_green">Matrix Green</string>
+    <string name="cell_color_cyan">Cyber Cyan</string>
+    <string name="cell_color_gold">Stark Gold</string>
+    <string name="cell_color_red">Crimson Red</string>
+    <string name="cell_color_purple">Quantum Purple</string>
+    <string name="cell_color_silver">Ghost Silver</string>
+
+    <!-- Notification Privacy -->
+    <string name="settings_notif_hide_body_title">Hide Message Content in Notification</string>
+    <string name="settings_notif_hide_body_subtitle">Show sender name only; conceal message text</string>
 </resources>

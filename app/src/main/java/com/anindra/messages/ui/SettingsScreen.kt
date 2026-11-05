@@ -57,6 +57,10 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -108,7 +112,15 @@ fun SettingsScreen(
     onOpenScheduled: () -> Unit = {},
     scrollState: ScrollState = rememberScrollState()
 ) {
-    BackHandler(onBack = onBack)
+    var searching by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    val focusRequester = remember { FocusRequester() }
+
+    BackHandler(enabled = searching) {
+        searching = false
+        searchQuery = ""
+    }
+    BackHandler(enabled = !searching, onBack = onBack)
 
     val context = LocalContext.current
 
@@ -118,6 +130,10 @@ fun SettingsScreen(
     else context.getString(R.string.settings_scheduled_count, scheduledAll.size)
 
     var themeDialog by remember { mutableStateOf(false) }
+    var languageDialog by remember { mutableStateOf(false) }
+    var previewLinesDialog by remember { mutableStateOf(false) }
+    var cellColorDialog by remember { mutableStateOf(false) }
+    var hideNotifBody by remember(revision) { mutableStateOf(vm.settings.hideNotificationBody) }
     var notificationSound by remember(revision) { mutableStateOf(vm.settings.notificationSound) }
     val notificationSoundOptions = listOf(
         SettingsStore.NOTIFY_SOUND_DEFAULT to context.getString(R.string.settings_sound_default),
@@ -229,10 +245,48 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.settings_general)) },
+                title = {
+                    if (searching) {
+                        LaunchedEffect(Unit) { focusRequester.requestFocus() }
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            placeholder = { Text(stringResource(R.string.settings_search_hint)) },
+                            singleLine = true,
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(focusRequester)
+                        )
+                    } else {
+                        Text(stringResource(R.string.settings_general))
+                    }
+                },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.icon_back))
+                    IconButton(onClick = {
+                        if (searching) {
+                            searching = false
+                            searchQuery = ""
+                        } else {
+                            onBack()
+                        }
+                    }) {
+                        Icon(
+                            Icons.AutoMirrored.Rounded.ArrowBack,
+                            stringResource(if (searching) R.string.icon_close_search else R.string.icon_back)
+                        )
+                    }
+                },
+                actions = {
+                    if (!searching) {
+                        IconButton(onClick = { searching = true }) {
+                            Icon(Icons.Outlined.Search, stringResource(R.string.icon_search))
+                        }
                     }
                 }
             )
@@ -329,6 +383,16 @@ fun SettingsScreen(
                 )
                 SettingsRow(
                     position = RowPosition.MIDDLE,
+                    title = stringResource(R.string.settings_notif_hide_body_title),
+                    subtitle = stringResource(R.string.settings_notif_hide_body_subtitle),
+                    checked = hideNotifBody,
+                    onChecked = {
+                        hideNotifBody = it
+                        vm.settings.hideNotificationBody = it
+                    }
+                )
+                SettingsRow(
+                    position = RowPosition.MIDDLE,
                     title = stringResource(R.string.settings_mark_read_title),
                     onClick = {
                         vm.markAllRead()
@@ -344,6 +408,44 @@ fun SettingsScreen(
                     title = stringResource(R.string.settings_theme_title),
                     subtitle = themeLabel(themeMode, context),
                     onClick = { themeDialog = true }
+                )
+                val langSubtitle = when (vm.settings.appLanguage) {
+                    "fa" -> stringResource(R.string.language_fa)
+                    "en" -> stringResource(R.string.language_en)
+                    else -> stringResource(R.string.language_system)
+                }
+                SettingsRow(
+                    position = RowPosition.MIDDLE,
+                    title = stringResource(R.string.settings_language_title),
+                    subtitle = langSubtitle,
+                    onClick = { languageDialog = true }
+                )
+                val linesSubtitle = when (vm.settings.previewLines) {
+                    1 -> stringResource(R.string.preview_lines_1)
+                    2 -> stringResource(R.string.preview_lines_2)
+                    3 -> stringResource(R.string.preview_lines_3)
+                    else -> "${vm.settings.previewLines} lines"
+                }
+                SettingsRow(
+                    position = RowPosition.MIDDLE,
+                    title = stringResource(R.string.settings_preview_lines_title),
+                    subtitle = linesSubtitle,
+                    onClick = { previewLinesDialog = true }
+                )
+                val colorSubtitle = when (vm.settings.customCellColor) {
+                    "green" -> stringResource(R.string.cell_color_green)
+                    "cyan" -> stringResource(R.string.cell_color_cyan)
+                    "gold" -> stringResource(R.string.cell_color_gold)
+                    "red" -> stringResource(R.string.cell_color_red)
+                    "purple" -> stringResource(R.string.cell_color_purple)
+                    "silver" -> stringResource(R.string.cell_color_silver)
+                    else -> stringResource(R.string.cell_color_theme)
+                }
+                SettingsRow(
+                    position = RowPosition.MIDDLE,
+                    title = stringResource(R.string.settings_cell_color_title),
+                    subtitle = colorSubtitle,
+                    onClick = { cellColorDialog = true }
                 )
                 val selectedSub = sims.firstOrNull { it.subscriptionId == vm.settings.simSubscriptionId }
                 val currentSimLabel = if (selectedSub == null) {
@@ -502,6 +604,135 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { themeDialog = false }) { Text(stringResource(R.string.common_cancel)) }
+            }
+        )
+    }
+
+    if (languageDialog) {
+        AlertDialog(
+            onDismissRequest = { languageDialog = false },
+            title = { Text(stringResource(R.string.settings_language_title)) },
+            text = {
+                Column {
+                    val langOptions = listOf(
+                        "system" to stringResource(R.string.language_system),
+                        "fa" to stringResource(R.string.language_fa),
+                        "en" to stringResource(R.string.language_en)
+                    )
+                    langOptions.forEach { (code, label) ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    vm.settings.appLanguage = code
+                                    languageDialog = false
+                                    (context as? Activity)?.recreate()
+                                }
+                                .padding(vertical = 6.dp)
+                        ) {
+                            RadioButton(
+                                selected = vm.settings.appLanguage == code,
+                                onClick = {
+                                    vm.settings.appLanguage = code
+                                    languageDialog = false
+                                    (context as? Activity)?.recreate()
+                                }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(label)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { languageDialog = false }) { Text(stringResource(R.string.common_ok)) }
+            }
+        )
+    }
+
+    if (previewLinesDialog) {
+        AlertDialog(
+            onDismissRequest = { previewLinesDialog = false },
+            title = { Text(stringResource(R.string.settings_preview_lines_title)) },
+            text = {
+                Column {
+                    val lineOptions = listOf(
+                        1 to stringResource(R.string.preview_lines_1),
+                        2 to stringResource(R.string.preview_lines_2),
+                        3 to stringResource(R.string.preview_lines_3)
+                    )
+                    lineOptions.forEach { (lines, label) ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    vm.settings.previewLines = lines
+                                    previewLinesDialog = false
+                                }
+                                .padding(vertical = 6.dp)
+                        ) {
+                            RadioButton(
+                                selected = vm.settings.previewLines == lines,
+                                onClick = {
+                                    vm.settings.previewLines = lines
+                                    previewLinesDialog = false
+                                }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(label)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { previewLinesDialog = false }) { Text(stringResource(R.string.common_ok)) }
+            }
+        )
+    }
+
+    if (cellColorDialog) {
+        AlertDialog(
+            onDismissRequest = { cellColorDialog = false },
+            title = { Text(stringResource(R.string.settings_cell_color_title)) },
+            text = {
+                Column {
+                    val colorOptions = listOf(
+                        "theme" to stringResource(R.string.cell_color_theme),
+                        "green" to stringResource(R.string.cell_color_green),
+                        "cyan" to stringResource(R.string.cell_color_cyan),
+                        "gold" to stringResource(R.string.cell_color_gold),
+                        "red" to stringResource(R.string.cell_color_red),
+                        "purple" to stringResource(R.string.cell_color_purple),
+                        "silver" to stringResource(R.string.cell_color_silver)
+                    )
+                    colorOptions.forEach { (code, label) ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    vm.settings.customCellColor = code
+                                    cellColorDialog = false
+                                }
+                                .padding(vertical = 4.dp)
+                        ) {
+                            RadioButton(
+                                selected = vm.settings.customCellColor == code,
+                                onClick = {
+                                    vm.settings.customCellColor = code
+                                    cellColorDialog = false
+                                }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(label)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { cellColorDialog = false }) { Text(stringResource(R.string.common_ok)) }
             }
         )
     }

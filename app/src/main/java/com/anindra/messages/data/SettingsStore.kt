@@ -68,6 +68,18 @@ class SettingsStore(context: Context) {
         const val KEY_PERMANENT_DELETE_WARN = "permanent_delete_warn"
         const val KEY_REVERSE_SWIPE = "reverse_swipe_enabled"
         const val KEY_USE_NEW_UI = "use_new_ui"
+        const val KEY_APP_LANGUAGE = "app_language"
+        const val LANGUAGE_SYSTEM = "system"
+        const val LANGUAGE_FA = "fa"
+        const val LANGUAGE_EN = "en"
+
+        const val KEY_PREVIEW_LINES = "preview_lines"
+        const val DEFAULT_PREVIEW_LINES = 1
+
+        const val KEY_CUSTOM_CELL_COLOR = "custom_cell_color"
+        const val CELL_COLOR_THEME = "theme"
+
+        const val KEY_HIDE_NOTIF_BODY = "hide_notif_body"
         const val KEY_DRAFTS_ENABLED = "drafts_enabled"
         const val KEY_SWIPE_LEFT_ACTION = "swipe_left_action"
         const val KEY_SWIPE_RIGHT_ACTION = "swipe_right_action"
@@ -197,6 +209,22 @@ class SettingsStore(context: Context) {
     var useNewUi: Boolean
         get() = prefs.getBoolean(KEY_USE_NEW_UI, true)
         set(v) { prefs.edit().putBoolean(KEY_USE_NEW_UI, v).apply(); _revision.value++ }
+
+    var appLanguage: String
+        get() = prefs.getString(KEY_APP_LANGUAGE, LANGUAGE_SYSTEM) ?: LANGUAGE_SYSTEM
+        set(v) { prefs.edit().putString(KEY_APP_LANGUAGE, v).apply(); _revision.value++ }
+
+    var previewLines: Int
+        get() = prefs.getInt(KEY_PREVIEW_LINES, DEFAULT_PREVIEW_LINES).coerceIn(1, 3)
+        set(v) { prefs.edit().putInt(KEY_PREVIEW_LINES, v.coerceIn(1, 3)).apply(); _revision.value++ }
+
+    var customCellColor: String
+        get() = prefs.getString(KEY_CUSTOM_CELL_COLOR, CELL_COLOR_THEME) ?: CELL_COLOR_THEME
+        set(v) { prefs.edit().putString(KEY_CUSTOM_CELL_COLOR, v).apply(); _revision.value++ }
+
+    var hideNotificationBody: Boolean
+        get() = prefs.getBoolean(KEY_HIDE_NOTIF_BODY, false)
+        set(v) { prefs.edit().putBoolean(KEY_HIDE_NOTIF_BODY, v).apply(); _revision.value++ }
 
     /** Legacy chat surfaces still gate on this. */
     var draftsEnabled: Boolean

@@ -20,6 +20,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -67,7 +68,7 @@ object SmartNumberDetector {
          */
         fun hasSeparators(): Boolean {
             if (type == NumberType.USSD || type == NumberType.URL) return false
-            val separators = setOf('-', '–', '—', '.', ',', '،', '/', '\\', '_', ':', ' ', '(', ')', '\u066B', '\u066C')
+            val separators = setOf('-', '–', '—', '.', ',', '،', '٫', '/', '\\', '_', ':', ' ', '(', ')', '\u066B', '\u066C', '\u060C')
             return originalText.any { it in separators }
         }
 
@@ -77,7 +78,7 @@ object SmartNumberDetector {
          */
         fun cleanWithoutSeparators(): String {
             if (type == NumberType.USSD || type == NumberType.URL) return originalText
-            val separators = setOf('-', '–', '—', '.', ',', '،', '/', '\\', '_', ':', ' ', '(', ')', '\u066B', '\u066C')
+            val separators = setOf('-', '–', '—', '.', ',', '،', '٫', '/', '\\', '_', ':', ' ', '(', ')', '\u066B', '\u066C', '\u060C')
             val filtered = originalText.filter { it !in separators }
             return JalaliCalendar.toEnglishDigits(filtered).trim()
         }
@@ -179,13 +180,13 @@ object SmartNumberDetector {
             }
         }
 
-        // 2. Formatted Currency / Amounts with commas or dots (e.g. 3,750,000, 5,200,675, 2,050,000, 3،750،000)
-        val amountRegex = Regex("""(?<!\d)(\d{1,3}(?:[,،.]\d{3})+(?:\.\d+)?)(?!\d)""")
+        // 2. Formatted Currency / Amounts with commas or dots (e.g. 3,750,000, 5,200,675, 2,050,000)
+        val amountRegex = Regex("""(?<!\d)(\d{1,3}(?:[,،٫.]\d{3})+(?:\.\d+)?)(?!\d)""")
         for (m in amountRegex.findAll(normalizedBody)) {
             val range = m.range
             if (!overlaps(range)) {
                 val original = text.substring(range)
-                val digitsOnly = original.filter { it.isDigit() || it in '۰'..'۹' || it in '٠'..'٩' }
+                val digitsOnly = original.filter { it.isDigit() || it in '\u06F0'..'\u06F9' || it in '\u0660'..'\u0669' }
                 val clean = JalaliCalendar.toEnglishDigits(digitsOnly)
                 results.add(
                     DetectedNumber(
@@ -258,7 +259,7 @@ object SmartNumberDetector {
 
         // 6. Alphanumeric Promo / Discount / Voucher / Tracking Codes
         // A. Keyword-preceded codes (e.g. "کد: LDMM7X", "کد: X4W2VT", "کد تخفیف: OKALA50", "کد: AB-1234-CD")
-        val promoKeywordRegex = Regex("""(?i)(?:کد|رمز|code|coupon|voucher|pin|تخفیف|شناسه|پیگیری)[:\s-]*([A-Za-z0-9_-]{3,24})(?![A-Za-z0-9_-])""")
+        val promoKeywordRegex = Regex("""(?i)(?:کد|رمز|code|coupon|voucher|pin|تخفیف|شناسه|پیگیری|کدتخفیف)[:\s-]*([A-Za-z0-9_-]{3,24})(?![A-Za-z0-9_-])""")
         for (m in promoKeywordRegex.findAll(text)) {
             val group = m.groups[1] ?: continue
             val range = group.range
@@ -350,7 +351,7 @@ object SmartNumberDetector {
 
         // 9. All Multi-Segment Numbers with Separators (Hyphens, Dots, Slashes, Underscores, Colons, Spaces)
         // Completely highlights full expressions like 1405.08.13, 123-456-789, 12-34-56, 18:10, etc.
-        val separatedNumRegex = Regex("""(?<!\d)(\d+(?:[-–—./\\_,،: ]\d+)+)(?!\d)""")
+        val separatedNumRegex = Regex("""(?<!\d)(\d+(?:[-–—./\\_،٫: ]\d+)+)(?!\d)""")
         for (m in separatedNumRegex.findAll(normalizedBody)) {
             val range = m.range
             if (!overlaps(range)) {
@@ -367,7 +368,7 @@ object SmartNumberDetector {
             }
         }
 
-        // 10. All Other Numeric Runs (2 or more digits: e.g. ۷۳۸, 1405, 50000, 80, 400, 0116466042000, etc.)
+        // 10. All Other Numeric Runs (2 or more digits: e.g. 738, 1405, 50000, 80, 400, 0116466042000, etc.)
         val pureNumRegex = Regex("""(?<!\d)(\d{2,30})(?!\d)""")
         for (m in pureNumRegex.findAll(normalizedBody)) {
             val range = m.range
@@ -402,8 +403,9 @@ object SmartNumberDetector {
 }
 
 /**
- * Stark HUD Glass Dialog asking whether to strip hyphens, dots, spaces, and symbols
+ * Cyber HUD Glass Dialog asking whether to strip hyphens, dots, spaces, and symbols
  * or copy the exact original text to clipboard.
+ * Fully synchronized with dynamic theme colors.
  */
 @Composable
 fun CopySeparatorDialog(
@@ -413,10 +415,11 @@ fun CopySeparatorDialog(
 ) {
     val cleanText = item.cleanWithoutSeparators()
     val originalText = item.originalText
+    val cs = MaterialTheme.colorScheme
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xF2090F1B),
+        containerColor = cs.surfaceContainerHigh.copy(alpha = 0.95f),
         tonalElevation = 6.dp,
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.padding(16.dp),
@@ -428,12 +431,12 @@ fun CopySeparatorDialog(
                 Icon(
                     imageVector = Icons.Rounded.ContentCopy,
                     contentDescription = null,
-                    tint = Color(0xFFFFCC00),
+                    tint = cs.primary,
                     modifier = Modifier.size(20.dp)
                 )
                 Text(
                     text = "کپی به کلیپ‌بورد",
-                    color = Color(0xFFFFCC00),
+                    color = cs.primary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 17.sp
                 )
@@ -443,7 +446,7 @@ fun CopySeparatorDialog(
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
                     text = "آیا مایلید علامت‌ها، فاصله‌ها و خطوط تیره از متن حذف شوند؟",
-                    color = Color(0xFFE2E8F0),
+                    color = cs.onSurface,
                     fontSize = 14.sp,
                     lineHeight = 20.sp
                 )
@@ -451,20 +454,20 @@ fun CopySeparatorDialog(
                 // Option 1 Preview: Cleaned without separators
                 Card(
                     shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0x3300E5FF)),
-                    border = BorderStroke(1.dp, Color(0x6600E5FF)),
+                    colors = CardDefaults.cardColors(containerColor = cs.primary.copy(alpha = 0.12f)),
+                    border = BorderStroke(0.8.dp, cs.primary.copy(alpha = 0.5f)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
                         Text(
                             text = "حالت خالص (بدون علامت و خط فاصله):",
-                            color = Color(0xFF81E6D9),
+                            color = cs.primary,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium
                         )
                         Text(
                             text = cleanText,
-                            color = Color(0xFFE6FFFA),
+                            color = cs.onSurface,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -474,20 +477,20 @@ fun CopySeparatorDialog(
                 // Option 2 Preview: Original with separators
                 Card(
                     shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0x33FFCC00)),
-                    border = BorderStroke(1.dp, Color(0x66FFCC00)),
+                    colors = CardDefaults.cardColors(containerColor = cs.surfaceVariant.copy(alpha = 0.5f)),
+                    border = BorderStroke(0.8.dp, cs.secondary.copy(alpha = 0.5f)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
                         Text(
                             text = "حالت اصلی (با علامت و خط فاصله):",
-                            color = Color(0xFFFFD54F),
+                            color = cs.secondary,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium
                         )
                         Text(
                             text = originalText,
-                            color = Color(0xFFFFF8E1),
+                            color = cs.onSurface,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -499,8 +502,8 @@ fun CopySeparatorDialog(
             Button(
                 onClick = { onCopy(cleanText, true) },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF00E5FF),
-                    contentColor = Color(0xFF04070B)
+                    containerColor = cs.primary,
+                    contentColor = cs.onPrimary
                 ),
                 shape = RoundedCornerShape(6.dp)
             ) {
@@ -511,15 +514,15 @@ fun CopySeparatorDialog(
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 OutlinedButton(
                     onClick = { onCopy(originalText, false) },
-                    border = BorderStroke(1.dp, Color(0xFFFFCC00)),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFFCC00)),
+                    border = BorderStroke(0.8.dp, cs.secondary),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = cs.secondary),
                     shape = RoundedCornerShape(6.dp)
                 ) {
                     Text("کپی با علامت", fontSize = 13.sp)
                 }
                 TextButton(
                     onClick = onDismiss,
-                    colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF94A3B8))
+                    colors = ButtonDefaults.textButtonColors(contentColor = cs.onSurfaceVariant)
                 ) {
                     Text("انصراف", fontSize = 13.sp)
                 }

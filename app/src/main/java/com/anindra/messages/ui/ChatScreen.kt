@@ -364,21 +364,21 @@ internal fun ChatBubble(
     }
 
     val hudBorder = if (isSelected) {
-        BorderStroke(1.5.dp, Color(0xFFFFCC00))
+        BorderStroke(1.2.dp, cs.primary)
     } else if (isSearchFocus) {
-        BorderStroke(2.dp, cs.primary.copy(alpha = searchHighlightAlpha))
+        BorderStroke(1.5.dp, cs.primary.copy(alpha = searchHighlightAlpha))
     } else if (msg.isMe) {
-        BorderStroke(1.2.dp, Color(0xFFFFCC00))
+        BorderStroke(0.8.dp, cs.primary.copy(alpha = 0.65f))
     } else {
-        BorderStroke(1.2.dp, Color(0xCCFFB800))
+        BorderStroke(0.8.dp, cs.secondary.copy(alpha = 0.45f))
     }
 
     val hudBackground = if (isSelected) {
-        cs.selectedBubble
+        cs.primary.copy(alpha = 0.20f)
     } else if (msg.isMe) {
-        Color(0xF0181305)
+        cs.surfaceVariant.copy(alpha = 0.85f)
     } else {
-        Color(0xF0080E18)
+        cs.surfaceContainerHigh.copy(alpha = 0.75f)
     }
 
     Row(
@@ -2377,13 +2377,16 @@ private fun rememberLinkedText(
     searchHighlightAlpha: Float = 1f
 ): AnnotatedString {
     val linkColor = if (highlight) textColor.copy(alpha = 0.8f) else MaterialTheme.colorScheme.primary
-    val searchBackground = MaterialTheme.colorScheme.tertiaryContainer.copy(
+    val cs = MaterialTheme.colorScheme
+    val linkColor = if (highlight) textColor.copy(alpha = 0.8f) else cs.primary
+    val hudPrimary = cs.primary
+    val searchBackground = cs.tertiaryContainer.copy(
         alpha = 0.6f * searchHighlightAlpha.coerceIn(0f, 1f)
     )
     val context = LocalContext.current
     val base = if (hide) {
         remember(body) {
-            styledBody(hideUrls(body), linkColor, emptyMap(), null, null, context)
+            styledBody(hideUrls(body), linkColor, hudPrimary, emptyMap(), null, null, context)
         }
     } else {
         produceState(AnnotatedString(body), body, highlight, textColor, linkColor) {
@@ -2391,12 +2394,25 @@ private fun rememberLinkedText(
                 val urls = if (highlight) {
                     val spanned = SpannableStringBuilder(body)
                     Linkify.addLinks(spanned, Linkify.WEB_URLS)
-                    spanned.getSpans(0, spanned.length, URLSpan::class.java)
+                    val map = spanned.getSpans(0, spanned.length, URLSpan::class.java)
                         .associate {
                             (spanned.getSpanStart(it)..spanned.getSpanEnd(it) - 1) to it.url
+                        }.toMutableMap()
+                    // Fallback regex for common Iranian / international web links without scheme (e.g. okala.ir/y)
+                    val urlPattern = Regex("""(?i)\b(?:https?://|www\.)?[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.(?:ir|com|net|org|io|me|co|info|app|biz|xyz|site|online)(?:/[^\s\u0600-\u06FF]*)?""")
+                    for (m in urlPattern.findAll(body)) {
+                        val r = m.range
+                        if (map.keys.none { !(r.last < it.first || r.first > it.last) }) {
+                            var u = m.value
+                            if (!u.startsWith("http://") && !u.startsWith("https://")) {
+                                u = "https://$u"
+                            }
+                            map[r] = u
                         }
+                    }
+                    map
                 } else emptyMap()
-                styledBody(body, linkColor, urls, onLinkClick, onSmartNumberClick, context)
+                styledBody(body, linkColor, hudPrimary, urls, onLinkClick, onSmartNumberClick, context)
             }
         }.value
     }
@@ -2417,6 +2433,7 @@ private fun rememberLinkedText(
 private fun styledBody(
     body: String,
     linkColor: Color,
+    hudPrimary: Color = linkColor,
     urls: Map<IntRange, String>,
     onLinkClick: ((String) -> Unit)?,
     onSmartNumberClick: ((SmartNumberDetector.DetectedNumber) -> Unit)? = null,
@@ -2444,9 +2461,9 @@ private fun styledBody(
         out.addStyle(SpanStyle(textDecoration = TextDecoration.Underline), range.first, range.last + 1)
     }
 
-    // 2. Highlighting all detected numbers with Stark HUD gold styling & smart separator copy
-    val hudNumberGold = Color(0xFFFFCC00)
-    val hudNumberBg = Color(0x38FFCC00)
+    // 2. Highlighting all detected numbers with dynamic theme styling & smart separator copy
+    val hudNumberGold = hudPrimary
+    val hudNumberBg = hudPrimary.copy(alpha = 0.22f)
     for (item in detectedNumbers) {
         if (urls.keys.none { !(item.range.last < it.first || item.range.first > it.last) }) {
             val range = iso.remap(item.range)
@@ -2713,19 +2730,19 @@ fun MessageRow(
     }
 
     val hudBorder = if (isSelected) {
-        BorderStroke(1.5.dp, Color(0xFFFFCC00))
+        BorderStroke(1.2.dp, cs.primary)
     } else if (msg.isMe) {
-        BorderStroke(1.dp, Color(0x66FFCC00))
+        BorderStroke(0.8.dp, cs.primary.copy(alpha = 0.65f))
     } else {
-        BorderStroke(1.dp, Color(0x4400E5FF))
+        BorderStroke(0.8.dp, cs.secondary.copy(alpha = 0.45f))
     }
 
     val hudBackground = if (isSelected) {
-        cs.selectedBubble
+        cs.primary.copy(alpha = 0.20f)
     } else if (msg.isMe) {
-        Color(0xF0181305)
+        cs.surfaceVariant.copy(alpha = 0.85f)
     } else {
-        Color(0xF0080E18)
+        cs.surfaceContainerHigh.copy(alpha = 0.75f)
     }
 
     Column(
