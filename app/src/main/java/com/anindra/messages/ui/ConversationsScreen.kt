@@ -40,6 +40,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -250,7 +254,9 @@ fun ConversationsScreen(
             cellBorderOpacity = vm.settings.cellBorderOpacity,
             cellBorderOpacityFloat = vm.settings.cellBorderOpacityFloat,
             cellBorderWidthFloat = vm.settings.cellBorderWidthFloat,
-            dividerColor = vm.settings.dividerColor
+            dividerColor = vm.settings.dividerColor,
+            cellShape = vm.settings.cellShape,
+            themeMode = vm.settings.themeMode
         )
     }
 
@@ -442,7 +448,12 @@ fun ConversationsScreen(
             }
         }
     ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize()) {
+        CyberBackground(
+            backgroundType = vm.settings.appBackground,
+            themeMode = vm.settings.themeMode,
+            modifier = Modifier.padding(padding).fillMaxSize()
+        ) {
+            Column(Modifier.fillMaxSize()) {
 
             if (selectionActive) {
                 ConversationSelectionBar(
@@ -618,6 +629,7 @@ fun ConversationsScreen(
                     }
                 }
             }
+        }
         }
     }
 
@@ -1013,7 +1025,9 @@ internal data class RowSettings(
     val cellBorderOpacity: String = "medium",
     val cellBorderOpacityFloat: Float = 0.45f,
     val cellBorderWidthFloat: Float = 0.8f,
-    val dividerColor: String = "theme"
+    val dividerColor: String = "theme",
+    val cellShape: String = "smart",
+    val themeMode: String = "stark"
 )
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -1081,7 +1095,7 @@ internal fun ConversationRow(
         "silver" -> Color(0xFFE2E8F0)
         else -> cs.primary
     }
-    val isDividerMode = settings.cellStyle == "divider"
+    val isDividerMode = settings.cellStyle == "divider" || settings.cellShape == "divider"
     val cardBorderColor = when {
         selected && selectionMode -> customAccent
         isUnread -> customAccent
@@ -1114,11 +1128,84 @@ internal fun ConversationRow(
                 vertical = if (isDividerMode) 1.dp else 3.dp
             )
     ) {
+        val isVipMechTheme = settings.themeMode in listOf(
+            "vip_cyber_mech_deck", "vip_tactical_hud_amber", "vip_classified_crimson",
+            "vip_classified_cyan", "vip_stark_cockpit_hud", "stark"
+        )
+
+        val resolvedShapeType = when {
+            isDividerMode -> "divider"
+            settings.cellShape == "chamfer" -> "chamfer"
+            settings.cellShape == "mech_pod" -> "mech_pod"
+            settings.cellShape == "rounded" -> "rounded"
+            settings.cellShape == "smart" && isVipMechTheme -> {
+                when (settings.themeMode) {
+                    "vip_cyber_mech_deck" -> "mech_pod"
+                    "vip_tactical_hud_amber" -> "chamfer"
+                    "vip_classified_crimson", "vip_classified_cyan" -> "chamfer"
+                    else -> "chamfer"
+                }
+            }
+            else -> "rounded"
+        }
+
+        val cellShapeObj: Shape = when (resolvedShapeType) {
+            "chamfer" -> CutCornerShape(topStart = 11.dp, bottomEnd = 11.dp, topEnd = 3.dp, bottomStart = 3.dp)
+            "mech_pod" -> RoundedCornerShape(topStart = 13.dp, bottomEnd = 13.dp, topEnd = 5.dp, bottomStart = 5.dp)
+            "divider" -> RoundedCornerShape(4.dp)
+            else -> RoundedCornerShape(8.dp)
+        }
+
         Surface(
-            shape = if (isDividerMode) RoundedCornerShape(4.dp) else RoundedCornerShape(8.dp),
-            color = cardBg,
+            shape = cellShapeObj,
+            color = if (isDividerMode) Color.Transparent else cardBg,
             border = if (isDividerMode) null else BorderStroke(effectiveWidth.dp, cardBorderColor),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .drawWithContent {
+                    drawContent()
+                    if (!isDividerMode && (resolvedShapeType == "chamfer" || resolvedShapeType == "mech_pod" || isVipMechTheme)) {
+                        val w = size.width
+                        val h = size.height
+                        val bracketLen = 10.dp.toPx()
+                        val strokeW = (effectiveWidth + 0.8f).dp.toPx()
+                        val glowBracket = cardBorderColor.copy(alpha = if (isUnread) 0.95f else 0.70f)
+
+                        // â”Œ Top-Left Bracket
+                        drawLine(glowBracket, Offset(0f, bracketLen), Offset(0f, 0f), strokeW)
+                        drawLine(glowBracket, Offset(0f, 0f), Offset(bracketLen, 0f), strokeW)
+
+                        // â” Top-Right Bracket
+                        drawLine(glowBracket, Offset(w - bracketLen, 0f), Offset(w, 0f), strokeW)
+                        drawLine(glowBracket, Offset(w, 0f), Offset(w, bracketLen), strokeW)
+
+                        // â”” Bottom-Left Bracket
+                        drawLine(glowBracket, Offset(0f, h - bracketLen), Offset(0f, h), strokeW)
+                        drawLine(glowBracket, Offset(0f, h), Offset(bracketLen, h), strokeW)
+
+                        // â”˜ Bottom-Right Bracket
+                        drawLine(glowBracket, Offset(w - bracketLen, h), Offset(w, h), strokeW)
+                        drawLine(glowBracket, Offset(w, h), Offset(w, h - bracketLen), strokeW)
+
+                        // Micro LED status dot
+                        val ledX = w - 16.dp.toPx()
+                        val ledY = 8.dp.toPx()
+                        drawCircle(
+                            color = if (isUnread) customAccent else customAccent.copy(alpha = 0.35f),
+                            radius = 2.5.dp.toPx(),
+                            center = Offset(ledX, ledY)
+                        )
+                    }
+
+                    if (isDividerMode) {
+                        drawLine(
+                            color = dividerColorResolved,
+                            start = Offset(12.dp.toPx(), size.height),
+                            end = Offset(size.width - 12.dp.toPx(), size.height),
+                            strokeWidth = effectiveWidth.dp.toPx()
+                        )
+                    }
+                }
         ) {
             Row(
                 modifier = Modifier

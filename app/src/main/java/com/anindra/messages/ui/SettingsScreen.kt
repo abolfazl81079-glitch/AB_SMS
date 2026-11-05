@@ -1,4 +1,4 @@
-﻿package com.anindra.messages.ui
+package com.anindra.messages.ui
 
 import android.Manifest
 import android.app.Activity
@@ -169,6 +169,8 @@ fun SettingsScreen(
     var importSourceDialog by remember { mutableStateOf(false) }
     var vipTokenDialog by remember { mutableStateOf(false) }
     var vipThemesDialog by remember { mutableStateOf(false) }
+    var appBackgroundDialog by remember { mutableStateOf(false) }
+    var cellShapeDialog by remember { mutableStateOf(false) }
     var tokenInput by remember { mutableStateOf("") }
     var tokenError by remember { mutableStateOf(false) }
 
@@ -323,6 +325,22 @@ fun SettingsScreen(
         "silver" -> stringResource(R.string.cell_color_silver)
         else -> stringResource(R.string.cell_color_theme)
     }
+    val appBackgroundSubtitle = when (vm.settings.appBackground) {
+        "grid" -> stringResource(R.string.background_grid)
+        "circuit" -> stringResource(R.string.background_circuit)
+        "cityscape" -> stringResource(R.string.background_cityscape)
+        "carbon" -> stringResource(R.string.background_carbon)
+        "hud_blueprint" -> stringResource(R.string.background_hud_blueprint)
+        "blackout" -> stringResource(R.string.background_blackout)
+        else -> stringResource(R.string.background_default)
+    }
+    val cellShapeSubtitle = when (vm.settings.cellShape) {
+        "chamfer" -> stringResource(R.string.cell_shape_chamfer)
+        "mech_pod" -> stringResource(R.string.cell_shape_mech_pod)
+        "rounded" -> stringResource(R.string.cell_shape_rounded)
+        "divider" -> stringResource(R.string.cell_shape_divider)
+        else -> stringResource(R.string.cell_shape_smart)
+    }
     val cellStyleSubtitle = when (vm.settings.cellStyle) {
         "divider" -> stringResource(R.string.cell_style_divider)
         else -> stringResource(R.string.cell_style_card)
@@ -377,7 +395,7 @@ fun SettingsScreen(
         showSimIndicator, hideNotifBody, privacyMode, appLock, periodicBackup, currentSimLabel,
         themeSubtitle, langSubtitle, linesSubtitle, cellColorSubtitle, cellStyleSubtitle,
         borderOpacitySubtitle, dividerColorSubtitle, launcherIconSubtitle, swipeLeftSubtitle,
-        swipeRightSubtitle, scheduledCount
+        swipeRightSubtitle, scheduledCount, appBackgroundSubtitle, cellShapeSubtitle
     ) {
         listOf(
             // Appearance & Theme
@@ -388,6 +406,22 @@ fun SettingsScreen(
                 category = "ظاهر و طراحی / Appearance",
                 keywords = listOf("theme", "تم", "پوسته", "رنگ", "ظاهر", "dark", "light", "amoled", "stark", "matrix", "arctic", "ghost", "crimson", "cyber", "quantum", "blackout", "gold", "cyan", "green"),
                 onClick = { themeDialog = true }
+            ),
+            SearchSettingItem(
+                id = "app_background",
+                title = context.getString(R.string.settings_app_background_title),
+                subtitle = appBackgroundSubtitle,
+                category = "ظاهر و طراحی / Appearance",
+                keywords = listOf("background", "پس‌زمینه", "بک گراند", "والپیپر", "wallpaper", "grid", "circuit", "cityscape", "carbon", "hud", "سیاه", "شبکه"),
+                onClick = { appBackgroundDialog = true }
+            ),
+            SearchSettingItem(
+                id = "cell_shape",
+                title = context.getString(R.string.settings_cell_shape_title),
+                subtitle = cellShapeSubtitle,
+                category = "ظاهر و طراحی / Appearance",
+                keywords = listOf("shape", "cell shape", "شکل کادر", "شکل سلول", "گوشه", "برش خورده", "chamfer", "mech", "هندسی"),
+                onClick = { cellShapeDialog = true }
             ),
             SearchSettingItem(
                 id = "vip_themes", title = context.getString(R.string.vip_settings_row_title),
@@ -881,13 +915,17 @@ fun SettingsScreen(
             )
         }
     ) { padding ->
-        Column(
-            Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(horizontal = SettingsLayout.SCREEN_PADDING)
+        CyberBackground(
+            backgroundType = vm.settings.appBackground,
+            themeMode = vm.settings.themeMode,
+            modifier = Modifier.padding(padding).fillMaxSize()
         ) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = SettingsLayout.SCREEN_PADDING)
+            ) {
             Spacer(Modifier.height(SettingsLayout.TOP_GAP))
 
             if (searching && searchQuery.isNotBlank()) {
@@ -1007,6 +1045,18 @@ fun SettingsScreen(
                         title = stringResource(R.string.settings_theme_title),
                         subtitle = themeSubtitle,
                         onClick = { themeDialog = true }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_app_background_title),
+                        subtitle = appBackgroundSubtitle,
+                        onClick = { appBackgroundDialog = true }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_cell_shape_title),
+                        subtitle = cellShapeSubtitle,
+                        onClick = { cellShapeDialog = true }
                     )
                     SettingsRow(
                         position = RowPosition.MIDDLE, title = stringResource(R.string.vip_settings_row_title), subtitle = vipSubtitle, onClick = { if (vm.settings.vipThemesUnlocked) {
@@ -1359,6 +1409,7 @@ fun SettingsScreen(
 
             SettingsFooter(stringResource(R.string.messages_footer))
         }
+        }
     }
 
     // Dialogs
@@ -1583,14 +1634,14 @@ fun SettingsScreen(
                     )
 
                     val darkVipThemes = listOf(
+                        Triple("vip_cyber_mech_deck", R.string.vip_theme_cyber_mech_deck_title, R.string.vip_theme_cyber_mech_deck_desc),
+                        Triple("vip_tactical_hud_amber", R.string.vip_theme_tactical_hud_amber_title, R.string.vip_theme_tactical_hud_amber_desc),
+                        Triple("vip_classified_crimson", R.string.vip_theme_classified_crimson_title, R.string.vip_theme_classified_crimson_desc),
+                        Triple("vip_classified_cyan", R.string.vip_theme_classified_cyan_title, R.string.vip_theme_classified_cyan_desc),
                         Triple("vip_stark_cockpit_hud", R.string.vip_theme_stark_cockpit_hud_title, R.string.vip_theme_stark_cockpit_hud_desc),
                         Triple("vip_phantom_hacker", R.string.vip_theme_phantom_hacker_title, R.string.vip_theme_phantom_hacker_desc),
-                        Triple("vip_blood_overdrive", R.string.vip_theme_blood_overdrive_title, R.string.vip_theme_blood_overdrive_desc),
-                        Triple("vip_synthwave_2077", R.string.vip_theme_synthwave_2077_title, R.string.vip_theme_synthwave_2077_desc),
-                        Triple("vip_titanium_monolith", R.string.vip_theme_titanium_monolith_title, R.string.vip_theme_titanium_monolith_desc),
-                        Triple("vip_matrix_terminal_zero", R.string.vip_theme_matrix_terminal_zero_title, R.string.vip_theme_matrix_terminal_zero_desc),
                         Triple("vip_liquid_glass_dark", R.string.vip_theme_liquid_glass_dark_title, R.string.vip_theme_liquid_glass_dark_desc),
-                        Triple("vip_crimson_reactor", R.string.vip_theme_crimson_reactor_title, R.string.vip_theme_crimson_reactor_desc)
+                        Triple("vip_matrix_terminal_zero", R.string.vip_theme_matrix_terminal_zero_title, R.string.vip_theme_matrix_terminal_zero_desc)
                     )
 
                     darkVipThemes.forEach { (id, titleRes, descRes) ->
@@ -1639,6 +1690,98 @@ fun SettingsScreen(
             confirmButton = {
                 TextButton(onClick = { vipThemesDialog = false }) {
                     Text(stringResource(R.string.common_ok))
+                }
+            }
+        )
+    }
+
+        if (appBackgroundDialog) {
+        AlertDialog(
+            onDismissRequest = { appBackgroundDialog = false },
+            title = { Text(stringResource(R.string.settings_app_background_title)) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    val bgOptions = listOf(
+                        "default" to stringResource(R.string.background_default),
+                        "grid" to stringResource(R.string.background_grid),
+                        "circuit" to stringResource(R.string.background_circuit),
+                        "cityscape" to stringResource(R.string.background_cityscape),
+                        "carbon" to stringResource(R.string.background_carbon),
+                        "hud_blueprint" to stringResource(R.string.background_hud_blueprint),
+                        "blackout" to stringResource(R.string.background_blackout)
+                    )
+                    bgOptions.forEach { (code, label) ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    vm.settings.appBackground = code
+                                    appBackgroundDialog = false
+                                }
+                                .padding(vertical = 8.dp)
+                        ) {
+                            RadioButton(
+                                selected = vm.settings.appBackground == code,
+                                onClick = {
+                                    vm.settings.appBackground = code
+                                    appBackgroundDialog = false
+                                }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(label, style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { appBackgroundDialog = false }) {
+                    Text(stringResource(R.string.common_cancel))
+                }
+            }
+        )
+    }
+
+    if (cellShapeDialog) {
+        AlertDialog(
+            onDismissRequest = { cellShapeDialog = false },
+            title = { Text(stringResource(R.string.settings_cell_shape_title)) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    val shapeOptions = listOf(
+                        "smart" to stringResource(R.string.cell_shape_smart),
+                        "chamfer" to stringResource(R.string.cell_shape_chamfer),
+                        "mech_pod" to stringResource(R.string.cell_shape_mech_pod),
+                        "rounded" to stringResource(R.string.cell_shape_rounded),
+                        "divider" to stringResource(R.string.cell_shape_divider)
+                    )
+                    shapeOptions.forEach { (code, label) ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    vm.settings.cellShape = code
+                                    cellShapeDialog = false
+                                }
+                                .padding(vertical = 8.dp)
+                        ) {
+                            RadioButton(
+                                selected = vm.settings.cellShape == code,
+                                onClick = {
+                                    vm.settings.cellShape = code
+                                    cellShapeDialog = false
+                                }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(label, style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { cellShapeDialog = false }) {
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -2752,6 +2895,10 @@ private fun themeLabel(mode: String, context: android.content.Context): String {
         "vip_rose_gold_lux" -> context.getString(R.string.vip_theme_rose_gold_lux_title)
         "vip_blueprint_light" -> context.getString(R.string.vip_theme_blueprint_light_title)
         // 8 VIP Masterpiece Dark / Hacker Themes
+        "vip_cyber_mech_deck" -> context.getString(R.string.vip_theme_cyber_mech_deck_title)
+        "vip_tactical_hud_amber" -> context.getString(R.string.vip_theme_tactical_hud_amber_title)
+        "vip_classified_crimson" -> context.getString(R.string.vip_theme_classified_crimson_title)
+        "vip_classified_cyan" -> context.getString(R.string.vip_theme_classified_cyan_title)
         "vip_stark_cockpit_hud" -> context.getString(R.string.vip_theme_stark_cockpit_hud_title)
         "vip_phantom_hacker" -> context.getString(R.string.vip_theme_phantom_hacker_title)
         "vip_blood_overdrive" -> context.getString(R.string.vip_theme_blood_overdrive_title)

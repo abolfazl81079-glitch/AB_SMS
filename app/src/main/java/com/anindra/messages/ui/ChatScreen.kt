@@ -1585,7 +1585,11 @@ fun ChatScreen(
             }
         }
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
+        CyberBackground(
+            backgroundType = vm.settings.appBackground,
+            themeMode = vm.settings.themeMode,
+            modifier = Modifier.fillMaxSize().padding(padding)
+        ) {
             val revealed = remember { mutableStateListOf<Long>() }
             CompositionLocalProvider(LocalDensity provides zoomedDensity) {
             LazyColumn(

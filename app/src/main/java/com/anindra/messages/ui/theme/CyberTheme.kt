@@ -751,6 +751,130 @@ object CyberTheme {
         surfaceContainerHighest = Color(0xFF2C0B12)
     )
 
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ VIP 17. Cyber Mech Deck 2077 (Titanium Chassis + Cyber Mint + Reactor Cyan) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Direct inspiration: media_1793885046610_b3a0237d.jpg & media_1793885062318_33297fe3.jpg
+    val VipCyberMechDeck = darkColorScheme(
+        primary = Color(0xFF00FF88),             // Hyper-vivid Cyber Mint / Neon Green
+        onPrimary = Color(0xFF001F0E),
+        primaryContainer = Color(0xFF00381B),    // Mech chamber glass
+        onPrimaryContainer = Color(0xFFB8FFE0),
+        inversePrimary = Color(0xFF5CFFAB),
+        secondary = Color(0xFF00E5FF),           // Reactor Core Cyan
+        onSecondary = Color(0xFF001B20),
+        secondaryContainer = Color(0xFF00363F),
+        onSecondaryContainer = Color(0xFFB3F5FF),
+        tertiary = Color(0xFFFF6B00),            // Alert Orange Status
+        onTertiary = Color(0xFF1F0800),
+        background = Color(0xFF04070A),          // Stealth Titanium OLED Black
+        onBackground = Color(0xFFE8FFF4),        // Ultra high contrast tech text
+        surface = Color(0xFF070D12),             // Console instrument slate
+        onSurface = Color(0xFFE8FFF4),
+        surfaceVariant = Color(0xFF0E1A24),      // Mech Pod Card Panel
+        onSurfaceVariant = Color(0xFF00FF88),    // Secondary Tech Mint
+        outline = Color(0xFF00FF88),             // Neon Mint Laser Borders
+        outlineVariant = Color(0xFF006633),      // Dark mech rail
+        error = Color(0xFFFF2A4A),
+        onError = Color(0xFFFFFFFF),
+        surfaceContainerLowest = Color(0xFF020406),
+        surfaceContainerLow = Color(0xFF05090E),
+        surfaceContainer = Color(0xFF0A131C),    // Mech Cell Container
+        surfaceContainerHigh = Color(0xFF111F2D),
+        surfaceContainerHighest = Color(0xFF192D40)
+    )
+
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ VIP 18. Tactical HUD Amber (Dark Cockpit + Incandescent Tube Amber + Gold Brackets) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Direct inspiration: media_1793885038945_3950f3c8.jpg
+    val VipTacticalHudAmber = darkColorScheme(
+        primary = Color(0xFFFF9900),             // Incandescent Vacuum Tube Amber
+        onPrimary = Color(0xFF1A0A00),
+        primaryContainer = Color(0xFF3D1900),    // Warm vacuum glow
+        onPrimaryContainer = Color(0xFFFFE3B8),
+        inversePrimary = Color(0xFFFFBD59),
+        secondary = Color(0xFFFFCC00),           // Stark Cyber Gold Framing
+        onSecondary = Color(0xFF171000),
+        secondaryContainer = Color(0xFF382C00),
+        onSecondaryContainer = Color(0xFFFFF0A8),
+        tertiary = Color(0xFFFF2A4A),            // Telemetry Red Indicator
+        onTertiary = Color(0xFFFFFFFF),
+        background = Color(0xFF070608),          // Cockpit Obsidian Chassis
+        onBackground = Color(0xFFFFF5E6),        // High-contrast warm HUD text
+        surface = Color(0xFF0F0C10),             // Instrument Panel
+        onSurface = Color(0xFFFFF5E6),
+        surfaceVariant = Color(0xFF1A141C),      // Tactical HUD Panel Card
+        onSurfaceVariant = Color(0xFFFF9900),    // Amber telemetry text
+        outline = Color(0xFFFF9900),             // Amber Laser Borders
+        outlineVariant = Color(0xFF804D00),      // Subdued Gold Bracket
+        error = Color(0xFFFF2A4A),
+        onError = Color(0xFFFFFFFF),
+        surfaceContainerLowest = Color(0xFF040305),
+        surfaceContainerLow = Color(0xFF09070B),
+        surfaceContainer = Color(0xFF120E15),    // Tactical Cell Slate
+        surfaceContainerHigh = Color(0xFF1D1722),
+        surfaceContainerHighest = Color(0xFF282030)
+    )
+
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ VIP 19. Classified Red Alert (Night City Skyline + Radioactive Crimson Alert) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Direct inspiration: media_1793885055667_a500a260.jpg (left phone)
+    val VipClassifiedCrimson = darkColorScheme(
+        primary = Color(0xFFFF003C),             // Radioactive Classified Crimson Alert
+        onPrimary = Color(0xFFFFFFFF),
+        primaryContainer = Color(0xFF3E000C),    // Red Alert Chamber
+        onPrimaryContainer = Color(0xFFFFD9DF),
+        inversePrimary = Color(0xFFFF5277),
+        secondary = Color(0xFFFF8800),           // Caution Hazard Amber
+        onSecondary = Color(0xFF1A0800),
+        secondaryContainer = Color(0xFF3A1800),
+        onSecondaryContainer = Color(0xFFFFE0B8),
+        tertiary = Color(0xFFFF3366),
+        onTertiary = Color(0xFFFFFFFF),
+        background = Color(0xFF080103),          // Night City Crimson Abyss
+        onBackground = Color(0xFFFFF0F2),        // Bright White/Rose Text
+        surface = Color(0xFF100306),             // Classified Console Slate
+        onSurface = Color(0xFFFFF0F2),
+        surfaceVariant = Color(0xFF1A060A),      // Classified Card
+        onSurfaceVariant = Color(0xFFFF4D6D),    // Red alert secondary text
+        outline = Color(0xFFFF003C),             // Crimson Laser Borders
+        outlineVariant = Color(0xFF80001E),      // Subdued Red Seam
+        error = Color(0xFFFF003C),
+        onError = Color(0xFFFFFFFF),
+        surfaceContainerLowest = Color(0xFF040001),
+        surfaceContainerLow = Color(0xFF0A0204),
+        surfaceContainer = Color(0xFF140407),    // Classified Cell Container
+        surfaceContainerHigh = Color(0xFF20060C),
+        surfaceContainerHighest = Color(0xFF2E0912)
+    )
+
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ VIP 20. Classified Stealth Teal (Night City Skyline + Hyper-Vivid Cyan Radar) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Direct inspiration: media_1793885055667_a500a260.jpg (right phone)
+    val VipClassifiedCyan = darkColorScheme(
+        primary = Color(0xFF00F2FF),             // Hyper-Vivid Electric Cyan
+        onPrimary = Color(0xFF001E22),
+        primaryContainer = Color(0xFF00373D),    // Radar Chamber Glass
+        onPrimaryContainer = Color(0xFFB5F8FF),
+        inversePrimary = Color(0xFF66F7FF),
+        secondary = Color(0xFF00FFAA),           // Tactical Radar Mint
+        onSecondary = Color(0xFF001F13),
+        secondaryContainer = Color(0xFF003822),
+        onSecondaryContainer = Color(0xFFB8FFE2),
+        tertiary = Color(0xFFFF7A00),            // Warning Alert Orange
+        onTertiary = Color(0xFF1F0A00),
+        background = Color(0xFF02080C),          // Night City Teal Abyss
+        onBackground = Color(0xFFE6FCFF),        // High Contrast Cyan White
+        surface = Color(0xFF051017),             // Radar Instrument Slate
+        onSurface = Color(0xFFE6FCFF),
+        surfaceVariant = Color(0xFF0B1B26),      // Classified Teal Card
+        onSurfaceVariant = Color(0xFF00F2FF),    // Radar Cyan secondary
+        outline = Color(0xFF00F2FF),             // Electric Cyan Laser Borders
+        outlineVariant = Color(0xFF007380),      // Subdued Teal Seam
+        error = Color(0xFFFF2A4A),
+        onError = Color(0xFFFFFFFF),
+        surfaceContainerLowest = Color(0xFF010406),
+        surfaceContainerLow = Color(0xFF030B10),
+        surfaceContainer = Color(0xFF081620),    // Classified Teal Cell Container
+        surfaceContainerHigh = Color(0xFF0E2230),
+        surfaceContainerHighest = Color(0xFF153044)
+    )
+
     /**
      * Resolves the requested theme mode into a ColorScheme.
      */
@@ -777,14 +901,20 @@ object CyberTheme {
         "vip_rose_gold_lux" -> VipRoseGoldLux
         "vip_blueprint_light" -> VipBlueprintLight
 
-        // 8 VIP Masterpiece Dark / Hacker Themes
+        // 8 VIP Premier Dark Themes (Sci-Fi Mech / Cockpit / Tactical)
+        "vip_cyber_mech_deck" -> VipCyberMechDeck
+        "vip_tactical_hud_amber" -> VipTacticalHudAmber
+        "vip_classified_crimson" -> VipClassifiedCrimson
+        "vip_classified_cyan" -> VipClassifiedCyan
         "vip_stark_cockpit_hud" -> VipStarkCockpitHud
         "vip_phantom_hacker" -> VipPhantomHacker
+        "vip_liquid_glass_dark" -> VipLiquidGlassDark
+        "vip_matrix_terminal_zero" -> VipMatrixTerminalZero
+
+        // Aliases / Legacy VIP dark modes
         "vip_blood_overdrive" -> VipBloodOverdrive
         "vip_synthwave_2077" -> VipSynthwave2077
         "vip_titanium_monolith" -> VipTitaniumMonolith
-        "vip_matrix_terminal_zero" -> VipMatrixTerminalZero
-        "vip_liquid_glass_dark" -> VipLiquidGlassDark
         "vip_crimson_reactor" -> VipCrimsonReactor
 
         else -> StarkHud // Default is Stark Cyber HUD

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name_placeholder">placeholder</string>
     <string name="translation_help">Translations are community-powered and may contain errors. If you find any inaccurate or missing translations, please open a new GitHub issue at github.com/an1ndra/Messages to help us improve.</string>
@@ -60,4 +60,33 @@
     <string name="vip_theme_liquid_glass_dark_desc">Deep obsidian translucent glass with glowing cyan fluid refraction</string>
     <string name="vip_theme_crimson_reactor_title">Cyber Crimson Reactor (Plasma Red &amp; Gold)</string>
     <string name="vip_theme_crimson_reactor_desc">Sub-atomic nuclear reactor chamber surrounded by stark gold containment lines</string>
+    <!-- New Sci-Fi Mech & Tactical Dark VIP Themes (Recreated from Photos) -->
+    <string name="vip_theme_cyber_mech_deck_title">Cyber Mech Deck 2077 (Titanium &amp; Cyber Mint)</string>
+    <string name="vip_theme_cyber_mech_deck_desc">Heavy titanium deck console with chamfered mech pod cells, PCB traces, and neon mint telemetry</string>
+    <string name="vip_theme_tactical_hud_amber_title">Tactical HUD Amber (Schematic Grid &amp; Amber)</string>
+    <string name="vip_theme_tactical_hud_amber_desc">Direct recreation of tactical HUD: blueprint coordinate grid, glowing vacuum amber bars, and cut-corner gold brackets</string>
+    <string name="vip_theme_classified_crimson_title">Classified Red Alert (Night City &amp; Crimson Alert)</string>
+    <string name="vip_theme_classified_crimson_desc">Direct recreation of classified red HUD: cyberpunk skyline backdrop, crimson laser framing, and tactical radar reticle</string>
+    <string name="vip_theme_classified_cyan_title">Classified Stealth Teal (Night City &amp; Electric Cyan)</string>
+    <string name="vip_theme_classified_cyan_desc">Direct recreation of classified teal HUD: dark teal skyline backdrop, electric cyan laser borders, and targeting brackets</string>
+
+    <!-- App Main Background Settings -->
+    <string name="settings_app_background_title">Main App Background</string>
+    <string name="settings_app_background_subtitle">Select graphical wallpaper, tech grid, or dark pattern for screens</string>
+    <string name="background_default">Follow Active Theme (Default)</string>
+    <string name="background_grid">Tech Schematic Grid</string>
+    <string name="background_circuit">Circuit Board PCB Traces</string>
+    <string name="background_cityscape">Cyber Cityscape Silhouette</string>
+    <string name="background_carbon">Tactical Carbon Fiber Mesh</string>
+    <string name="background_hud_blueprint">HUD Cockpit Blueprint</string>
+    <string name="background_blackout">Pure AMOLED Black</string>
+
+    <!-- Cell Geometric Shape Settings -->
+    <string name="settings_cell_shape_title">Cell Geometric Shape</string>
+    <string name="settings_cell_shape_subtitle">Customize cut corners, tech chamfers, and brackets for message cards</string>
+    <string name="cell_shape_smart">Smart (Follow Active Theme)</string>
+    <string name="cell_shape_chamfer">Chamfered Tech Cut-Corners</string>
+    <string name="cell_shape_mech_pod">Mech Pod Console</string>
+    <string name="cell_shape_rounded">Classic Rounded Card</string>
+    <string name="cell_shape_divider">Minimal Linear Divider</string>
 </resources>

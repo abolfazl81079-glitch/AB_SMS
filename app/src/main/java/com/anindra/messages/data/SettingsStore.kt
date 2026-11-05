@@ -1,4 +1,4 @@
-﻿package com.anindra.messages.data
+package com.anindra.messages.data
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -103,6 +103,22 @@ class SettingsStore(context: Context) {
         const val SHAPE_CAPSULE = "capsule"
 
         const val KEY_DIVIDER_COLOR = "divider_color"
+
+        const val KEY_APP_BACKGROUND = "app_background"
+        const val BACKGROUND_DEFAULT = "default"
+        const val BACKGROUND_GRID = "grid"
+        const val BACKGROUND_CIRCUIT = "circuit"
+        const val BACKGROUND_CITYSCAPE = "cityscape"
+        const val BACKGROUND_CARBON = "carbon"
+        const val BACKGROUND_HUD_BLUEPRINT = "hud_blueprint"
+        const val BACKGROUND_BLACKOUT = "blackout"
+
+        const val KEY_CELL_SHAPE = "cell_shape"
+        const val CELL_SHAPE_SMART = "smart"
+        const val CELL_SHAPE_CHAMFER = "chamfer"
+        const val CELL_SHAPE_MECH_POD = "mech_pod"
+        const val CELL_SHAPE_ROUNDED = "rounded"
+        const val CELL_SHAPE_DIVIDER = "divider"
 
         const val KEY_CALENDAR_TYPE = "calendar_type"
         const val CALENDAR_JALALI = "jalali"
@@ -285,6 +301,14 @@ class SettingsStore(context: Context) {
     var cellStyle: String
         get() = prefs.getString(KEY_CELL_STYLE, CELL_STYLE_CARD) ?: CELL_STYLE_CARD
         set(v) { prefs.edit().putString(KEY_CELL_STYLE, v).apply(); _revision.value++ }
+
+    var appBackground: String
+        get() = prefs.getString(KEY_APP_BACKGROUND, BACKGROUND_DEFAULT) ?: BACKGROUND_DEFAULT
+        set(v) { prefs.edit().putString(KEY_APP_BACKGROUND, v).apply(); _revision.value++ }
+
+    var cellShape: String
+        get() = prefs.getString(KEY_CELL_SHAPE, CELL_SHAPE_SMART) ?: CELL_SHAPE_SMART
+        set(v) { prefs.edit().putString(KEY_CELL_SHAPE, v).apply(); _revision.value++ }
 
     var cellBorderOpacity: String
         get() = prefs.getString(KEY_CELL_BORDER_OPACITY, BORDER_OPACITY_MEDIUM) ?: BORDER_OPACITY_MEDIUM
