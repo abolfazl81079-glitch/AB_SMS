@@ -18,6 +18,9 @@ class SettingsStore(context: Context) {
     companion object {
         const val THEME_STARK = "stark"
         const val THEME_ORANGE = "orange"
+        const val KEY_VIP_THEMES_UNLOCKED = "vip_themes_unlocked"
+        const val VIP_TOKEN_1 = "23882323"
+        const val VIP_TOKEN_2 = "238823"
         const val THEME_SYSTEM = "system"
         const val THEME_LIGHT = "light"
         const val THEME_DARK = "dark"
@@ -152,6 +155,19 @@ class SettingsStore(context: Context) {
         const val DEFAULTS_SIM_SUBSCRIPTION_ID = -1
         const val DEFAULTS_EMOJI_BUTTON = false
         const val DEFAULTS_UNREAD_AT_TOP = false
+    }
+
+    var vipThemesUnlocked: Boolean
+        get() = prefs.getBoolean(KEY_VIP_THEMES_UNLOCKED, false)
+        set(v) { prefs.edit().putBoolean(KEY_VIP_THEMES_UNLOCKED, v).apply(); _revision.value++ }
+
+    fun unlockVipThemesWithToken(token: String): Boolean {
+        val trimmed = token.trim()
+        if (trimmed == VIP_TOKEN_1 || trimmed == VIP_TOKEN_2) {
+            vipThemesUnlocked = true
+            return true
+        }
+        return false
     }
 
     var themeMode: String

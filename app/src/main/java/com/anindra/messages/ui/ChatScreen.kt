@@ -369,7 +369,8 @@ internal fun ChatBubble(
                 pendingCopyItem = null
                 val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                 cm.setPrimaryClip(android.content.ClipData.newPlainText(item.type.label, textToCopy))
-                val label = if (isClean) "کپی بدون علامت انجام شد" else "کپی با علامت انجام شد"
+                val isPersian = java.util.Locale.getDefault().language == "fa"
+                val label = if (isPersian) (if (isClean) "کپی بدون علامت انجام شد" else "کپی با علامت انجام شد") else (if (isClean) "Copied clean" else "Copied original")
                 Toast.makeText(context, "$label: $textToCopy", Toast.LENGTH_SHORT).show()
             }
         )
@@ -2788,7 +2789,8 @@ fun MessageRow(
                 pendingCopyItem = null
                 val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                 cm.setPrimaryClip(android.content.ClipData.newPlainText(item.type.label, textToCopy))
-                val label = if (isClean) "کپی بدون علامت انجام شد" else "کپی با علامت انجام شد"
+                val isPersian = java.util.Locale.getDefault().language == "fa"
+                val label = if (isPersian) (if (isClean) "کپی بدون علامت انجام شد" else "کپی با علامت انجام شد") else (if (isClean) "Copied clean" else "Copied original")
                 Toast.makeText(context, "$label: $textToCopy", Toast.LENGTH_SHORT).show()
             }
         )

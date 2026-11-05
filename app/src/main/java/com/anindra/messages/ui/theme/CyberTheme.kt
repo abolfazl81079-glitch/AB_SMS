@@ -2,6 +2,7 @@
 
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
 /**
@@ -295,7 +296,17 @@ object CyberTheme {
         "crimson", "crimson_hacker" -> CrimsonHacker
         "quantum" -> Quantum
         "minimal", "minimal_glass" -> MinimalGlass
-        "orange", "cyber_orange", "amber_orange" -> CyberOrange
+                "orange", "cyber_orange", "amber_orange" -> CyberOrange
+        "vip_stark_clean" -> VipStarkClean
+        "vip_matrix_light" -> VipMatrixLight
+        "vip_sunset_amber" -> VipSunsetAmber
+        "vip_quantum_lilac" -> VipQuantumLilac
+        "vip_arctic_ice" -> VipArcticIce
+        "vip_phantom_hacker" -> VipPhantomHacker
+        "vip_blood_overdrive" -> VipBloodOverdrive
+        "vip_synthwave_2077" -> VipSynthwave2077
+        "vip_titanium_monolith" -> VipTitaniumMonolith
+        "vip_matrix_terminal_zero" -> VipMatrixTerminalZero
         else -> StarkHud // Default is Stark Cyber HUD from screenshot
     }
 }

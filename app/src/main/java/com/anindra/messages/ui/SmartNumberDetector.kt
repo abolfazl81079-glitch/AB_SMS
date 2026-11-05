@@ -1,4 +1,4 @@
-package com.anindra.messages.ui
+﻿package com.anindra.messages.ui
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -227,6 +227,24 @@ object SmartNumberDetector {
             }
         }
 
+        // 3.5 Time with colons (e.g. 11:54:48, 13:58:54, 01:04:47, 18:10)
+        val timeRegex = Regex("""(?<!\d)(\d{1,2}[:\uFF1A]\d{2}(?:[:\uFF1A]\d{2})?)(?!\d)""")
+        for (m in timeRegex.findAll(normalizedBody)) {
+            val range = m.range
+            if (!overlaps(range)) {
+                val original = text.substring(range)
+                val clean = JalaliCalendar.toEnglishDigits(original)
+                results.add(
+                    DetectedNumber(
+                        originalText = original,
+                        normalizedText = clean,
+                        type = NumberType.DATE,
+                        range = range
+                    )
+                )
+            }
+        }
+
         // 4. Bank Card: 16 digits, with optional spaces or dashes
         val cardRegex = Regex("""(?<!\d)(\d{4}[ -]?\d{4}[ -]?\d{4}[ -]?\d{4})(?!\d)""")
         for (m in cardRegex.findAll(normalizedBody)) {
@@ -434,9 +452,8 @@ object SmartNumberDetector {
 }
 
 /**
- * Cyber HUD Glass Dialog asking whether to strip hyphens, dots, spaces, and symbols
- * or copy the exact original text to clipboard.
- * Fully synchronized with dynamic theme colors.
+ * Ultra-minimal bilingual Cyber HUD dialog for smart number/code actions.
+ * Tapping any preview card directly copies the text.
  */
 @Composable
 fun CopySeparatorDialog(
@@ -449,6 +466,7 @@ fun CopySeparatorDialog(
     val originalText = item.originalText
     val cs = MaterialTheme.colorScheme
     val hasSeparators = cleanText != originalText
+    val isPersian = java.util.Locale.getDefault().language == "fa"
 
     val isDialable = item.type == SmartNumberDetector.NumberType.USSD ||
         item.type == SmartNumberDetector.NumberType.MOBILE ||
@@ -457,19 +475,19 @@ fun CopySeparatorDialog(
 
     Dialog(onDismissRequest = onDismiss) {
         androidx.compose.material3.Surface(
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(14.dp),
             color = cs.surfaceContainerHigh.copy(alpha = 0.98f),
-            border = BorderStroke(0.9.dp, cs.primary.copy(alpha = 0.45f)),
-            shadowElevation = 8.dp,
+            border = BorderStroke(0.8.dp, cs.primary.copy(alpha = 0.5f)),
+            shadowElevation = 10.dp,
             modifier = Modifier
-                .widthIn(min = 280.dp, max = 310.dp)
-                .padding(horizontal = 8.dp)
+                .widthIn(min = 270.dp, max = 300.dp)
+                .padding(horizontal = 6.dp)
         ) {
             Column(
                 modifier = Modifier.padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Title Row
+                // Header Row
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -481,101 +499,100 @@ fun CopySeparatorDialog(
                         modifier = Modifier.size(17.dp)
                     )
                     Text(
-                        text = if (isDialable) "عملیات شماره و کد" else "کپی به کلیپ‌بورد",
+                        text = if (isDialable) {
+                            if (isPersian) "عملیات شماره و کد" else "Number & Code Actions"
+                        } else {
+                            if (isPersian) "کپی به کلیپ‌بورد" else "Copy to Clipboard"
+                        },
                         color = cs.primary,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.5.sp
                     )
                 }
 
-                // Subtitle
-                Text(
-                    text = if (hasSeparators) "قالب مورد نظر را انتخاب یا لمس کنید:" else "مقدار انتخاب‌شده:",
-                    color = cs.onSurfaceVariant,
-                    fontSize = 11.5.sp
-                )
-
-                // Option 1: Cleaned
+                // Card 1: Cleaned
                 androidx.compose.material3.Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = cs.primary.copy(alpha = 0.10f),
-                    border = BorderStroke(0.7.dp, cs.primary.copy(alpha = 0.5f)),
+                    shape = RoundedCornerShape(8.dp),
+                    color = cs.primary.copy(alpha = 0.12f),
+                    border = BorderStroke(0.8.dp, cs.primary.copy(alpha = 0.6f)),
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onCopy(cleanText, true) }
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = if (hasSeparators) "حالت خالص (بدون علامت):" else "مقدار:",
+                                text = if (hasSeparators) {
+                                    if (isPersian) "حالت خالص (بدون علامت):" else "Clean (no symbols):"
+                                } else {
+                                    if (isPersian) "مقدار:" else "Value:"
+                                },
                                 color = cs.primary,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
-                            Spacer(Modifier.height(1.dp))
+                            Spacer(Modifier.height(2.dp))
                             Text(
                                 text = cleanText,
                                 color = cs.onSurface,
-                                fontSize = 13.sp,
+                                fontSize = 13.5.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
                         Icon(
                             imageVector = Icons.Rounded.ContentCopy,
-                            contentDescription = "کپی",
-                            tint = cs.primary.copy(alpha = 0.7f),
-                            modifier = Modifier.size(14.dp)
+                            contentDescription = if (isPersian) "کپی" else "Copy",
+                            tint = cs.primary.copy(alpha = 0.8f),
+                            modifier = Modifier.size(15.dp)
                         )
                     }
                 }
 
-                // Option 2: Original (if has separators)
+                // Card 2: Original with separators (if different)
                 if (hasSeparators) {
                     androidx.compose.material3.Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = cs.surfaceVariant.copy(alpha = 0.4f),
-                        border = BorderStroke(0.7.dp, cs.outlineVariant.copy(alpha = 0.5f)),
+                        shape = RoundedCornerShape(8.dp),
+                        color = cs.surfaceVariant.copy(alpha = 0.45f),
+                        border = BorderStroke(0.8.dp, cs.outlineVariant.copy(alpha = 0.5f)),
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { onCopy(originalText, false) }
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "حالت اصلی (با علامت):",
+                                    text = if (isPersian) "حالت اصلی (با علامت):" else "Original (with symbols):",
                                     color = cs.onSurfaceVariant,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
-                                Spacer(Modifier.height(1.dp))
+                                Spacer(Modifier.height(2.dp))
                                 Text(
                                     text = originalText,
                                     color = cs.onSurface,
-                                    fontSize = 13.sp,
+                                    fontSize = 13.5.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
                             Icon(
                                 imageVector = Icons.Rounded.ContentCopy,
-                                contentDescription = "کپی",
-                                tint = cs.onSurfaceVariant.copy(alpha = 0.7f),
-                                modifier = Modifier.size(14.dp)
+                                contentDescription = if (isPersian) "کپی" else "Copy",
+                                tint = cs.onSurfaceVariant.copy(alpha = 0.8f),
+                                modifier = Modifier.size(15.dp)
                             )
                         }
                     }
                 }
 
-                Spacer(Modifier.height(2.dp))
-
-                // Action Buttons
+                // Direct Call Action Button (if dialable)
                 if (isDialable) {
                     Button(
                         onClick = {
@@ -587,7 +604,7 @@ fun CopySeparatorDialog(
                             try {
                                 context.startActivity(intent)
                             } catch (_: Exception) {
-                                Toast.makeText(context, "خطا در باز کردن شماره‌گیر", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, if (isPersian) "خطا در باز کردن شماره‌گیر" else "Could not open dialer", Toast.LENGTH_SHORT).show()
                             }
                             onDismiss()
                         },
@@ -595,7 +612,7 @@ fun CopySeparatorDialog(
                             containerColor = Color(0xFF10B981),
                             contentColor = Color.White
                         ),
-                        shape = RoundedCornerShape(6.dp),
+                        shape = RoundedCornerShape(7.dp),
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 4.dp, horizontal = 12.dp),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -603,45 +620,15 @@ fun CopySeparatorDialog(
                     ) {
                         Icon(Icons.Rounded.Call, contentDescription = null, modifier = Modifier.size(15.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("تماس / شماره‌گیری", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(
+                            text = if (isPersian) "تماس / شماره‌گیری" else "Call / Dial",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
                     }
                 }
 
-                if (hasSeparators) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Button(
-                            onClick = { onCopy(cleanText, true) },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = cs.primary,
-                                contentColor = cs.onPrimary
-                            ),
-                            shape = RoundedCornerShape(6.dp),
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 2.dp, horizontal = 8.dp),
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(32.dp)
-                        ) {
-                            Text("کپی بدون علامت", fontWeight = FontWeight.Bold, fontSize = 11.sp, maxLines = 1)
-                        }
-
-                        OutlinedButton(
-                            onClick = { onCopy(originalText, false) },
-                            border = BorderStroke(0.7.dp, cs.outlineVariant),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = cs.onSurface),
-                            shape = RoundedCornerShape(6.dp),
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 2.dp, horizontal = 8.dp),
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(32.dp)
-                        ) {
-                            Text("کپی با علامت", fontWeight = FontWeight.Medium, fontSize = 11.sp, maxLines = 1)
-                        }
-                    }
-                }
-
+                // Clean Dismiss Button
                 TextButton(
                     onClick = onDismiss,
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 2.dp),
@@ -649,7 +636,11 @@ fun CopySeparatorDialog(
                         .fillMaxWidth()
                         .height(30.dp)
                 ) {
-                    Text("انصراف", color = cs.onSurfaceVariant, fontSize = 12.sp)
+                    Text(
+                        text = if (isPersian) "انصراف" else "Dismiss",
+                        color = cs.onSurfaceVariant,
+                        fontSize = 12.sp
+                    )
                 }
             }
         }

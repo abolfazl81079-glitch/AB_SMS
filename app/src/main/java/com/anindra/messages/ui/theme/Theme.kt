@@ -277,7 +277,13 @@ val ChatMetaWeight: FontWeight = FontWeight.Medium
  * black, and it does not follow the system, so picking it under a light system
  * must still give a black page.
  */
-internal fun themeIsDark(mode: String, systemIsDark: Boolean): Boolean = (mode != SettingsStore.THEME_LIGHT)
+internal fun themeIsDark(mode: String, systemIsDark: Boolean): Boolean = when (mode) {
+    SettingsStore.THEME_LIGHT,
+    "vip_stark_clean", "vip_matrix_light", "vip_sunset_amber",
+    "vip_quantum_lilac", "vip_arctic_ice" -> false
+    SettingsStore.THEME_SYSTEM -> systemIsDark
+    else -> true
+}
 
 /**
  * The wallpaper-derived scheme Android 12+ can supply, or null where it does not
@@ -311,7 +317,7 @@ internal fun schemeFor(
 ): ColorScheme = when {
     a11y.highContrastEnabled && darkTheme -> DarkHighContrastColors
     a11y.highContrastEnabled -> LightHighContrastColors
-    mode in listOf("stark", "stark_hud", "hud", "cyber", "cyber_blue", "ab_cyber_blue", "blackout", "matrix", "neon_matrix", "arctic", "arctic_glass", "ghost", "ghost_protocol", "ocean", "deep_ocean", "crimson", "crimson_hacker", "quantum", "minimal", "minimal_glass", "orange", "cyber_orange", "amber_orange") -> CyberTheme.schemeForMode(mode)
+    mode.startsWith("vip_") || mode in listOf("stark", "stark_hud", "hud", "cyber", "cyber_blue", "ab_cyber_blue", "blackout", "matrix", "neon_matrix", "arctic", "arctic_glass", "ghost", "ghost_protocol", "ocean", "deep_ocean", "crimson", "crimson_hacker", "quantum", "minimal", "minimal_glass", "orange", "cyber_orange", "amber_orange") -> CyberTheme.schemeForMode(mode)
     mode == SettingsStore.THEME_AMOLED -> CyberTheme.Blackout
     mode == SettingsStore.THEME_DYNAMIC && dynamic != null -> dynamic
     darkTheme || mode == SettingsStore.THEME_DARK -> CyberTheme.StarkHud

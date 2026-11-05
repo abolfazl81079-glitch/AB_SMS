@@ -1,4 +1,4 @@
-﻿package com.anindra.messages.ui
+package com.anindra.messages.ui
 
 import android.Manifest
 import android.app.Activity
@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -166,6 +167,10 @@ fun SettingsScreen(
     var simDialog by remember { mutableStateOf(false) }
     var importModeDialog by remember { mutableStateOf(false) }
     var importSourceDialog by remember { mutableStateOf(false) }
+    var vipTokenDialog by remember { mutableStateOf(false) }
+    var vipThemesDialog by remember { mutableStateOf(false) }
+    var tokenInput by remember { mutableStateOf("") }
+    var tokenError by remember { mutableStateOf(false) }
 
     // Reactive setting values
     var hideNotifBody by remember(revision) { mutableStateOf(vm.settings.hideNotificationBody) }
@@ -293,8 +298,14 @@ fun SettingsScreen(
         }
     }
 
+    val isPersian = vm.settings.appLanguage == "fa" || (vm.settings.appLanguage == "system" && java.util.Locale.getDefault().language == "fa")
     // Resolve labels
     val themeSubtitle = themeLabel(themeMode, context)
+    val vipSubtitle = if (vm.settings.vipThemesUnlocked) {
+        if (isPersian) "فعال شده 🔓✨ (۱۰ پوسته استثنایی)" else "Unlocked 🔓✨ (10 Exclusive Themes)"
+    } else {
+        if (isPersian) "قفل شده 🔒 (جهت فعال‌سازی لمس کنید)" else "Locked 🔒 (Tap to enter security token)"
+    }
     val langSubtitle = when (vm.settings.appLanguage) {
         "fa" -> stringResource(R.string.language_fa)
         "en" -> stringResource(R.string.language_en)
@@ -384,6 +395,22 @@ fun SettingsScreen(
                 category = "ظاهر و طراحی / Appearance",
                 keywords = listOf("theme", "تم", "پوسته", "رنگ", "ظاهر", "dark", "light", "amoled", "stark", "matrix", "arctic", "ghost", "crimson", "cyber", "quantum", "blackout", "gold", "cyan", "green"),
                 onClick = { themeDialog = true }
+            ),
+            SearchSettingItem(
+                id = "vip_themes",
+                title = if (isPersian) "تم‌های اختصاصی هکری VIP 💎" else "VIP Exclusive Hacker Themes 💎",
+                subtitle = vipSubtitle,
+                category = "ظاهر و طراحی / Appearance",
+                keywords = listOf("vip", "وی آی پی", "توکن", "هکری", "تم اختصاصی", "تم روشن", "تم تاریک", "light theme", "dark theme", "cyber", "phantom", "matrix", "stark", "sunset", "arctic", "blood", "synthwave", "titanium"),
+                onClick = {
+                    if (vm.settings.vipThemesUnlocked) {
+                        vipThemesDialog = true
+                    } else {
+                        tokenInput = ""
+                        tokenError = false
+                        vipTokenDialog = true
+                    }
+                }
             ),
             SearchSettingItem(
                 id = "cell_style",
@@ -991,6 +1018,20 @@ fun SettingsScreen(
                     )
                     SettingsRow(
                         position = RowPosition.MIDDLE,
+                        title = if (isPersian) "تم‌های اختصاصی هکری VIP 💎" else "VIP Exclusive Hacker Themes 💎",
+                        subtitle = vipSubtitle,
+                        onClick = {
+                            if (vm.settings.vipThemesUnlocked) {
+                                vipThemesDialog = true
+                            } else {
+                                tokenInput = ""
+                                tokenError = false
+                                vipTokenDialog = true
+                            }
+                        }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
                         title = stringResource(R.string.settings_cell_style_title),
                         subtitle = cellStyleSubtitle,
                         onClick = { cellStyleDialog = true }
@@ -1338,7 +1379,12 @@ fun SettingsScreen(
             onDismissRequest = { themeDialog = false },
             title = { Text(stringResource(R.string.settings_choose_theme)) },
             text = {
-                Column {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 420.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
                     val options = buildList {
                         add("stark" to "Stark Cyber HUD (Iron Man Gold & Cockpit Black)")
                         add("cyber" to "AB Cyber Blue (Electric Blue / Cyan)")
@@ -1349,10 +1395,22 @@ fun SettingsScreen(
                         add("ocean" to "Deep Ocean (Navy & Electric Blue)")
                         add("crimson" to "Crimson Hacker (Black & Red)")
                         add("quantum" to "Quantum (Cyber Purple & Cyan)")
-                        add("orange" to "نارنجی سایبرپانک / Cyber Orange")
+                        add("orange" to "Ù†Ø§Ø±Ù†Ø¬ÛŒ Ø³Ø§ÛŒØ¨Ø±Ù¾Ø§Ù†Ú© / Cyber Orange")
                         add("minimal" to "Minimal Glass (Subtle Transparent)")
                         add("light" to stringResource(R.string.settings_theme_light))
                         add("system" to stringResource(R.string.settings_theme_system))
+                        if (vm.settings.vipThemesUnlocked) {
+                            add("vip_stark_clean" to "ðŸ’Ž VIP: Stark Clean Tech (Ø±ÙˆØ´Ù†)")
+                            add("vip_matrix_light" to "ðŸ’Ž VIP: Neo Matrix Light (Ø±ÙˆØ´Ù†)")
+                            add("vip_sunset_amber" to "ðŸ’Ž VIP: Solar Amber Sunset (Ø±ÙˆØ´Ù†)")
+                            add("vip_quantum_lilac" to "ðŸ’Ž VIP: Quantum Vaporwave (Ø±ÙˆØ´Ù†)")
+                            add("vip_arctic_ice" to "ðŸ’Ž VIP: Arctic Glacial Ice (Ø±ÙˆØ´Ù†)")
+                            add("vip_phantom_hacker" to "ðŸ’Ž VIP: Phantom Hacker (Ù…Ø´Ú©ÛŒ/Ù†Ø¹Ù†Ø§ÛŒÛŒ)")
+                            add("vip_blood_overdrive" to "ðŸ’Ž VIP: Blood Overdrive (Ù…Ø´Ú©ÛŒ/Ù‚Ø±Ù…Ø²)")
+                            add("vip_synthwave_2077" to "ðŸ’Ž VIP: Synthwave 2077 (ØµÙˆØ±ØªÛŒ/Ø³Ø§ÛŒØ§Ù†)")
+                            add("vip_titanium_monolith" to "ðŸ’Ž VIP: Titanium Monolith (Ú¯Ø±Ø§ÙÛŒØª)")
+                            add("vip_matrix_terminal_zero" to "ðŸ’Ž VIP: Matrix Terminal Zero (ÙØ³ÙØ±ÛŒ)")
+                        }
                     }
                     options.forEach { (value, label) ->
                         Row(
@@ -1380,6 +1438,261 @@ fun SettingsScreen(
             }
         )
     }
+
+    if (vipTokenDialog) {
+        AlertDialog(
+            onDismissRequest = { vipTokenDialog = false },
+            title = {
+                Text(
+                    text = if (isPersian) "Ù‚ÙÙ„â€ŒÚ¯Ø´Ø§ÛŒÛŒ ØªÙ…â€ŒÙ‡Ø§ÛŒ Ø§Ø®ØªØµØ§ØµÛŒ VIP ðŸ”’" else "Unlock VIP Exclusive Themes ðŸ”’",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = if (isPersian)
+                            "Ø¨Ø±Ø§ÛŒ Ø¯Ø³ØªØ±Ø³ÛŒ Ø¯Ø§Ø¦Ù…ÛŒ Ø¨Ù‡ Ûµ ØªÙ… Ø±ÙˆØ´Ù† ÙÙˆÙ‚â€ŒØ§Ù„Ø¹Ø§Ø¯Ù‡ Ùˆ Ûµ ØªÙ… Ù…Ø´Ú©ÛŒ/Ù‡Ú©Ø±ÛŒ Ø´Ø§Ù‡Ú©Ø§Ø±ØŒ ØªÙˆÚ©Ù† Ø§Ù…Ù†ÛŒØªÛŒ Ø§Ø®ØªØµØ§ØµÛŒ Ø±Ø§ ÙˆØ§Ø±Ø¯ Ú©Ù†ÛŒØ¯:"
+                        else
+                            "Enter your security token to permanently unlock 5 extraordinary light themes and 5 masterpiece dark/hacker themes:",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = tokenInput,
+                        onValueChange = {
+                            tokenInput = it
+                            tokenError = false
+                        },
+                        label = { Text(if (isPersian) "ØªÙˆÚ©Ù† Ø§Ù…Ù†ÛŒØªÛŒ" else "Security Token") },
+                        singleLine = true,
+                        isError = tokenError,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    if (tokenError) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = if (isPersian) "ØªÙˆÚ©Ù† Ø§Ù…Ù†ÛŒØªÛŒ ÙˆØ§Ø±Ø¯Ø´Ø¯Ù‡ Ù†Ø§Ù…Ø¹ØªØ¨Ø± Ø§Ø³Øª!" else "Invalid security token!",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (vm.settings.unlockVipThemesWithToken(tokenInput)) {
+                            vipTokenDialog = false
+                            vipThemesDialog = true
+                            Toast.makeText(
+                                context,
+                                if (isPersian) "ØªÙ…â€ŒÙ‡Ø§ÛŒ VIP Ø¨Ø§ Ù…ÙˆÙÙ‚ÛŒØª ÙØ¹Ø§Ù„ Ùˆ Ø¯Ø§Ø¦Ù…ÛŒ Ø´Ø¯Ù†Ø¯! ðŸ”“âœ¨" else "VIP Themes successfully unlocked! ðŸ”“âœ¨",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        } else {
+                            tokenError = true
+                        }
+                    }
+                ) {
+                    Text(if (isPersian) "ØªØ£ÛŒÛŒØ¯ Ùˆ Ø¨Ø§Ø²Ú¯Ø´Ø§ÛŒÛŒ" else "Unlock")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { vipTokenDialog = false }) {
+                    Text(stringResource(R.string.common_cancel))
+                }
+            }
+        )
+    }
+
+    if (vipThemesDialog) {
+        AlertDialog(
+            onDismissRequest = { vipThemesDialog = false },
+            title = {
+                Text(
+                    text = if (isPersian) "ØªÙ…â€ŒÙ‡Ø§ÛŒ Ø§Ø®ØªØµØ§ØµÛŒ Ù‡Ú©Ø±ÛŒ VIP ðŸ’Ž" else "VIP Exclusive Hacker Themes ðŸ’Ž",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 480.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    // Group 1: 5 Extraordinary Light Themes
+                    Text(
+                        text = if (isPersian) "â˜€ï¸ Ûµ ØªÙ… Ø§Ø®ØªØµØ§ØµÛŒ Ø±ÙˆØ´Ù† Ùˆ Ù…Ø¯Ø±Ù† (Light Themes)" else "â˜€ï¸ 5 Exclusive Modern Light Themes",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(top = 4.dp, bottom = 6.dp)
+                    )
+
+                    val lightVipThemes = listOf(
+                        Triple(
+                            "vip_stark_clean",
+                            if (isPersian) "Stark Clean Tech (Ø³ÙÛŒØ¯ / Ú©Ø¨Ø§Ù„Øª)" else "Stark Clean Tech (White & Cobalt)",
+                            if (isPersian) "Ù¾Ø³â€ŒØ²Ù…ÛŒÙ†Ù‡ Ø³ÙÛŒØ¯ Ú©Ø±ÛŒØ³ØªØ§Ù„ÛŒØŒ Ø­Ø±ÙˆÙ Ú©Ø§Ù…Ù„Ø§Ù‹ Ù…Ø´Ú©ÛŒ Ùˆ Ú©Ø§Ø¯Ø±Ù‡Ø§ÛŒ Ø¢Ø¨ÛŒ Ù†Ø¦ÙˆÙ†ÛŒ" else "Pristine white tech paper, rich black contrast, vibrant cobalt borders"
+                        ),
+                        Triple(
+                            "vip_matrix_light",
+                            if (isPersian) "Neo Matrix Light (Ú©Ø§ØºØ° Ø¯ÛŒØ¬ÛŒØªØ§Ù„ / Ø³Ø¨Ø²)" else "Neo Matrix Light (Digital Paper & Emerald)",
+                            if (isPersian) "Ù¾ÙˆØ³ØªÙ‡ Ø±ÙˆØ´Ù† Ù‡Ú©Ø±ÛŒ Ø¨Ø§ Ø®Ø·ÙˆØ· Ùˆ Ú©Ø§Ø¯Ø±Ù‡Ø§ÛŒ Ø³Ø¨Ø² Ø²Ù…Ø±Ø¯ÛŒ Ù…Ø§Øª Ùˆ ØªÙ…ÛŒØ²" else "Clean digital paper with emerald green matrix framing and dark accents"
+                        ),
+                        Triple(
+                            "vip_sunset_amber",
+                            if (isPersian) "Solar Amber Sunset (Ù…Ø±ÙˆØ§Ø±ÛŒØ¯ Ú¯Ø±Ù… / Ú©Ù‡Ø±Ø¨Ø§ÛŒÛŒ)" else "Solar Amber Sunset (Warm Solar & Amber)",
+                            if (isPersian) "Ù¾ÙˆØ³ØªÙ‡ Ø®ÙˆØ±Ø´ÛŒØ¯ÛŒ Ù„ÙˆÚ©Ø³ Ø¨Ø§ Ø±Ù†Ú¯â€ŒÙ‡Ø§ÛŒ Ú©Ù‡Ø±Ø¨Ø§ÛŒÛŒØŒ Ø·Ù„Ø§ÛŒÛŒ Ùˆ Ù†Ø§Ø±Ù†Ø¬ÛŒ ØªØ§Ø¨Ø§Ù†" else "Warm solar pearl background with radiant incandescent amber accents"
+                        ),
+                        Triple(
+                            "vip_quantum_lilac",
+                            if (isPersian) "Quantum Vaporwave (ÛŒØ§Ø³ÛŒ Ù¾Ø§Ø³ØªÙ„ÛŒ / Ø¨Ù†ÙØ´)" else "Quantum Vaporwave (Lilac & Electric Violet)",
+                            if (isPersian) "ØªÙ… Ø¨Ø³ÛŒØ§Ø± Ø´ÛŒÚ© Ø¨Ø§ ØªÙ†â€ŒÙ‡Ø§ÛŒ ÛŒØ§Ø³ÛŒ Ø±ÙˆØ´Ù† Ùˆ Ø¨Ù†ÙØ´ Ø³Ø§ÛŒØ¨Ø±ÛŒ Ø¢ÛŒÙ†Ø¯Ù‡â€ŒÙ†Ú¯Ø±Ø§Ù†Ù‡" else "Pastel lilac aesthetic with electric neon violet lines and readable dark text"
+                        ),
+                        Triple(
+                            "vip_arctic_ice",
+                            if (isPersian) "Arctic Glacial Ice (ÛŒØ®ÛŒ Ù‚Ø·Ø¨ÛŒ / ÙÛŒØ±ÙˆØ²Ù‡â€ŒØ§ÛŒ)" else "Arctic Glacial Ice (Glacial Frost & Vivid Cyan)",
+                            if (isPersian) "Ø³ÙÛŒØ¯ ÛŒØ®ÛŒ Ù‚Ø·Ø¨ÛŒ Ø¨Ø§ Ø®Ø·ÙˆØ· ÙÛŒØ±ÙˆØ²Ù‡â€ŒØ§ÛŒ Ùˆ Ù„Ø§Ø¬ÙˆØ±Ø¯ÛŒ Ø´ÙØ§Ù Ùˆ Ú†Ø´Ù…â€ŒÙ†ÙˆØ§Ø²" else "Ultra-clean glacial ice white with electric cyan borders and deep navy clarity"
+                        )
+                    )
+
+                    lightVipThemes.forEach { (id, title, desc) ->
+                        val selected = themeMode == id
+                        Card(
+                            shape = RoundedCornerShape(10.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+                            ),
+                            border = BorderStroke(
+                                width = if (selected) 1.5.dp else 0.8.dp,
+                                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                                .clickable { vm.setTheme(id) }
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
+                            ) {
+                                RadioButton(
+                                    selected = selected,
+                                    onClick = { vm.setTheme(id) }
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = title,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(Modifier.height(2.dp))
+                                    Text(
+                                        text = desc,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(14.dp))
+
+                    // Group 2: 5 Masterpiece Dark / Hacker Themes
+                    Text(
+                        text = if (isPersian) "ðŸ•¶ï¸ Ûµ ØªÙ… Ø§Ø®ØªØµØ§ØµÛŒ ØªØ§Ø±ÛŒÚ© Ùˆ Ù‡Ú©Ø±ÛŒ (Hacker VIP)" else "ðŸ•¶ï¸ 5 Masterpiece Dark / Hacker VIP Themes",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(bottom = 6.dp)
+                    )
+
+                    val darkVipThemes = listOf(
+                        Triple(
+                            "vip_phantom_hacker",
+                            if (isPersian) "Phantom Hacker (Ù…Ø´Ú©ÛŒ OLED / Ù†Ø¹Ù†Ø§ÛŒÛŒ Ù†Ø¦ÙˆÙ†)" else "Phantom Hacker (Void Black & Radioactive Mint)",
+                            if (isPersian) "Ø³ÛŒØ§Ù‡ÛŒ Ù…Ø·Ù„Ù‚ Ù†Ù…Ø§ÛŒØ´Ú¯Ø±Ù‡Ø§ÛŒ Ø§ÙˆÙ„Ø¯ Ø¨Ø§ ØªØ§Ø¨Ø´ ÙØ³ÙØ±ÛŒ Ø³Ø¨Ø² Ù†Ø¹Ù†Ø§ÛŒÛŒ Ø±Ø§Ø¯ÛŒÙˆØ§Ú©ØªÛŒÙˆ" else "Pitch void black OLED canvas ignited by radioactive toxic mint lasers"
+                        ),
+                        Triple(
+                            "vip_blood_overdrive",
+                            if (isPersian) "Blood Overdrive (Ø¢Ø¨Ø³ÛŒØ¯ÛŒÙ† / Ù‚Ø±Ù…Ø² Ø³Ø§ÛŒØ¨Ø±Ù¾Ø§Ù†Ú©)" else "Blood Overdrive (Obsidian Black & Neon Blood Red)",
+                            if (isPersian) "Ø¸Ù„Ù…Øª Ø³Ø§ÛŒØ¨Ø±ÛŒ Ø¨Ø§ Ø®Ø·ÙˆØ· Ù†Ø¦ÙˆÙ† Ù‚Ø±Ù…Ø² Ø®ÙˆÙ†ÛŒ Ù¾Ø±Ø§Ù†Ø±Ú˜ÛŒ Ùˆ Ù¾Ø±Ú©Ù†ØªØ±Ø§Ø³Øª" else "Total obsidian blackness electrified by hyper-vivid crimson neon glows"
+                        ),
+                        Triple(
+                            "vip_synthwave_2077",
+                            if (isPersian) "Synthwave 2077 (Ù†Ø¦Ùˆ ØªÙˆÚ©ÛŒÙˆ ØµÙˆØ±ØªÛŒ Ùˆ Ø³Ø§ÛŒØ§Ù†)" else "Synthwave 2077 (Neo Tokyo Laser Pink & Cyan)",
+                            if (isPersian) "Ù‡Ø§Ø±Ù…ÙˆÙ†ÛŒ Ø¯ÙˆØªØ§ÛŒÛŒ ØµÙˆØ±ØªÛŒ Ù†Ø¦ÙˆÙ†ÛŒ Ùˆ Ø¢Ø¨ÛŒ Ø³Ø§ÛŒØ§Ù† Ø¯Ø± ÙØ¶Ø§ÛŒ Ø³Ø§ÛŒØ¨Ø±Ù¾Ø§Ù†Ú© Û²Û°Û·Û·" else "Dual laser pink and cyan retro-futurism set in deep midnight Tokyo"
+                        ),
+                        Triple(
+                            "vip_titanium_monolith",
+                            if (isPersian) "Titanium Monolith (Ú¯Ø±Ø§ÙÛŒØª ØªØ§Ú©ØªÛŒÚ©Ø§Ù„ ØªÛŒØ±Ù‡)" else "Titanium Monolith (Tactical Graphite & Titanium)",
+                            if (isPersian) "Ø·Ø±Ø§Ø­ÛŒ Ù†Ø¸Ø§Ù…ÛŒ Ù…ÛŒÙ†ÛŒÙ…Ø§Ù„ Ø§Ø² Ú¯Ø±Ø§ÙÛŒØª Ù…Ø§ØªØŒ ÙÙˆÙ„Ø§Ø¯ Ø®Ø§Ú©Ø³ØªØ±ÛŒ Ùˆ Ù†Ù‚Ø±Ù‡â€ŒØ§ÛŒ Ù…ØªØ§Ù„ÛŒÚ©" else "Stealth tactical graphite structure crafted with brushed cold titanium"
+                        ),
+                        Triple(
+                            "vip_matrix_terminal_zero",
+                            if (isPersian) "Matrix Terminal Zero (ÙØ³ÙØ±ÛŒ ØªØ±Ù…ÛŒÙ†Ø§Ù„ CRT)" else "Matrix Terminal Zero (CRT Phosphor Green)",
+                            if (isPersian) "Ù†Ù…Ø§ÛŒØ´Ú¯Ø± Ø¨Ø§Ø³ØªØ§Ù†ÛŒ Ù‡Ú©Ø±ÛŒ Ø³Ø¨Ø² ÙØ³ÙØ±ÛŒ Û±Û¹Û¸Û´ Ø¨Ø± Ø±ÙˆÛŒ Ø²Ù…ÛŒÙ†Ù‡ ØªØ§Ø±ÛŒÚ© Ø®Ø§Ù„Øµ" else "Retro 1980s mainframe CRT phosphor green scanning pure deep space"
+                        )
+                    )
+
+                    darkVipThemes.forEach { (id, title, desc) ->
+                        val selected = themeMode == id
+                        Card(
+                            shape = RoundedCornerShape(10.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+                            ),
+                            border = BorderStroke(
+                                width = if (selected) 1.5.dp else 0.8.dp,
+                                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                                .clickable { vm.setTheme(id) }
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
+                            ) {
+                                RadioButton(
+                                    selected = selected,
+                                    onClick = { vm.setTheme(id) }
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = title,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(Modifier.height(2.dp))
+                                    Text(
+                                        text = desc,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { vipThemesDialog = false }) {
+                    Text(stringResource(R.string.common_ok))
+                }
+            }
+        )
+    }
+
 
     if (cellStyleDialog) {
         AlertDialog(
@@ -2462,23 +2775,38 @@ private fun openSystemNotificationSettings(context: android.content.Context) {
     }
 }
 
-private fun themeLabel(mode: String, context: android.content.Context) = when (mode) {
-    "stark", "stark_hud" -> "Stark Cyber HUD"
-    "cyber", "cyber_blue", "ab_cyber_blue" -> "AB Cyber Blue"
-    "blackout" -> "Blackout (OLED)"
-    "matrix", "neon_matrix" -> "Neon Matrix"
-    "arctic", "arctic_glass" -> "Arctic Glass"
-    "ghost", "ghost_protocol" -> "Ghost Protocol"
-    "ocean", "deep_ocean" -> "Deep Ocean"
-    "crimson", "crimson_hacker" -> "Crimson Hacker"
-    "quantum" -> "Quantum"
-    "orange", "cyber_orange" -> "Cyber Orange"
-    "minimal", "minimal_glass" -> "Minimal Glass"
-    "light" -> context.getString(R.string.settings_theme_light)
-    "dark" -> context.getString(R.string.settings_theme_dark)
-    "amoled" -> context.getString(R.string.settings_theme_amoled)
-    "dynamic" -> context.getString(R.string.settings_theme_dynamic)
-    else -> "Stark Cyber HUD"
+private fun themeLabel(mode: String, context: android.content.Context): String {
+    val isFa = java.util.Locale.getDefault().language == "fa"
+    return when (mode) {
+        "stark", "stark_hud" -> "Stark Cyber HUD"
+        "cyber", "cyber_blue", "ab_cyber_blue" -> "AB Cyber Blue"
+        "blackout" -> "Blackout (OLED)"
+        "matrix", "neon_matrix" -> "Neon Matrix"
+        "arctic", "arctic_glass" -> "Arctic Glass"
+        "ghost", "ghost_protocol" -> "Ghost Protocol"
+        "ocean", "deep_ocean" -> "Deep Ocean"
+        "crimson", "crimson_hacker" -> "Crimson Hacker"
+        "quantum" -> "Quantum"
+        "orange", "cyber_orange" -> "Cyber Orange"
+        "minimal", "minimal_glass" -> "Minimal Glass"
+        "light" -> context.getString(R.string.settings_theme_light)
+        "dark" -> context.getString(R.string.settings_theme_dark)
+        "amoled" -> context.getString(R.string.settings_theme_amoled)
+        "dynamic" -> context.getString(R.string.settings_theme_dynamic)
+        // VIP Light Themes
+        "vip_stark_clean" -> if (isFa) "VIP: Ø§Ø³ØªØ§Ø±Ú© Ø³ÙÛŒØ¯ Ù…Ø¯Ø±Ù† (Stark Clean)" else "VIP: Stark Clean Tech (White & Cobalt)"
+        "vip_matrix_light" -> if (isFa) "VIP: Ù…Ø§ØªØ±ÛŒÚ©Ø³ Ø±ÙˆØ´Ù† (Matrix Light)" else "VIP: Neo Matrix Light (Digital Paper & Emerald)"
+        "vip_sunset_amber" -> if (isFa) "VIP: ØºØ±ÙˆØ¨ Ú©Ù‡Ø±Ø¨Ø§ÛŒÛŒ (Sunset Amber)" else "VIP: Solar Amber Sunset (Warm Solar & Amber)"
+        "vip_quantum_lilac" -> if (isFa) "VIP: Ú©ÙˆØ§Ù†ØªÙˆÙ… ÛŒØ§Ø³ÛŒ (Quantum Lilac)" else "VIP: Quantum Vaporwave (Lilac & Violet)"
+        "vip_arctic_ice" -> if (isFa) "VIP: ÛŒØ® Ù‚Ø·Ø¨ÛŒ Ø¢Ø±Ú©ØªÛŒÚ© (Arctic Ice)" else "VIP: Arctic Glacial Ice (Glacial Frost & Vivid Cyan)"
+        // VIP Dark Themes
+        "vip_phantom_hacker" -> if (isFa) "VIP: ÙØ§Ù†ØªÙˆÙ… Ù‡Ú©Ø± (Phantom Hacker)" else "VIP: Phantom Hacker (Void Black & Radioactive Mint)"
+        "vip_blood_overdrive" -> if (isFa) "VIP: Ø§ÙˆØ±Ø¯Ø±Ø§ÛŒÙˆ Ø®ÙˆÙ†ÛŒÙ† (Blood Overdrive)" else "VIP: Blood Overdrive (Obsidian Black & Neon Blood Red)"
+        "vip_synthwave_2077" -> if (isFa) "VIP: Ø³ÛŒÙ†Øªâ€ŒÙˆÛŒÙˆ Û²Û°Û·Û· (Synthwave 2077)" else "VIP: Synthwave 2077 (Neo Tokyo Laser Pink & Cyan)"
+        "vip_titanium_monolith" -> if (isFa) "VIP: ØªÛŒØªØ§Ù†ÛŒÙˆÙ… Ù…Ù†ÙˆÙ„ÛŒØª (Titanium Monolith)" else "VIP: Titanium Monolith (Graphite & Titanium)"
+        "vip_matrix_terminal_zero" -> if (isFa) "VIP: ØªØ±Ù…ÛŒÙ†Ø§Ù„ Ù…Ø§ØªØ±ÛŒÚ©Ø³ Ø²ÛŒØ±Ùˆ (Terminal Zero)" else "VIP: Matrix Terminal Zero (CRT Phosphor Green)"
+        else -> "Stark Cyber HUD"
+    }
 }
 
 private fun notificationSoundLabel(value: String, options: List<Pair<String, String>>, context: android.content.Context) =
