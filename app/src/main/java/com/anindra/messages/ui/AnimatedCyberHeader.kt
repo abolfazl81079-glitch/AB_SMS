@@ -109,7 +109,7 @@ fun AnimatedCyberHeader(
                     Spacer(Modifier.width(8.dp))
 
                     Text(
-                        text = "AB/SMS",
+                        text = "A/SMS",
                         color = cs.onSurface,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,

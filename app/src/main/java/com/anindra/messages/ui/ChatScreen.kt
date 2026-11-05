@@ -274,7 +274,8 @@ internal fun ChatBubble(
     showReactionBar: Boolean = false,
     searchQuery: String? = null,
     isSearchFocus: Boolean = false,
-    searchHighlightAlpha: Float = 0f
+    searchHighlightAlpha: Float = 0f,
+    cardShape: String = com.anindra.messages.data.SettingsStore.SHAPE_ROUNDED
 ) {
     val cs = MaterialTheme.colorScheme
     val context = LocalContext.current
@@ -381,6 +382,14 @@ internal fun ChatBubble(
         cs.surfaceContainerHigh.copy(alpha = 0.75f)
     }
 
+    val bubbleShape = when (cardShape) {
+        com.anindra.messages.data.SettingsStore.SHAPE_CYBER -> RoundedCornerShape(4.dp)
+        com.anindra.messages.data.SettingsStore.SHAPE_BUBBLE -> if (msg.isMe) RoundedCornerShape(18.dp, 18.dp, 2.dp, 18.dp) else RoundedCornerShape(18.dp, 18.dp, 18.dp, 2.dp)
+        com.anindra.messages.data.SettingsStore.SHAPE_MINIMAL -> RoundedCornerShape(2.dp)
+        com.anindra.messages.data.SettingsStore.SHAPE_CAPSULE -> RoundedCornerShape(22.dp)
+        else -> RoundedCornerShape(12.dp)
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -418,7 +427,7 @@ internal fun ChatBubble(
                         if (msg.body.isNotBlank()) {
                             Surface(
                                 color = hudBackground,
-                                shape = RoundedCornerShape(8.dp),
+                                shape = bubbleShape,
                                 border = hudBorder,
                                 modifier = Modifier.widthIn(max = 260.dp).padding(top = 2.dp)
                                     .combinedClickable(
@@ -444,7 +453,7 @@ internal fun ChatBubble(
                 } else {
                     Surface(
                         color = hudBackground,
-                        shape = RoundedCornerShape(8.dp),
+                        shape = bubbleShape,
                         border = hudBorder,
                         modifier = Modifier.widthIn(max = 300.dp).combinedClickable(
                             onClick = { onTap() },
@@ -1579,6 +1588,7 @@ fun ChatScreen(
                         }
                         ChatBubble(
                             msg = msg,
+                            cardShape = vm.settings.messageCardShape,
                             showTime = isLastMessage || isRevealed,
                             // Only a group needs a sender: in a 1:1 chat there is
                             // only one other person and the header names them.

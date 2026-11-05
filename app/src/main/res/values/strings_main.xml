@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">AB/SMS</string>
+    <string name="app_name">A/SMS</string>
 
     <!-- App lock & permissions -->
     <string name="lock_title">Authenticate to access your messages</string>

@@ -89,6 +89,15 @@ class SettingsStore(context: Context) {
         const val BORDER_OPACITY_STRONG = "strong"
         const val BORDER_OPACITY_NEON = "neon"
 
+        const val KEY_CELL_BORDER_OPACITY_FLOAT = "cell_border_opacity_float"
+        const val KEY_CELL_BORDER_WIDTH_FLOAT = "cell_border_width_float"
+        const val KEY_MESSAGE_CARD_SHAPE = "message_card_shape"
+        const val SHAPE_ROUNDED = "rounded"
+        const val SHAPE_CYBER = "cyber"
+        const val SHAPE_BUBBLE = "bubble"
+        const val SHAPE_MINIMAL = "minimal"
+        const val SHAPE_CAPSULE = "capsule"
+
         const val KEY_DIVIDER_COLOR = "divider_color"
 
         const val KEY_LAUNCHER_ICON = "launcher_icon"
@@ -251,6 +260,18 @@ class SettingsStore(context: Context) {
     var cellBorderOpacity: String
         get() = prefs.getString(KEY_CELL_BORDER_OPACITY, BORDER_OPACITY_MEDIUM) ?: BORDER_OPACITY_MEDIUM
         set(v) { prefs.edit().putString(KEY_CELL_BORDER_OPACITY, v).apply(); _revision.value++ }
+
+    var cellBorderOpacityFloat: Float
+        get() = prefs.getFloat(KEY_CELL_BORDER_OPACITY_FLOAT, 0.45f)
+        set(v) { prefs.edit().putFloat(KEY_CELL_BORDER_OPACITY_FLOAT, v.coerceIn(0.05f, 1.0f)).apply(); _revision.value++ }
+
+    var cellBorderWidthFloat: Float
+        get() = prefs.getFloat(KEY_CELL_BORDER_WIDTH_FLOAT, 0.8f)
+        set(v) { prefs.edit().putFloat(KEY_CELL_BORDER_WIDTH_FLOAT, v.coerceIn(0.3f, 4.0f)).apply(); _revision.value++ }
+
+    var messageCardShape: String
+        get() = prefs.getString(KEY_MESSAGE_CARD_SHAPE, SHAPE_ROUNDED) ?: SHAPE_ROUNDED
+        set(v) { prefs.edit().putString(KEY_MESSAGE_CARD_SHAPE, v).apply(); _revision.value++ }
 
     var dividerColor: String
         get() = prefs.getString(KEY_DIVIDER_COLOR, CELL_COLOR_THEME) ?: CELL_COLOR_THEME

@@ -221,4 +221,14 @@
     <string name="contact_cell_color_follow_global">Follow Global Theme</string>
     <string name="contact_lines_follow_global">Follow Global Setting</string>
     <string name="contact_cell_customization_group">Conversation Cell Customization</string>
+
+    <!-- Sliders and Shape Settings -->
+    <string name="settings_border_opacity_slider_title">Border and divider opacity</string>
+    <string name="settings_border_opacity_slider_subtitle">Adjust intensity from faint to vivid</string>
+    <string name="settings_border_width_slider_title">Border and divider stroke thickness</string>
+    <string name="settings_border_width_slider_subtitle">Adjust stroke width from thin to thick</string>
+    <string name="settings_message_card_shape_title">Message card shape in chat</string>
+    <string name="settings_message_card_shape_subtitle">Choose the shape of message bubbles inside conversations</string>
+    <string name="contact_custom_border_opacity">Custom border &amp; divider opacity</string>
+    <string name="contact_custom_border_width">Custom border &amp; divider thickness</string>
 </resources>

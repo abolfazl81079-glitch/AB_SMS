@@ -7,13 +7,15 @@ import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Manages per-conversation customization settings:
- * custom cell border color and per-conversation preview lines.
- * Overrides global settings when set; falls back to global settings when default.
+ * custom cell border color, preview lines, border opacity, and border width.
+ * Overrides global settings when set; falls back to global settings when default (-1).
  */
 object CustomConversationStore {
     private const val PREFS_NAME = "custom_conversation_prefs"
     private const val KEY_COLOR_PREFIX = "cell_color_"
     private const val KEY_LINES_PREFIX = "preview_lines_"
+    private const val KEY_OPACITY_PREFIX = "border_opacity_"
+    private const val KEY_WIDTH_PREFIX = "border_width_"
 
     private val _revision = MutableStateFlow(0)
     val revision: StateFlow<Int> = _revision.asStateFlow()
@@ -44,6 +46,36 @@ object CustomConversationStore {
             prefs.edit().remove(KEY_LINES_PREFIX + key).apply()
         } else {
             prefs.edit().putInt(KEY_LINES_PREFIX + key, lines).apply()
+        }
+        _revision.value++
+    }
+
+    fun getBorderOpacity(context: Context, key: String): Float {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getFloat(KEY_OPACITY_PREFIX + key, -1f)
+    }
+
+    fun setBorderOpacity(context: Context, key: String, opacity: Float) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        if (opacity < 0f) {
+            prefs.edit().remove(KEY_OPACITY_PREFIX + key).apply()
+        } else {
+            prefs.edit().putFloat(KEY_OPACITY_PREFIX + key, opacity).apply()
+        }
+        _revision.value++
+    }
+
+    fun getBorderWidth(context: Context, key: String): Float {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getFloat(KEY_WIDTH_PREFIX + key, -1f)
+    }
+
+    fun setBorderWidth(context: Context, key: String, width: Float) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        if (width < 0f) {
+            prefs.edit().remove(KEY_WIDTH_PREFIX + key).apply()
+        } else {
+            prefs.edit().putFloat(KEY_WIDTH_PREFIX + key, width).apply()
         }
         _revision.value++
     }

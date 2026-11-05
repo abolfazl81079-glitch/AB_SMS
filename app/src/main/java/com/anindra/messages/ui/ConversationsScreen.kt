@@ -116,6 +116,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -177,6 +179,8 @@ fun ConversationsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
     var lastBackExitAt by remember { mutableLongStateOf(0L) }
     val syncDone by vm.initialSyncDone.collectAsState()
     val syncProgress by vm.initialSyncProgress.collectAsState()
@@ -244,6 +248,8 @@ fun ConversationsScreen(
             customCellColor = vm.settings.customCellColor,
             cellStyle = vm.settings.cellStyle,
             cellBorderOpacity = vm.settings.cellBorderOpacity,
+            cellBorderOpacityFloat = vm.settings.cellBorderOpacityFloat,
+            cellBorderWidthFloat = vm.settings.cellBorderWidthFloat,
             dividerColor = vm.settings.dividerColor
         )
     }
@@ -598,10 +604,14 @@ fun ConversationsScreen(
                                     if (selectionActive) {
                                         toggleSelection(convo)
                                     } else {
-                                        onOpenConversation(
-                                            convo.id,
-                                            if (searching) ConversationList.handoffQuery(convo, query) else ""
-                                        )
+                                        val handoff = if (searching) ConversationList.handoffQuery(convo, query) else ""
+                                        if (searching) {
+                                            searching = false
+                                            query = ""
+                                            focusManager.clearFocus()
+                                            keyboardController?.hide()
+                                        }
+                                        onOpenConversation(convo.id, handoff)
                                     }
                                 },
                                 onDelete = { moveToTrash(convo) },
@@ -1003,6 +1013,8 @@ internal data class RowSettings(
     val customCellColor: String = "theme",
     val cellStyle: String = "card",
     val cellBorderOpacity: String = "medium",
+    val cellBorderOpacityFloat: Float = 0.45f,
+    val cellBorderWidthFloat: Float = 0.8f,
     val dividerColor: String = "theme"
 )
 
@@ -1054,8 +1066,13 @@ internal fun ConversationRow(
     val convoKey = convo.address.ifBlank { convo.id.toString() }
     val perConvoColor = com.anindra.messages.data.CustomConversationStore.getCellColor(context, convoKey)
     val perConvoLines = com.anindra.messages.data.CustomConversationStore.getPreviewLines(context, convoKey)
+    val perConvoOpacity = com.anindra.messages.data.CustomConversationStore.getBorderOpacity(context, convoKey)
+    val perConvoWidth = com.anindra.messages.data.CustomConversationStore.getBorderWidth(context, convoKey)
+
     val effectiveColorCode = perConvoColor ?: settings.customCellColor
     val effectiveLines = if (perConvoLines > 0) perConvoLines else settings.previewLines
+    val effectiveOpacity = if (perConvoOpacity >= 0f) perConvoOpacity else settings.cellBorderOpacityFloat
+    val effectiveWidth = if (perConvoWidth >= 0f) perConvoWidth else settings.cellBorderWidthFloat
 
     val customAccent = when (effectiveColorCode) {
         "green" -> Color(0xFF00FF66)
@@ -1066,18 +1083,12 @@ internal fun ConversationRow(
         "silver" -> Color(0xFFE2E8F0)
         else -> cs.primary
     }
-    val borderAlpha = when (settings.cellBorderOpacity) {
-        "subtle" -> 0.16f
-        "strong" -> 0.70f
-        "neon" -> 1.0f
-        else -> 0.35f
-    }
     val isDividerMode = settings.cellStyle == "divider"
     val cardBorderColor = when {
         selected && selectionMode -> customAccent
         isUnread -> customAccent
         convo.pinned && settings.pinnedEnabled -> cs.secondary
-        else -> customAccent.copy(alpha = borderAlpha)
+        else -> customAccent.copy(alpha = effectiveOpacity)
     }
     val cardBg = when {
         selected && selectionMode -> customAccent.copy(alpha = 0.15f)
@@ -1085,16 +1096,17 @@ internal fun ConversationRow(
         isDividerMode -> Color.Transparent
         else -> cs.surfaceContainer.copy(alpha = 0.65f)
     }
-    val dividerColorResolved = when (settings.dividerColor) {
-        "green" -> Color(0xFF00FF66).copy(alpha = 0.40f)
-        "cyan" -> Color(0xFF00E5FF).copy(alpha = 0.40f)
-        "gold" -> Color(0xFFFFCC00).copy(alpha = 0.40f)
-        "red" -> Color(0xFFFF2A4A).copy(alpha = 0.40f)
-        "purple" -> Color(0xFFC084FC).copy(alpha = 0.40f)
-        "silver" -> Color(0xFFE2E8F0).copy(alpha = 0.30f)
-        "subtle" -> cs.outlineVariant.copy(alpha = 0.25f)
-        else -> cs.primary.copy(alpha = 0.40f)
+    val baseDividerColor = when (settings.dividerColor) {
+        "green" -> Color(0xFF00FF66)
+        "cyan" -> Color(0xFF00E5FF)
+        "gold" -> Color(0xFFFFCC00)
+        "red" -> Color(0xFFFF2A4A)
+        "purple" -> Color(0xFFC084FC)
+        "silver" -> Color(0xFFE2E8F0)
+        "subtle" -> cs.outlineVariant
+        else -> customAccent
     }
+    val dividerColorResolved = baseDividerColor.copy(alpha = effectiveOpacity)
 
     Box(
         modifier = modifier
@@ -1107,7 +1119,7 @@ internal fun ConversationRow(
         Surface(
             shape = if (isDividerMode) RoundedCornerShape(4.dp) else RoundedCornerShape(8.dp),
             color = cardBg,
-            border = if (isDividerMode) null else BorderStroke(0.8.dp, cardBorderColor),
+            border = if (isDividerMode) null else BorderStroke(effectiveWidth.dp, cardBorderColor),
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
@@ -1221,7 +1233,7 @@ internal fun ConversationRow(
         }
         if (isDividerMode) {
             HorizontalDivider(
-                thickness = 0.8.dp,
+                thickness = effectiveWidth.dp,
                 color = dividerColorResolved,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)

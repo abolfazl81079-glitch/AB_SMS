@@ -54,6 +54,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -154,6 +155,9 @@ fun SettingsScreen(
     var cellOpacityDialog by remember { mutableStateOf(false) }
     var dividerColorDialog by remember { mutableStateOf(false) }
     var launcherIconDialog by remember { mutableStateOf(false) }
+    var borderOpacitySliderDialog by remember { mutableStateOf(false) }
+    var borderWidthSliderDialog by remember { mutableStateOf(false) }
+    var messageCardShapeDialog by remember { mutableStateOf(false) }
     var delaySecondsDialog by remember { mutableStateOf(false) }
     var swipeLeftDialog by remember { mutableStateOf(false) }
     var swipeRightDialog by remember { mutableStateOf(false) }
@@ -423,7 +427,7 @@ fun SettingsScreen(
             ),
             SearchSettingItem(
                 id = "profile_avatar",
-                title = "تصویر پروفایل شما (AB/SMS)",
+                title = "تصویر پروفایل شما (A/SMS)",
                 subtitle = "انتخاب تصویر دلخواه برای پروفایل کاربری",
                 category = "ظاهر و طراحی / Appearance",
                 keywords = listOf("avatar", "profile", "عکس", "پروفایل", "تصویر", "photo", "camera", "تصویر کاربری"),
@@ -945,7 +949,7 @@ fun SettingsScreen(
                         Spacer(Modifier.width(14.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "تصویر پروفایل شما (AB/SMS)",
+                                text = "تصویر پروفایل شما (A/SMS)",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFFFFF2B2)
@@ -977,9 +981,21 @@ fun SettingsScreen(
                     )
                     SettingsRow(
                         position = RowPosition.MIDDLE,
-                        title = stringResource(R.string.settings_border_opacity_title),
+                        title = stringResource(R.string.settings_border_opacity_slider_title),
                         subtitle = borderOpacitySubtitle,
-                        onClick = { cellOpacityDialog = true }
+                        onClick = { borderOpacitySliderDialog = true }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_border_width_slider_title),
+                        subtitle = borderWidthSubtitle,
+                        onClick = { borderWidthSliderDialog = true }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_message_card_shape_title),
+                        subtitle = messageCardShapeSubtitle,
+                        onClick = { messageCardShapeDialog = true }
                     )
                     SettingsRow(
                         position = RowPosition.MIDDLE,
@@ -1468,6 +1484,124 @@ fun SettingsScreen(
         )
     }
 
+    if (borderOpacitySliderDialog) {
+        var tempOpacity by remember { mutableStateOf(vm.settings.cellBorderOpacityFloat) }
+        AlertDialog(
+            onDismissRequest = { borderOpacitySliderDialog = false },
+            title = { Text(stringResource(R.string.settings_border_opacity_slider_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "${(tempOpacity * 100).toInt()}%",
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Slider(
+                        value = tempOpacity,
+                        onValueChange = { tempOpacity = it },
+                        valueRange = 0.10f..1.0f
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("10%", style = MaterialTheme.typography.labelSmall)
+                        Text("100%", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.settings.cellBorderOpacityFloat = tempOpacity
+                    borderOpacitySliderDialog = false
+                }) { Text(stringResource(R.string.common_ok)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { borderOpacitySliderDialog = false }) { Text(stringResource(R.string.common_cancel)) }
+            }
+        )
+    }
+
+    if (borderWidthSliderDialog) {
+        var tempWidth by remember { mutableStateOf(vm.settings.cellBorderWidthFloat) }
+        AlertDialog(
+            onDismissRequest = { borderWidthSliderDialog = false },
+            title = { Text(stringResource(R.string.settings_border_width_slider_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = String.format(java.util.Locale.US, "%.1f dp", tempWidth),
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Slider(
+                        value = tempWidth,
+                        onValueChange = { tempWidth = it },
+                        valueRange = 0.4f..4.0f
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("0.4 dp", style = MaterialTheme.typography.labelSmall)
+                        Text("4.0 dp", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.settings.cellBorderWidthFloat = tempWidth
+                    borderWidthSliderDialog = false
+                }) { Text(stringResource(R.string.common_ok)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { borderWidthSliderDialog = false }) { Text(stringResource(R.string.common_cancel)) }
+            }
+        )
+    }
+
+    if (messageCardShapeDialog) {
+        AlertDialog(
+            onDismissRequest = { messageCardShapeDialog = false },
+            title = { Text(stringResource(R.string.settings_message_card_shape_title)) },
+            text = {
+                Column {
+                    val shapeOptions = listOf(
+                        SettingsStore.SHAPE_ROUNDED to "Rounded (12dp)",
+                        SettingsStore.SHAPE_CYBER to "Cyberpunk (4dp)",
+                        SettingsStore.SHAPE_BUBBLE to "Classic Bubble",
+                        SettingsStore.SHAPE_MINIMAL to "Minimal (2dp)",
+                        SettingsStore.SHAPE_CAPSULE to "Capsule (22dp)"
+                    )
+                    shapeOptions.forEach { (code, label) ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    vm.settings.messageCardShape = code
+                                    messageCardShapeDialog = false
+                                }
+                                .padding(vertical = 6.dp)
+                        ) {
+                            RadioButton(
+                                selected = vm.settings.messageCardShape == code,
+                                onClick = {
+                                    vm.settings.messageCardShape = code
+                                    messageCardShapeDialog = false
+                                }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(label)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { messageCardShapeDialog = false }) { Text(stringResource(R.string.common_ok)) }
+            }
+        )
+    }
     if (launcherIconDialog) {
         AlertDialog(
             onDismissRequest = { launcherIconDialog = false },

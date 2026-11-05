@@ -5,10 +5,13 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -258,8 +261,8 @@ object SmartNumberDetector {
         }
 
         // 6. Alphanumeric Promo / Discount / Voucher / Tracking Codes
-        // A. Keyword-preceded codes (e.g. "کد: LDMM7X", "کد: X4W2VT", "کد تخفیف: OKALA50", "کد: AB-1234-CD")
-        val promoKeywordRegex = Regex("""(?i)(?:کد|رمز|code|coupon|voucher|pin|تخفیف|شناسه|پیگیری|کدتخفیف)[:\s-]*([A-Za-z0-9_-]{3,24})(?![A-Za-z0-9_-])""")
+        // A. Keyword-preceded codes (e.g. "کد: LDMM7X", "کد: X4W2VT", "کد تخفیف: OKALA50", "کد درگاه دیجی‌پی: DEZTAV", "کد درگاه دیجی‌پی: DEBMET")
+        val promoKeywordRegex = Regex("""(?i)(?:کد|رمز|code|coupon|voucher|pin|تخفیف|شناسه|پیگیری|کدتخفیف|درگاه|هدیه|معرف|شارژ)[^:\n\r]{0,35}[:\s-]+\s*([A-Za-z0-9_-]{3,24})(?![A-Za-z0-9_-])""")
         for (m in promoKeywordRegex.findAll(text)) {
             val group = m.groups[1] ?: continue
             val range = group.range
@@ -276,13 +279,34 @@ object SmartNumberDetector {
             }
         }
 
-        // B. Standalone mixed alphanumeric codes containing letters AND digits with optional hyphens/underscores (e.g. LDMM7X, X4W2VT, SNAP-50)
+        // B. Standalone mixed alphanumeric codes containing letters AND digits (e.g. LDMM7X, X4W2VT, SNAP-50)
         val standaloneAlphaNumRegex = Regex("""(?<![A-Za-z0-9_-])([A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*)(?![A-Za-z0-9_-])""")
         for (m in standaloneAlphaNumRegex.findAll(text)) {
             val token = m.groupValues[1]
             val hasLetter = token.any { it.isLetter() }
             val hasDigit = token.any { it.isDigit() }
             if (hasLetter && hasDigit && !overlaps(m.range)) {
+                results.add(
+                    DetectedNumber(
+                        originalText = token,
+                        normalizedText = token.trim(),
+                        type = NumberType.PROMO_CODE,
+                        range = m.range
+                    )
+                )
+            }
+        }
+
+        // C. Standalone uppercase promo words (4 to 16 chars: e.g. DEZTAV, DEBMET, YALDA, NOROOZ)
+        val uppercasePromoRegex = Regex("""(?<![A-Za-z0-9])([A-Z]{4,16})(?![A-Za-z0-9])""")
+        val excludedEnglishWords = setOf(
+            "MESSAGE", "MESSAGES", "DELIVERED", "RECEIVED", "FAILED", "ONLINE", "STARK",
+            "CYBER", "SYSTEM", "ERROR", "HTTPS", "HTTP", "FALSE", "TRUE", "ANDROID",
+            "NOTIFICATION", "INFO", "ALERT", "CALL", "CHAT", "DETAILS", "SIM", "CANCEL"
+        )
+        for (m in uppercasePromoRegex.findAll(text)) {
+            val token = m.groupValues[1]
+            if (token !in excludedEnglishWords && !overlaps(m.range)) {
                 results.add(
                     DetectedNumber(
                         originalText = token,
@@ -421,7 +445,7 @@ fun CopySeparatorDialog(
         onDismissRequest = onDismiss,
         containerColor = cs.surfaceContainerHigh.copy(alpha = 0.95f),
         tonalElevation = 6.dp,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(14.dp),
         modifier = Modifier.padding(16.dp),
         title = {
             Row(
@@ -447,24 +471,38 @@ fun CopySeparatorDialog(
                 Text(
                     text = "آیا مایلید علامت‌ها، فاصله‌ها و خطوط تیره از متن حذف شوند؟",
                     color = cs.onSurface,
-                    fontSize = 14.sp,
+                    fontSize = 13.5.sp,
                     lineHeight = 20.sp
                 )
 
-                // Option 1 Preview: Cleaned without separators
+                // Option 1 Preview Card: Cleaned without separators (Directly clickable)
                 Card(
                     shape = RoundedCornerShape(8.dp),
                     colors = CardDefaults.cardColors(containerColor = cs.primary.copy(alpha = 0.12f)),
-                    border = BorderStroke(0.8.dp, cs.primary.copy(alpha = 0.5f)),
-                    modifier = Modifier.fillMaxWidth()
+                    border = BorderStroke(0.8.dp, cs.primary.copy(alpha = 0.6f)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onCopy(cleanText, true) }
                 ) {
-                    Column(Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
-                        Text(
-                            text = "حالت خالص (بدون علامت و خط فاصله):",
-                            color = cs.primary,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium
-                        )
+                    Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "حالت خالص (بدون علامت و خط فاصله):",
+                                color = cs.primary,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "لمس برای کپی",
+                                color = cs.primary.copy(alpha = 0.8f),
+                                fontSize = 10.sp
+                            )
+                        }
+                        Spacer(Modifier.height(3.dp))
                         Text(
                             text = cleanText,
                             color = cs.onSurface,
@@ -474,20 +512,34 @@ fun CopySeparatorDialog(
                     }
                 }
 
-                // Option 2 Preview: Original with separators
+                // Option 2 Preview Card: Original with separators (Directly clickable)
                 Card(
                     shape = RoundedCornerShape(8.dp),
                     colors = CardDefaults.cardColors(containerColor = cs.surfaceVariant.copy(alpha = 0.5f)),
-                    border = BorderStroke(0.8.dp, cs.secondary.copy(alpha = 0.5f)),
-                    modifier = Modifier.fillMaxWidth()
+                    border = BorderStroke(0.8.dp, cs.secondary.copy(alpha = 0.6f)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onCopy(originalText, false) }
                 ) {
-                    Column(Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
-                        Text(
-                            text = "حالت اصلی (با علامت و خط فاصله):",
-                            color = cs.secondary,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium
-                        )
+                    Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "حالت اصلی (با علامت و خط فاصله):",
+                                color = cs.secondary,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "لمس برای کپی",
+                                color = cs.secondary.copy(alpha = 0.8f),
+                                fontSize = 10.sp
+                            )
+                        }
+                        Spacer(Modifier.height(3.dp))
                         Text(
                             text = originalText,
                             color = cs.onSurface,
@@ -499,34 +551,46 @@ fun CopySeparatorDialog(
             }
         },
         confirmButton = {
-            Button(
-                onClick = { onCopy(cleanText, true) },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = cs.primary,
-                    contentColor = cs.onPrimary
-                ),
-                shape = RoundedCornerShape(6.dp)
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Text("کپی بدون علامت", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-            }
-        },
-        dismissButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                OutlinedButton(
-                    onClick = { onCopy(originalText, false) },
-                    border = BorderStroke(0.8.dp, cs.secondary),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = cs.secondary),
-                    shape = RoundedCornerShape(6.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("کپی با علامت", fontSize = 13.sp)
+                    Button(
+                        onClick = { onCopy(cleanText, true) },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = cs.primary,
+                            contentColor = cs.onPrimary
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("کپی بدون علامت", fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1)
+                    }
+
+                    OutlinedButton(
+                        onClick = { onCopy(originalText, false) },
+                        border = BorderStroke(0.8.dp, cs.secondary),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = cs.secondary),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("کپی با علامت", fontWeight = FontWeight.Medium, fontSize = 12.sp, maxLines = 1)
+                    }
                 }
+
                 TextButton(
                     onClick = onDismiss,
-                    colors = ButtonDefaults.textButtonColors(contentColor = cs.onSurfaceVariant)
+                    colors = ButtonDefaults.textButtonColors(contentColor = cs.onSurfaceVariant),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("انصراف", fontSize = 13.sp)
                 }
             }
-        }
+        },
+        dismissButton = null
     )
 }

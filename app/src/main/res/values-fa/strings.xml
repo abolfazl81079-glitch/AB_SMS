@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">AB/SMS</string>
-    <string name="app_name_placeholder">AB/SMS</string>
+    <string name="app_name">A/SMS</string>
+    <string name="app_name_placeholder">A/SMS</string>
 
     <!-- App lock & permissions -->
     <string name="lock_title">برای دسترسی به پیام‌ها هویت خود را تأیید کنید</string>
-    <string name="lock_unlock_title">قفل‌گشایی AB/SMS</string>
+    <string name="lock_unlock_title">قفل‌گشایی A/SMS</string>
     <string name="lock_auth_subtitle">برای مشاهده پیام‌ها قفل دستگاه خود را باز کنید</string>
     <string name="lock_change_app_lock_title">تغییر قفل برنامه</string>
     <string name="lock_change_app_lock_subtitle">اثر انگشت، چهره یا پین تأیید می‌کند که شما هستید</string>
@@ -18,7 +18,7 @@
 
     <!-- Default SMS app prompt -->
     <string name="default_sms_title">تنظیم به عنوان پیام‌رسان پیش‌فرض؟</string>
-    <string name="default_sms_message">برای ارسال و دریافت پیامک، AB/SMS باید برنامه پیش‌فرض پیامک دستگاه باشد.</string>
+    <string name="default_sms_message">برای ارسال و دریافت پیامک، A/SMS باید برنامه پیش‌فرض پیامک دستگاه باشد.</string>
     <string name="default_sms_set">تنظیم به عنوان پیش‌فرض</string>
     <string name="default_sms_not_now">بعداً</string>
 
@@ -119,7 +119,7 @@
     <string name="settings_messages_search">جستجو در تنظیمات…</string>
     <string name="settings_search_hint">جستجو در تنظیمات…</string>
     <string name="settings_search_none">موردی یافت نشد</string>
-    <string name="messages_footer">AB/SMS — پیام‌رسان ایمن و هوشمند هکری</string>
+    <string name="messages_footer">A/SMS — پیام‌رسان ایمن و هوشمند هکری</string>
     <string name="common_ok">تأیید</string>
     <string name="common_cancel">انصراف</string>
 
@@ -230,4 +230,14 @@
     <string name="contact_cell_color_follow_global">پیش‌فرض سراسری پوسته</string>
     <string name="contact_lines_follow_global">پیش‌فرض سراسری</string>
     <string name="contact_cell_customization_group">شخصی‌سازی سلول گفتگو</string>
+
+    <!-- Sliders and Shape Settings -->
+    <string name="settings_border_opacity_slider_title">شفافیت و وضوح کادر و دیوایدر</string>
+    <string name="settings_border_opacity_slider_subtitle">تنظیم کشویی کمرنگی و پررنگی خطوط</string>
+    <string name="settings_border_width_slider_title">ضخامت کادر و دیوایدر</string>
+    <string name="settings_border_width_slider_subtitle">تنظیم کشویی نازکی و ضخامت خطوط</string>
+    <string name="settings_message_card_shape_title">شکل کادر کارت پیام در چت</string>
+    <string name="settings_message_card_shape_subtitle">تنظیم استایل و انحنای کارت‌های پیام داخل گفتگو</string>
+    <string name="contact_custom_border_opacity">شفافیت اختصاصی کادر و دیوایدر</string>
+    <string name="contact_custom_border_width">ضخامت اختصاصی کادر و دیوایدر</string>
 </resources>

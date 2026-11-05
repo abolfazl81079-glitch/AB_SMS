@@ -54,6 +54,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -125,6 +126,10 @@ onBack: () -> Unit,
     val customLines = remember(customRevision) { com.anindra.messages.data.CustomConversationStore.getPreviewLines(context, convoKey) }
     var showColorDialog by remember { mutableStateOf(false) }
     var showLinesDialog by remember { mutableStateOf(false) }
+    val customOpacity = remember(customRevision) { com.anindra.messages.data.CustomConversationStore.getBorderOpacity(context, convoKey) }
+    val customWidth = remember(customRevision) { com.anindra.messages.data.CustomConversationStore.getBorderWidth(context, convoKey) }
+    var showOpacityDialog by remember { mutableStateOf(false) }
+    var showWidthDialog by remember { mutableStateOf(false) }
 
     val membershipRevision by vm.membershipRevision.collectAsState()
     var recipients by remember(address) { mutableStateOf(listOf(address)) }
@@ -451,6 +456,20 @@ onBack: () -> Unit,
                     subtitle = linesLabel,
                     onClick = { showLinesDialog = true }
                 )
+                val opacityLabel = if (customOpacity >= 0f) "${(customOpacity * 100).toInt()}%" else stringResource(R.string.contact_lines_follow_global)
+                DetailCardRow(
+                    icon = Icons.Rounded.Tune,
+                    title = stringResource(R.string.contact_custom_border_opacity),
+                    subtitle = opacityLabel,
+                    onClick = { showOpacityDialog = true }
+                )
+                val widthLabel = if (customWidth >= 0f) String.format(java.util.Locale.US, "%.1f dp", customWidth) else stringResource(R.string.contact_lines_follow_global)
+                DetailCardRow(
+                    icon = Icons.Rounded.Tune,
+                    title = stringResource(R.string.contact_custom_border_width),
+                    subtitle = widthLabel,
+                    onClick = { showWidthDialog = true }
+                )
             }
 
             Spacer(Modifier.height(12.dp))
@@ -612,6 +631,93 @@ onBack: () -> Unit,
         )
     }
 
+    if (showOpacityDialog) {
+        var tempOpacity by remember { mutableStateOf(if (customOpacity >= 0f) customOpacity else 0.45f) }
+        AlertDialog(
+            onDismissRequest = { showOpacityDialog = false },
+            title = { Text(stringResource(R.string.contact_custom_border_opacity)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "${(tempOpacity * 100).toInt()}%",
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Slider(
+                        value = tempOpacity,
+                        onValueChange = { tempOpacity = it },
+                        valueRange = 0.10f..1.0f
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("10%", style = MaterialTheme.typography.labelSmall)
+                        Text("100%", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    com.anindra.messages.data.CustomConversationStore.setBorderOpacity(context, convoKey, tempOpacity)
+                    showOpacityDialog = false
+                }) { Text(stringResource(R.string.common_ok)) }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = {
+                        com.anindra.messages.data.CustomConversationStore.setBorderOpacity(context, convoKey, -1f)
+                        showOpacityDialog = false
+                    }) { Text(stringResource(R.string.contact_lines_follow_global)) }
+                    TextButton(onClick = { showOpacityDialog = false }) { Text(stringResource(R.string.common_cancel)) }
+                }
+            }
+        )
+    }
+
+    if (showWidthDialog) {
+        var tempWidth by remember { mutableStateOf(if (customWidth >= 0f) customWidth else 0.8f) }
+        AlertDialog(
+            onDismissRequest = { showWidthDialog = false },
+            title = { Text(stringResource(R.string.contact_custom_border_width)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = String.format(java.util.Locale.US, "%.1f dp", tempWidth),
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Slider(
+                        value = tempWidth,
+                        onValueChange = { tempWidth = it },
+                        valueRange = 0.4f..4.0f
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("0.4 dp", style = MaterialTheme.typography.labelSmall)
+                        Text("4.0 dp", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    com.anindra.messages.data.CustomConversationStore.setBorderWidth(context, convoKey, tempWidth)
+                    showWidthDialog = false
+                }) { Text(stringResource(R.string.common_ok)) }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = {
+                        com.anindra.messages.data.CustomConversationStore.setBorderWidth(context, convoKey, -1f)
+                        showWidthDialog = false
+                    }) { Text(stringResource(R.string.contact_lines_follow_global)) }
+                    TextButton(onClick = { showWidthDialog = false }) { Text(stringResource(R.string.common_cancel)) }
+                }
+            }
+        )
+    }
     if (showLinesDialog) {
         val linesOptions = listOf(
             0 to stringResource(R.string.contact_lines_follow_global),
