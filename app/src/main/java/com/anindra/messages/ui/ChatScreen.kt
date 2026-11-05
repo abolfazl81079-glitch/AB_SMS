@@ -1,5 +1,6 @@
 package com.anindra.messages.ui
 
+import androidx.compose.ui.graphics.luminance
 import com.anindra.messages.data.JalaliCalendar
 import android.Manifest
 import android.content.Context
@@ -584,27 +585,16 @@ internal fun ChatBubble(
                     if (simNumber != null) {
                         Surface(
                             shape = RoundedCornerShape(3.dp),
-                            color = cs.surfaceContainerHighest.copy(alpha = 0.7f),
-                            border = BorderStroke(0.6.dp, cs.primary.copy(alpha = 0.5f)),
+                            color = cs.surfaceContainerHighest.copy(alpha = 0.75f),
+                            border = BorderStroke(0.6.dp, cs.primary.copy(alpha = 0.6f)),
                             modifier = Modifier.padding(end = 5.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
+                            Text(
+                                text = if (isPersian || calendarType == com.anindra.messages.data.SettingsStore.CALENDAR_JALALI) "سیم " + JalaliCalendar.toPersianDigits(simNumber.toString()) else "SIM $simNumber",
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.5.sp, fontWeight = FontWeight.Bold),
+                                color = cs.primary,
                                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                            ) {
-                                Icon(
-                                    imageVector = androidx.compose.material.icons.Icons.Rounded.SimCard,
-                                    contentDescription = null,
-                                    tint = cs.primary,
-                                    modifier = Modifier.size(11.dp)
-                                )
-                                Spacer(Modifier.width(2.dp))
-                                Text(
-                                    text = if (isPersian || calendarType == com.anindra.messages.data.SettingsStore.CALENDAR_JALALI) JalaliCalendar.toPersianDigits(simNumber.toString()) else simNumber.toString(),
-                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
-                                    color = cs.onSurface
-                                )
-                            }
+                            )
                         }
                     }
 
