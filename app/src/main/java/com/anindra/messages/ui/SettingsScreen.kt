@@ -318,11 +318,14 @@ fun SettingsScreen(
         "divider" -> stringResource(R.string.cell_style_divider)
         else -> stringResource(R.string.cell_style_card)
     }
-    val borderOpacitySubtitle = when (vm.settings.cellBorderOpacity) {
-        "subtle" -> stringResource(R.string.border_opacity_subtle)
-        "strong" -> stringResource(R.string.border_opacity_strong)
-        "neon" -> stringResource(R.string.border_opacity_neon)
-        else -> stringResource(R.string.border_opacity_medium)
+    val borderOpacitySubtitle = "${(vm.settings.cellBorderOpacityFloat * 100).toInt()}%"
+    val borderWidthSubtitle = String.format(java.util.Locale.US, "%.1f dp", vm.settings.cellBorderWidthFloat)
+    val messageCardShapeSubtitle = when (vm.settings.messageCardShape) {
+        SettingsStore.SHAPE_CYBER -> "Cyberpunk (4dp)"
+        SettingsStore.SHAPE_BUBBLE -> "Classic Bubble"
+        SettingsStore.SHAPE_MINIMAL -> "Minimal (2dp)"
+        SettingsStore.SHAPE_CAPSULE -> "Capsule (22dp)"
+        else -> "Rounded (12dp)"
     }
     val dividerColorSubtitle = when (vm.settings.dividerColor) {
         "gold" -> "طلایی استارک (Stark Gold)"
