@@ -1553,10 +1553,12 @@ fun SettingsScreen(
         val isLeft = swipeLeftDialog
         val currentAction = if (isLeft) vm.settings.swipeLeftAction else vm.settings.swipeRightAction
         val actions = listOf(
-            SwipeAction.Archive to stringResource(R.string.swipe_action_archive),
-            SwipeAction.Delete to stringResource(R.string.swipe_action_delete),
-            SwipeAction.MarkRead to stringResource(R.string.swipe_action_mark_read),
-            SwipeAction.None to stringResource(R.string.swipe_action_off)
+            SwipeAction.ARCHIVE to stringResource(R.string.access_archive),
+            SwipeAction.DELETE to stringResource(R.string.sheet_delete),
+            SwipeAction.MARK_READ_UNREAD to stringResource(R.string.swipe_action_mark_read),
+            SwipeAction.PIN to stringResource(R.string.swipe_action_pin),
+            SwipeAction.BLOCK to stringResource(R.string.swipe_action_block),
+            SwipeAction.OFF to stringResource(R.string.swipe_action_off)
         )
         AlertDialog(
             onDismissRequest = {
@@ -2199,10 +2201,12 @@ fun SettingsSectionHeader(title: String) {
 }
 
 private fun swipeActionLabel(action: SwipeAction, context: android.content.Context): String = when (action) {
-    SwipeAction.Archive -> context.getString(R.string.swipe_action_archive)
-    SwipeAction.Delete -> context.getString(R.string.swipe_action_delete)
-    SwipeAction.MarkRead -> context.getString(R.string.swipe_action_mark_read)
-    SwipeAction.None -> context.getString(R.string.swipe_action_off)
+    SwipeAction.ARCHIVE -> context.getString(R.string.access_archive)
+    SwipeAction.DELETE -> context.getString(R.string.sheet_delete)
+    SwipeAction.MARK_READ_UNREAD -> context.getString(R.string.swipe_action_mark_read)
+    SwipeAction.PIN -> context.getString(R.string.swipe_action_pin)
+    SwipeAction.BLOCK -> context.getString(R.string.swipe_action_block)
+    SwipeAction.OFF -> context.getString(R.string.swipe_action_off)
 }
 
 @Composable
