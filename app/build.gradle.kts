@@ -16,8 +16,8 @@ android {
         applicationId = "com.absms.app"
         minSdk = 29
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.2.0"
     }
 
     val releaseKeystore = file(System.getenv("RELEASE_KEYSTORE") ?: "${rootProject.projectDir}/release.keystore")

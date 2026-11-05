@@ -279,6 +279,16 @@ internal fun ChatBubble(
 ) {
     val cs = MaterialTheme.colorScheme
     val context = LocalContext.current
+    val isDarkTheme = cs.surface.luminance() < 0.5f
+    val bubbleTextColor = if (isSelected) {
+        cs.onSelectedBubble
+    } else if (!isDarkTheme) {
+        Color(0xFF0F172A)
+    } else if (msg.isMe) {
+        Color(0xFFFFF2B2)
+    } else {
+        Color(0xFFE6F3FF)
+    }
     var pendingUrl by remember { mutableStateOf<String?>(null) }
     var pendingCopyItem by remember { mutableStateOf<SmartNumberDetector.DetectedNumber?>(null) }
     val isLockedAndHidden = msg.locked && !isUnlocked
@@ -303,7 +313,7 @@ internal fun ChatBubble(
         hideLinks && !isLockedAndHidden,
         onLinkClick = { pendingUrl = it },
         onSmartNumberClick = { pendingCopyItem = it },
-        textColor = if (isSelected) cs.onSelectedBubble else if (msg.isMe) cs.onPrimaryContainer else cs.onSurface,
+        textColor = bubbleTextColor,
         searchQuery = if (isLockedAndHidden) null else searchQuery,
         searchHighlightAlpha = searchHighlightAlpha
     )
@@ -438,7 +448,7 @@ internal fun ChatBubble(
                                 Text(
                                     text = bodyText,
                                     style = MaterialTheme.typography.bodyLarge.merge(
-                                        TextStyle(color = if (isSelected) cs.onSelectedBubble else if (msg.isMe) Color(0xFFFFF2B2) else Color(0xFFE6F3FF))
+                                        TextStyle(color = bubbleTextColor)
                                     ),
                                     modifier = Modifier
                                         .padding(horizontal = 14.dp, vertical = 8.dp)
@@ -463,7 +473,7 @@ internal fun ChatBubble(
                         Text(
                             text = bodyText,
                             style = MaterialTheme.typography.bodyLarge.merge(
-                                TextStyle(color = if (isSelected) cs.onSelectedBubble else if (msg.isMe) Color(0xFFFFF2B2) else Color(0xFFE6F3FF))
+                                TextStyle(color = bubbleTextColor)
                             ),
                             modifier = Modifier
                                 .padding(horizontal = 14.dp, vertical = 8.dp)
@@ -537,28 +547,70 @@ internal fun ChatBubble(
                     )
                 }
             } else if (showTime) {
-                val simLabel = if (showSimIndicator && msg.subId > 0) {
-                    try {
-                        val slotIndex = SubscriptionManager.getSlotIndex(msg.subId)
-                        if (slotIndex >= 0) String.format(context.getString(R.string.sim_slot_suffix), slotIndex + 1) else ""
-                    } catch (_: Exception) { "" }
-                } else ""
                 val isPersian = java.util.Locale.getDefault().language == "fa"
+                val settingsStore = remember { com.anindra.messages.data.SettingsStore.get(context) }
+                val calendarType = remember(settingsStore) { settingsStore.calendarType }
+
                 val rawTime = formatTimeOnly(msg.timestamp, is24HourFormat(context))
-                val time = if (isPersian) JalaliCalendar.toPersianDigits(rawTime) else rawTime
+                val timeDisplay = if (calendarType == com.anindra.messages.data.SettingsStore.CALENDAR_JALALI || isPersian) {
+                    JalaliCalendar.toPersianDigits(rawTime)
+                } else rawTime
+
+                val dateDisplay = if (calendarType == com.anindra.messages.data.SettingsStore.CALENDAR_GREGORIAN) {
+                    val instant = java.time.Instant.ofEpochMilli(msg.timestamp).atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+                    String.format(java.util.Locale.US, "%04d/%02d/%02d", instant.year, instant.monthValue, instant.dayOfMonth)
+                } else {
+                    JalaliCalendar.fromEpochMillis(msg.timestamp).formatShort(persianDigits = true)
+                }
+
+                val timeAndDate = "$timeDisplay • $dateDisplay"
+
+                val slotIndex = if (showSimIndicator && msg.subId > 0) {
+                    try {
+                        SubscriptionManager.getSlotIndex(msg.subId)
+                    } catch (_: Exception) { -1 }
+                } else -1
+                val simNumber = if (slotIndex >= 0) slotIndex + 1 else null
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(
-                        top = 6.dp,
+                        top = 4.dp,
                         bottom = 2.dp,
                         start = if (msg.isMe) 0.dp else 4.dp,
                         end = if (msg.isMe) 4.dp else 0.dp
                     )
                 ) {
+                    if (simNumber != null) {
+                        Surface(
+                            shape = RoundedCornerShape(3.dp),
+                            color = cs.surfaceContainerHighest.copy(alpha = 0.7f),
+                            border = BorderStroke(0.6.dp, cs.primary.copy(alpha = 0.5f)),
+                            modifier = Modifier.padding(end = 5.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                            ) {
+                                Icon(
+                                    imageVector = androidx.compose.material.icons.Icons.Rounded.SimCard,
+                                    contentDescription = null,
+                                    tint = cs.primary,
+                                    modifier = Modifier.size(11.dp)
+                                )
+                                Spacer(Modifier.width(2.dp))
+                                Text(
+                                    text = if (isPersian || calendarType == com.anindra.messages.data.SettingsStore.CALENDAR_JALALI) JalaliCalendar.toPersianDigits(simNumber.toString()) else simNumber.toString(),
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
+                                    color = cs.onSurface
+                                )
+                            }
+                        }
+                    }
+
                     Text(
-                        text = "$time$simLabel",
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = ChatMetaWeight),
+                        text = timeAndDate,
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = ChatMetaWeight, fontSize = 11.sp),
                         color = cs.onSurfaceVariant
                     )
 
@@ -2481,7 +2533,11 @@ private fun styledBody(
                     LinkAnnotation.Url(
                         url = "smartnum:${item.range.first}",
                         linkInteractionListener = {
-                            if (item.hasSeparators()) {
+                            val isDialable = item.type == SmartNumberDetector.NumberType.USSD ||
+                                item.type == SmartNumberDetector.NumberType.MOBILE ||
+                                item.type == SmartNumberDetector.NumberType.LANDLINE ||
+                                (item.cleanWithoutSeparators().isNotEmpty() && item.cleanWithoutSeparators().all { it.isDigit() || it == '+' })
+                            if (isDialable || item.hasSeparators()) {
                                 onSmartNumberClick?.invoke(item)
                             } else {
                                 if (context != null) {
@@ -2673,6 +2729,16 @@ fun MessageRow(
 ) {
     val cs = MaterialTheme.colorScheme
     val context = LocalContext.current
+    val isDarkTheme = cs.surface.luminance() < 0.5f
+    val bubbleTextColor = if (isSelected) {
+        cs.onSelectedBubble
+    } else if (!isDarkTheme) {
+        Color(0xFF0F172A)
+    } else if (msg.isMe) {
+        Color(0xFFFFF2B2)
+    } else {
+        Color(0xFFE6F3FF)
+    }
     var pendingUrl by remember { mutableStateOf<String?>(null) }
     var pendingCopyItem by remember { mutableStateOf<SmartNumberDetector.DetectedNumber?>(null) }
     val isLockedAndHidden = msg.locked && !isUnlocked
@@ -2683,7 +2749,7 @@ fun MessageRow(
         hideLinks && !isLockedAndHidden,
         onLinkClick = { pendingUrl = it },
         onSmartNumberClick = { pendingCopyItem = it },
-        textColor = if (isSelected) cs.onSelectedBubble else if (msg.isMe) cs.onPrimaryContainer else cs.onSurface
+        textColor = bubbleTextColor
     )
 
     // cache derived text/sim so an unlock doesn't recompute row allocations
@@ -2782,7 +2848,7 @@ fun MessageRow(
                             Text(
                                 text = bodyText,
                                 style = MaterialTheme.typography.bodyLarge.merge(
-                                    TextStyle(color = if (isSelected) cs.onSelectedBubble else if (msg.isMe) Color(0xFFFFF2B2) else Color(0xFFE6F3FF))
+                                    TextStyle(color = bubbleTextColor)
                                 ),
                                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
                             )
@@ -2802,7 +2868,7 @@ fun MessageRow(
                     Text(
                         text = bodyText,
                         style = MaterialTheme.typography.bodyLarge.merge(
-                            TextStyle(color = if (isSelected) cs.onSelectedBubble else if (msg.isMe) Color(0xFFFFF2B2) else Color(0xFFE6F3FF))
+                            TextStyle(color = bubbleTextColor)
                         ),
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
                     )

@@ -17,6 +17,14 @@ object ConversationList {
      * anywhere in their history (see `Repository.conversationIdsMatchingMessage`),
      * so a word buried in an old message still surfaces its thread.
      */
+    private fun normalizeForSearch(s: String): String = JalaliCalendar.toEnglishDigits(s)
+        .replace('ي', 'ی')
+        .replace('ك', 'ک')
+        .replace('ة', 'ه')
+        .replace("\u200C", "")
+        .replace(" ", "")
+        .lowercase()
+
     fun filter(
         conversations: List<Conversation>,
         showArchived: Boolean,
@@ -43,10 +51,14 @@ object ConversationList {
             // a snippet match (issue #284).
             list.filter { AddressIdentity.matchesNumber(it.address, query) }
         } else {
+            val normQuery = normalizeForSearch(query)
             list.filter {
                 val snippet = snippetFor(it)
                 it.id in messageMatchIds ||
-                    it.name.contains(query, true) || it.address.contains(query, true) ||
+                    normalizeForSearch(it.name).contains(normQuery) ||
+                    it.name.contains(query, true) ||
+                    it.address.contains(query, true) ||
+                    normalizeForSearch(snippet).contains(normQuery) ||
                     snippet.contains(query, true) ||
                     AddressIdentity.matchesNumber(it.address, query)
             }
@@ -68,8 +80,11 @@ object ConversationList {
             AddressIdentity.tooShortToBeNumber(query) ||
             AddressIdentity.isNumberQuery(query)
         ) return conversations
+        val normQuery = normalizeForSearch(query)
         val (named, mentioned) = conversations.partition {
-            it.name.contains(query, true) || it.address.contains(query, true)
+            normalizeForSearch(it.name).contains(normQuery) ||
+                it.name.contains(query, true) ||
+                it.address.contains(query, true)
         }
         return named + mentioned
     }
@@ -86,7 +101,11 @@ object ConversationList {
     fun handoffQuery(conversation: Conversation, query: String): String {
         val q = query.trim()
         if (q.isEmpty()) return ""
-        return if (conversation.name.contains(q, true) || conversation.address.contains(q, true)) "" else q
+        val normQuery = normalizeForSearch(q)
+        return if (normalizeForSearch(conversation.name).contains(normQuery) ||
+            conversation.name.contains(q, true) ||
+            conversation.address.contains(q, true)
+        ) "" else q
     }
 
     /**

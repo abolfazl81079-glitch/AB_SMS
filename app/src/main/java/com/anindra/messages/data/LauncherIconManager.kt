@@ -13,10 +13,10 @@ object LauncherIconManager {
     private const val TAG = "LauncherIconManager"
 
     val ALIAS_MAP = mapOf(
-        SettingsStore.ICON_BLACK_WHITE to "com.anindra.messages.ui.LauncherBlackWhite",
-        SettingsStore.ICON_STARK_GOLD to "com.anindra.messages.ui.LauncherStarkGold",
-        SettingsStore.ICON_MATRIX_GREEN to "com.anindra.messages.ui.LauncherMatrixGreen",
-        SettingsStore.ICON_CYBER_CYAN to "com.anindra.messages.ui.LauncherCyberCyan"
+        SettingsStore.ICON_BLACK_WHITE to "com.anindra.messages.LauncherBlackWhite",
+        SettingsStore.ICON_STARK_GOLD to "com.anindra.messages.LauncherStarkGold",
+        SettingsStore.ICON_MATRIX_GREEN to "com.anindra.messages.LauncherMatrixGreen",
+        SettingsStore.ICON_CYBER_CYAN to "com.anindra.messages.LauncherCyberCyan"
     )
 
     fun applyIcon(context: Context, iconCode: String) {

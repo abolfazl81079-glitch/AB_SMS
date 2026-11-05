@@ -208,10 +208,16 @@
     <!-- Launcher Icon Options -->
     <string name="settings_launcher_icon_title">App launcher icon</string>
     <string name="settings_launcher_icon_subtitle">Switch launcher icon style or avatar</string>
-    <string name="launcher_icon_black_white">Minimal Black on White (Default)</string>
+    <string name="launcher_icon_black_white">Circular Blue Messenger (Default)</string>
     <string name="launcher_icon_stark_gold">Stark Gold on Black</string>
     <string name="launcher_icon_matrix_green">Matrix Green on Black</string>
     <string name="launcher_icon_cyber_cyan">Cyber Cyan on Black</string>
+
+    <!-- Calendar Settings -->
+    <string name="settings_calendar_title">Message calendar system</string>
+    <string name="settings_calendar_subtitle">Switch between Persian Solar Hijri (Jalali) and Gregorian calendar</string>
+    <string name="calendar_jalali">Persian Jalali (Default)</string>
+    <string name="calendar_gregorian">Gregorian</string>
 
     <!-- Contact Details Customization -->
     <string name="contact_custom_cell_color">Custom cell border color</string>

@@ -100,6 +100,18 @@ class SettingsStore(context: Context) {
 
         const val KEY_DIVIDER_COLOR = "divider_color"
 
+        const val KEY_CALENDAR_TYPE = "calendar_type"
+        const val CALENDAR_JALALI = "jalali"
+        const val CALENDAR_GREGORIAN = "gregorian"
+
+        @Volatile
+        private var instance: SettingsStore? = null
+
+        fun get(context: Context): SettingsStore =
+            instance ?: synchronized(this) {
+                instance ?: SettingsStore(context.applicationContext).also { instance = it }
+            }
+
         const val KEY_LAUNCHER_ICON = "launcher_icon"
         const val ICON_BLACK_WHITE = "black_white"
         const val ICON_STARK_GOLD = "stark_gold"
@@ -272,6 +284,10 @@ class SettingsStore(context: Context) {
     var messageCardShape: String
         get() = prefs.getString(KEY_MESSAGE_CARD_SHAPE, SHAPE_ROUNDED) ?: SHAPE_ROUNDED
         set(v) { prefs.edit().putString(KEY_MESSAGE_CARD_SHAPE, v).apply(); _revision.value++ }
+
+    var calendarType: String
+        get() = prefs.getString(KEY_CALENDAR_TYPE, CALENDAR_JALALI) ?: CALENDAR_JALALI
+        set(v) { prefs.edit().putString(KEY_CALENDAR_TYPE, v).apply(); _revision.value++ }
 
     var dividerColor: String
         get() = prefs.getString(KEY_DIVIDER_COLOR, CELL_COLOR_THEME) ?: CELL_COLOR_THEME

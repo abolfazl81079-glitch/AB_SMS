@@ -149,6 +149,7 @@ fun SettingsScreen(
     // Dialog state
     var themeDialog by remember { mutableStateOf(false) }
     var languageDialog by remember { mutableStateOf(false) }
+    var calendarDialog by remember { mutableStateOf(false) }
     var previewLinesDialog by remember { mutableStateOf(false) }
     var cellColorDialog by remember { mutableStateOf(false) }
     var cellStyleDialog by remember { mutableStateOf(false) }
@@ -298,6 +299,10 @@ fun SettingsScreen(
         "fa" -> stringResource(R.string.language_fa)
         "en" -> stringResource(R.string.language_en)
         else -> stringResource(R.string.language_system)
+    }
+    val calendarSubtitle = when (vm.settings.calendarType) {
+        SettingsStore.CALENDAR_GREGORIAN -> "میلادی (گرگوریان)"
+        else -> "شمسی (جلالی) - پیش‌فرض"
     }
     val linesSubtitle = when (vm.settings.previewLines) {
         1 -> stringResource(R.string.preview_lines_1)
@@ -767,6 +772,14 @@ fun SettingsScreen(
                 category = "عمومی و سیستم / General",
                 keywords = listOf("language", "زبان", "فارسی", "english", "انگلیسی", "persian", "مترجم"),
                 onClick = { languageDialog = true }
+            ),
+            SearchSettingItem(
+                id = "calendar",
+                title = "نوع تقویم / Calendar System",
+                subtitle = calendarSubtitle,
+                category = "عمومی و سیستم / General",
+                keywords = listOf("calendar", "تقویم", "شمسی", "میلادی", "جلالی", "تاریخ", "solar", "jalali", "gregorian"),
+                onClick = { calendarDialog = true }
             ),
             SearchSettingItem(
                 id = "advanced",
@@ -1301,6 +1314,12 @@ fun SettingsScreen(
                         onClick = { languageDialog = true }
                     )
                     SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = "نوع تقویم",
+                        subtitle = calendarSubtitle,
+                        onClick = { calendarDialog = true }
+                    )
+                    SettingsRow(
                         position = RowPosition.LAST,
                         title = stringResource(R.string.settings_advanced_title),
                         subtitle = stringResource(R.string.settings_advanced_subtitle),
@@ -1781,6 +1800,46 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { languageDialog = false }) { Text(stringResource(R.string.common_ok)) }
+            }
+        )
+    }
+
+    if (calendarDialog) {
+        AlertDialog(
+            onDismissRequest = { calendarDialog = false },
+            title = { Text("نوع تقویم پیام‌ها") },
+            text = {
+                Column {
+                    val calOptions = listOf(
+                        SettingsStore.CALENDAR_JALALI to "شمسی (جلالی) - پیش‌فرض",
+                        SettingsStore.CALENDAR_GREGORIAN to "میلادی (گرگوریان)"
+                    )
+                    calOptions.forEach { (code, label) ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    vm.settings.calendarType = code
+                                    calendarDialog = false
+                                }
+                                .padding(vertical = 8.dp)
+                        ) {
+                            RadioButton(
+                                selected = vm.settings.calendarType == code,
+                                onClick = {
+                                    vm.settings.calendarType = code
+                                    calendarDialog = false
+                                }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(label, style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { calendarDialog = false }) { Text(stringResource(R.string.common_ok)) }
             }
         )
     }

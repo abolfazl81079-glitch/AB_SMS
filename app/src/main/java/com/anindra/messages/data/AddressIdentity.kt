@@ -37,46 +37,37 @@ object AddressIdentity {
     fun isReplyable(address: String): Boolean = PhoneNumberUtils.isDialableAddress(address)
 
     /** True when [query] can only be a phone number: at least one digit, and
-     *  nothing but digits and the punctuation people type numbers with. This is
-     *  what splits number search from text search — a number identifies a
-     *  conversation, never a message (issue #284). */
-    fun isNumberQuery(query: String): Boolean =
-        query.any { it.isDigit() } && query.all { it.isDigit() || it in "+-(). " }
+     *  nothing but digits and the punctuation people type numbers with. Supports Persian & Arabic digits. */
+    fun isNumberQuery(query: String): Boolean {
+        val eng = JalaliCalendar.toEnglishDigits(query)
+        return eng.any { it in '0'..'9' } && eng.all { it in '0'..'9' || it in "+-(). " }
+    }
 
     /** True when [query] is a number too short to match anything yet, so the
      *  list should stay unfiltered while the user is still typing it. */
-    fun tooShortToBeNumber(query: String): Boolean =
-        isNumberQuery(query) && query.count { it.isDigit() } < MIN_SEARCH_DIGITS
+    fun tooShortToBeNumber(query: String): Boolean {
+        val eng = JalaliCalendar.toEnglishDigits(query)
+        return isNumberQuery(query) && eng.count { it in '0'..'9' } < MIN_SEARCH_DIGITS
+    }
 
     /** True when [query] is a phone-number fragment that identifies [address],
      *  however each side was formatted (spaces, dashes, `+`, country code).
-     *  The conversation search needs this because the UI shows/accepts
-     *  `555-000-1234` while the address is stored as `+15550001234`.
-     *
-     *  Containment, not suffix, because the query is usually partial: a suffix
-     *  test cannot succeed until nearly the whole number is typed, which made a
-     *  contact appear only at the last digit.
-     *
-     *  An address containing a letter is an alphanumeric sender ID, never a
-     *  number, and is rejected outright. Stripping one to its digits is what made
-     *  `X1 INFO` match every query ending in 1 — it reduces to "1", so
-     *  `q.endsWith(a)` flickered on and off as the user typed. Same rule as
-     *  [samePerson] above: a letter means it is not dialable.
-     *
-     *  [ContactLookup.compareDigits] stays as the last resort for spellings the
-     *  three digit runs below miss — the same last-seven rule contact lookup
-     *  already uses, rather than a second copy of it here. */
+     *  Normalizes Persian and Arabic numerals to ensure accurate matching. */
     fun matchesNumber(address: String, query: String): Boolean {
         if (address.any { it.isLetter() }) return false
-        val q = query.filter { it.isDigit() }
+        val q = JalaliCalendar.toEnglishDigits(query).filter { it in '0'..'9' }
         if (q.length < MIN_SEARCH_DIGITS) return false
-        val a = address.filter { it.isDigit() }
+        val a = JalaliCalendar.toEnglishDigits(address).filter { it in '0'..'9' }
         if (a.isEmpty()) return false
         if (a.contains(q)) return true
-        nationalSpellings(a).forEach { if (it.contains(q)) return true }
+        val qNoZero = q.trimStart('0')
+        if (qNoZero.length >= MIN_SEARCH_DIGITS && a.contains(qNoZero)) return true
+        nationalSpellings(a).forEach { 
+            if (it.contains(q) || (qNoZero.length >= MIN_SEARCH_DIGITS && it.contains(qNoZero))) return true 
+        }
         // Reverse direction, only once the address carries enough digits to be a
         // real number rather than something reduced below significance.
-        if (a.length >= ContactLookup.MIN_MATCH_DIGITS && q.endsWith(a)) return true
+        if (a.length >= ContactLookup.MIN_MATCH_DIGITS && (q.endsWith(a) || (qNoZero.length >= ContactLookup.MIN_MATCH_DIGITS && qNoZero.endsWith(a)))) return true
         return ContactLookup.compareDigits(a, q)
     }
 

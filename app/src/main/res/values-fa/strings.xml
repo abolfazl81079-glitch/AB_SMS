@@ -217,10 +217,16 @@
     <!-- Launcher Icon Options -->
     <string name="settings_launcher_icon_title">آیکون برنامه</string>
     <string name="settings_launcher_icon_subtitle">تغییر استایل آیکون یا تصویر دلخواه</string>
-    <string name="launcher_icon_black_white">مشکی مینیمال روی سفید (پیش‌فرض)</string>
+    <string name="launcher_icon_black_white">آبی دایره‌ای پیام‌ها (پیش‌فرض)</string>
     <string name="launcher_icon_stark_gold">طلایی استارک روی مشکی</string>
     <string name="launcher_icon_matrix_green">سبز ماتریکس روی مشکی</string>
     <string name="launcher_icon_cyber_cyan">آبی سایان روی مشکی</string>
+
+    <!-- Calendar Settings -->
+    <string name="settings_calendar_title">نوع تقویم پیام‌ها</string>
+    <string name="settings_calendar_subtitle">انتخاب بین تقویم شمسی (جلالی) و میلادی</string>
+    <string name="calendar_jalali">شمسی (جلالی) - پیش‌فرض</string>
+    <string name="calendar_gregorian">میلادی (گرگوریان)</string>
 
     <!-- Contact Details Customization -->
     <string name="contact_custom_cell_color">رنگ اختصاصی کادر سلول</string>
