@@ -7,6 +7,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -156,7 +157,7 @@ fun AnimatedCyberHeader(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Left: Clean Minimal Hacker Identity
+                // Left: Clean Minimal Hacker Identity with Cockpit HUD / ONLINE Telemetry
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Rounded.Terminal,
@@ -170,13 +171,43 @@ fun AnimatedCyberHeader(
                     Spacer(Modifier.width(8.dp))
 
                     Text(
-                        text = "A/SMS",
+                        text = "AB/SMS",
                         color = cs.onSurface,
-                        fontSize = 17.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp,
                         fontFamily = FontFamily.Monospace
                     )
+
+                    Spacer(Modifier.width(8.dp))
+
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = effectiveLaserColor.copy(alpha = if (isDark) 0.12f else 0.08f),
+                        border = BorderStroke(0.8.dp, effectiveLaserColor.copy(alpha = if (isDark) 0.55f else 0.40f))
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(5.dp)
+                                    .clip(CircleShape)
+                                    .background(effectiveLaserColor)
+                                    .alpha(pulseAlpha)
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = "HUD // ONLINE",
+                                color = effectiveLaserColor,
+                                fontSize = 8.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp,
+                                fontFamily = FontFamily.Monospace
+                            )
+                        }
+                    }
                 }
 
                 // Right: Action Buttons

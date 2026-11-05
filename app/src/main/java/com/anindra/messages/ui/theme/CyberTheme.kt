@@ -1,4 +1,4 @@
-package com.anindra.messages.ui.theme
+﻿package com.anindra.messages.ui.theme
 
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
@@ -573,6 +573,184 @@ object CyberTheme {
     )
 
 
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ VIP 11. Liquid Glass Frost (Translucent Liquid Glass + Prism Cyan) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    val VipLiquidGlassLight = lightColorScheme(
+        primary = Color(0xFF0284C7),             // Prism Sky Blue
+        onPrimary = Color(0xFFFFFFFF),
+        primaryContainer = Color(0xFFE0F2FE),
+        onPrimaryContainer = Color(0xFF0369A1),
+        secondary = Color(0xFF6366F1),           // Prism Indigo
+        onSecondary = Color(0xFFFFFFFF),
+        secondaryContainer = Color(0xFFEEF2FF),
+        onSecondaryContainer = Color(0xFF4338CA),
+        tertiary = Color(0xFF06B6D4),            // Cyan
+        onTertiary = Color(0xFFFFFFFF),
+        background = Color(0xFFF1F5F9),          // Frosted liquid glass backdrop
+        onBackground = Color(0xFF0F172A),        // Pitch black readable text
+        surface = Color(0xFFFFFFFF),             // Translucent glass panel
+        onSurface = Color(0xFF0F172A),
+        surfaceVariant = Color(0xFFE2E8F0),
+        onSurfaceVariant = Color(0xFF334155),
+        outline = Color(0xFF38BDF8),             // Prism liquid outline
+        outlineVariant = Color(0xFFBAE6FD),
+        error = Color(0xFFDC2626),
+        onError = Color(0xFFFFFFFF),
+        surfaceContainerLowest = Color(0xFFFFFFFF),
+        surfaceContainerLow = Color(0xFFF8FAFC),
+        surfaceContainer = Color(0xFFEBF2F8),    // Frosted liquid cell container
+        surfaceContainerHigh = Color(0xFFE2E8F0),
+        surfaceContainerHighest = Color(0xFFCBD5E1)
+    )
+
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ VIP 12. Rose Gold Luxe (Champagne Ivory + Metallic Rose Gold) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    val VipRoseGoldLux = lightColorScheme(
+        primary = Color(0xFFC05638),             // Rose Gold Deep Accent
+        onPrimary = Color(0xFFFFFFFF),
+        primaryContainer = Color(0xFFFDE8E1),
+        onPrimaryContainer = Color(0xFF6A1B07),
+        secondary = Color(0xFFD97757),           // Metallic Rose Gold
+        onSecondary = Color(0xFFFFFFFF),
+        secondaryContainer = Color(0xFFFCEEEA),
+        onSecondaryContainer = Color(0xFF7A2712),
+        tertiary = Color(0xFFB45309),
+        onTertiary = Color(0xFFFFFFFF),
+        background = Color(0xFFFDFBF7),          // Pearl Champagne Ivory
+        onBackground = Color(0xFF23140E),        // Crisp espresso dark text
+        surface = Color(0xFFFFFFFF),
+        onSurface = Color(0xFF23140E),
+        surfaceVariant = Color(0xFFF7EBE5),
+        onSurfaceVariant = Color(0xFF4E2B20),
+        outline = Color(0xFFD97757),             // Rose gold border
+        outlineVariant = Color(0xFFF5C5B5),
+        error = Color(0xFFDC2626),
+        onError = Color(0xFFFFFFFF),
+        surfaceContainerLowest = Color(0xFFFFFFFF),
+        surfaceContainerLow = Color(0xFFFDFBF7),
+        surfaceContainer = Color(0xFFF7EDE8),
+        surfaceContainerHigh = Color(0xFFEEDCD4),
+        surfaceContainerHighest = Color(0xFFE2C8BE)
+    )
+
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ VIP 13. Blueprint Tech Light (CAD White & Engineering Cyan) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    val VipBlueprintLight = lightColorScheme(
+        primary = Color(0xFF0369A1),             // Deep CAD Cyan Blue
+        onPrimary = Color(0xFFFFFFFF),
+        primaryContainer = Color(0xFFE0F2FE),
+        onPrimaryContainer = Color(0xFF075985),
+        secondary = Color(0xFF0284C7),
+        onSecondary = Color(0xFFFFFFFF),
+        secondaryContainer = Color(0xFFBAE6FD),
+        onSecondaryContainer = Color(0xFF0369A1),
+        tertiary = Color(0xFF0891B2),
+        onTertiary = Color(0xFFFFFFFF),
+        background = Color(0xFFF0F7FC),          // Technical Blueprint Paper
+        onBackground = Color(0xFF082F49),        // Dark blueprint ink
+        surface = Color(0xFFFFFFFF),
+        onSurface = Color(0xFF082F49),
+        surfaceVariant = Color(0xFFE0EEF8),
+        onSurfaceVariant = Color(0xFF0C4A6E),
+        outline = Color(0xFF0284C7),             // CAD Blueprint line
+        outlineVariant = Color(0xFF7DD3FC),
+        error = Color(0xFFDC2626),
+        onError = Color(0xFFFFFFFF),
+        surfaceContainerLowest = Color(0xFFFFFFFF),
+        surfaceContainerLow = Color(0xFFF0F7FC),
+        surfaceContainer = Color(0xFFE2EFF9),
+        surfaceContainerHigh = Color(0xFFD4E5F4),
+        surfaceContainerHighest = Color(0xFFBFD9EE)
+    )
+
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ VIP 14. Stark Cockpit HUD 2077 (Cockpit Gold + Reactor Red + Telemetry Cyan) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Exactly matches the sci-fi cockpit HUD phone layout:
+    // Dark matte cockpit chassis (#06090E), Stark Cyber Gold framing (#FFCC00),
+    // Glowing reactor red indicators (#FF1E46), and telemetry cyan (#00E5FF).
+    val VipStarkCockpitHud = darkColorScheme(
+        primary = Color(0xFFFFCC00),             // Stark Cyber Gold
+        onPrimary = Color(0xFF140E00),
+        primaryContainer = Color(0xFF382C00),    // Gold cockpit glass
+        onPrimaryContainer = Color(0xFFFFF1B8),
+        inversePrimary = Color(0xFFFFDB4D),
+        secondary = Color(0xFFFF1E46),           // Reactor Core Red / Red Alert
+        onSecondary = Color(0xFFFFFFFF),
+        secondaryContainer = Color(0xFF3B000C),  // Deep reactor red glass
+        onSecondaryContainer = Color(0xFFFFD9DF),
+        tertiary = Color(0xFF00E5FF),            // Telemetry / HUD Cyan
+        onTertiary = Color(0xFF001B20),
+        background = Color(0xFF06090E),          // Cockpit Matte OLED Black
+        onBackground = Color(0xFFFFF9E6),        // High-contrast warm HUD text
+        surface = Color(0xFF0B1017),             // HUD instrument slate
+        onSurface = Color(0xFFFFF9E6),
+        surfaceVariant = Color(0xFF151C26),      // Cockpit panel card
+        onSurfaceVariant = Color(0xFFFFCC00),    // Secondary HUD Gold text
+        outline = Color(0xFFFFCC00),             // Stark Cyber Gold Borders
+        outlineVariant = Color(0xFF8A6E00),      // Subdued cockpit frame
+        error = Color(0xFFFF1E46),               // Critical red alert
+        onError = Color(0xFFFFFFFF),
+        surfaceContainerLowest = Color(0xFF04060A),
+        surfaceContainerLow = Color(0xFF080C12),
+        surfaceContainer = Color(0xFF0D131C),    // Conversation Cell Cockpit Slate
+        surfaceContainerHigh = Color(0xFF161E2C),
+        surfaceContainerHighest = Color(0xFF202A3C)
+    )
+
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ VIP 15. Liquid Obsidian Glass (Translucent Obsidian + Prism Neon Refraction) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    val VipLiquidGlassDark = darkColorScheme(
+        primary = Color(0xFF00E5FF),             // Refracted Neon Cyan
+        onPrimary = Color(0xFF001E24),
+        primaryContainer = Color(0xFF00363F),
+        onPrimaryContainer = Color(0xFFB3F5FF),
+        secondary = Color(0xFF818CF8),           // Refracted Indigo Prism
+        onSecondary = Color(0xFF0C1033),
+        secondaryContainer = Color(0xFF1E2456),
+        onSecondaryContainer = Color(0xFFD6DBFF),
+        tertiary = Color(0xFF38BDF8),
+        onTertiary = Color(0xFF001E2B),
+        background = Color(0xFF05070B),          // Obsidian Glass Pitch Dark
+        onBackground = Color(0xFFF0F9FF),
+        surface = Color(0xFF0A0E15),
+        onSurface = Color(0xFFF0F9FF),
+        surfaceVariant = Color(0xFF121924),
+        onSurfaceVariant = Color(0xFF7DD3FC),
+        outline = Color(0xFF38BDF8),             // Translucent glass refraction outline
+        outlineVariant = Color(0xFF0369A1),
+        error = Color(0xFFFF2A4A),
+        onError = Color(0xFFFFFFFF),
+        surfaceContainerLowest = Color(0xFF030508),
+        surfaceContainerLow = Color(0xFF070A0F),
+        surfaceContainer = Color(0xFF0C111A),    // Tinted obsidian glass cell
+        surfaceContainerHigh = Color(0xFF141B26),
+        surfaceContainerHighest = Color(0xFF1E2838)
+    )
+
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ VIP 16. Cyber Crimson Reactor (Plasma Red & Stark Gold Chamber) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    val VipCrimsonReactor = darkColorScheme(
+        primary = Color(0xFFFF1E46),             // Plasma Core Crimson
+        onPrimary = Color(0xFFFFFFFF),
+        primaryContainer = Color(0xFF3D000C),
+        onPrimaryContainer = Color(0xFFFFD9DE),
+        secondary = Color(0xFFFFCC00),           // Stark Containment Gold
+        onSecondary = Color(0xFF171000),
+        secondaryContainer = Color(0xFF3A2C00),
+        onSecondaryContainer = Color(0xFFFFEFA8),
+        tertiary = Color(0xFFFF4D6D),
+        onTertiary = Color(0xFFFFFFFF),
+        background = Color(0xFF050102),          // Deep reactor vacuum
+        onBackground = Color(0xFFFFF0F2),
+        surface = Color(0xFF0D0305),
+        onSurface = Color(0xFFFFF0F2),
+        surfaceVariant = Color(0xFF19060A),
+        onSurfaceVariant = Color(0xFFFF8599),
+        outline = Color(0xFFFF1E46),             // Plasma red containment outline
+        outlineVariant = Color(0xFFFFCC00),      // Dual gold containment line
+        error = Color(0xFFFF1E46),
+        onError = Color(0xFFFFFFFF),
+        surfaceContainerLowest = Color(0xFF030001),
+        surfaceContainerLow = Color(0xFF080203),
+        surfaceContainer = Color(0xFF120407),    // Reactor cell chamber
+        surfaceContainerHigh = Color(0xFF1D070C),
+        surfaceContainerHighest = Color(0xFF2C0B12)
+    )
+
     /**
      * Resolves the requested theme mode into a ColorScheme.
      */
@@ -587,17 +765,28 @@ object CyberTheme {
         "crimson", "crimson_hacker" -> CrimsonHacker
         "quantum" -> Quantum
         "minimal", "minimal_glass" -> MinimalGlass
-                "orange", "cyber_orange", "amber_orange" -> CyberOrange
+        "orange", "cyber_orange", "amber_orange" -> CyberOrange
+
+        // 8 VIP Modern Light Themes
         "vip_stark_clean" -> VipStarkClean
         "vip_matrix_light" -> VipMatrixLight
         "vip_sunset_amber" -> VipSunsetAmber
         "vip_quantum_lilac" -> VipQuantumLilac
         "vip_arctic_ice" -> VipArcticIce
+        "vip_liquid_glass_light" -> VipLiquidGlassLight
+        "vip_rose_gold_lux" -> VipRoseGoldLux
+        "vip_blueprint_light" -> VipBlueprintLight
+
+        // 8 VIP Masterpiece Dark / Hacker Themes
+        "vip_stark_cockpit_hud" -> VipStarkCockpitHud
         "vip_phantom_hacker" -> VipPhantomHacker
         "vip_blood_overdrive" -> VipBloodOverdrive
         "vip_synthwave_2077" -> VipSynthwave2077
         "vip_titanium_monolith" -> VipTitaniumMonolith
         "vip_matrix_terminal_zero" -> VipMatrixTerminalZero
-        else -> StarkHud // Default is Stark Cyber HUD from screenshot
+        "vip_liquid_glass_dark" -> VipLiquidGlassDark
+        "vip_crimson_reactor" -> VipCrimsonReactor
+
+        else -> StarkHud // Default is Stark Cyber HUD
     }
 }

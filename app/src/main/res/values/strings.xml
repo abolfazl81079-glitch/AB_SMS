@@ -11,4 +11,53 @@
          - strings_contact.xml: contact details, block dialogs
          - strings_components.xml: shared components, time formats
          Translators: add new files like values-es/, values-fr/, etc. -->
+    <!-- VIP Themes (16 Exclusive Themes) -->
+    <string name="vip_dialog_title">VIP Exclusive Themes 💎</string>
+    <string name="vip_token_title">Unlock VIP Exclusive Themes 🔒</string>
+    <string name="vip_token_message">Enter your VIP security token to permanently unlock 8 extraordinary light themes and 8 masterpiece dark/hacker themes (16 exclusive themes):</string>
+    <string name="vip_token_input_label">Security Token</string>
+    <string name="vip_token_error">Invalid security token!</string>
+    <string name="vip_token_unlock_button">Unlock</string>
+    <string name="vip_token_unlocked_toast">VIP Themes successfully unlocked! 🔓✨</string>
+    <string name="vip_group_light">☀️ 8 Exclusive Modern Light Themes</string>
+    <string name="vip_group_dark">🕶️ 8 Masterpiece Dark / Hacker VIP Themes</string>
+    <string name="vip_settings_row_title">VIP Exclusive Hacker Themes 💎</string>
+    <string name="vip_settings_row_unlocked">Unlocked 🔓✨ (16 Exclusive Light &amp; Hacker Themes)</string>
+    <string name="vip_settings_row_locked">Locked 🔒 (Tap to enter security token)</string>
+
+    <!-- 8 Light VIP Themes -->
+    <string name="vip_theme_stark_clean_title">Stark Clean Tech (White &amp; Cobalt)</string>
+    <string name="vip_theme_stark_clean_desc">Pristine white canvas, rich black text contrast, and cobalt cyber lines</string>
+    <string name="vip_theme_matrix_light_title">Neo Matrix Light (Digital Paper &amp; Emerald)</string>
+    <string name="vip_theme_matrix_light_desc">Clean digital paper with emerald green matrix framing and dark accents</string>
+    <string name="vip_theme_sunset_amber_title">Solar Amber Sunset (Warm Solar &amp; Amber)</string>
+    <string name="vip_theme_sunset_amber_desc">Warm solar pearl background with radiant incandescent amber accents</string>
+    <string name="vip_theme_quantum_lilac_title">Quantum Vaporwave (Lilac &amp; Violet)</string>
+    <string name="vip_theme_quantum_lilac_desc">Pastel lilac aesthetic with electric neon violet lines and readable dark text</string>
+    <string name="vip_theme_arctic_ice_title">Arctic Glacial Ice (Glacial Frost &amp; Vivid Cyan)</string>
+    <string name="vip_theme_arctic_ice_desc">Ultra-clean glacial ice white with electric cyan borders and deep navy clarity</string>
+    <string name="vip_theme_liquid_glass_light_title">Liquid Glass Frost (Translucent Glass)</string>
+    <string name="vip_theme_liquid_glass_light_desc">Frosted liquid glass translucent panels with prism-refracted borders</string>
+    <string name="vip_theme_rose_gold_lux_title">Rose Gold Luxe (Champagne &amp; Rose Gold)</string>
+    <string name="vip_theme_rose_gold_lux_desc">Pearl champagne ivory with radiant rose gold metallic lines</string>
+    <string name="vip_theme_blueprint_light_title">Blueprint Tech Light (CAD Teal)</string>
+    <string name="vip_theme_blueprint_light_desc">Technical architectural blueprint paper with CAD teal outlines</string>
+
+    <!-- 8 Dark/Hacker VIP Themes -->
+    <string name="vip_theme_stark_cockpit_hud_title">Stark Cockpit HUD 2077 (Cockpit Gold &amp; Reactor)</string>
+    <string name="vip_theme_stark_cockpit_hud_desc">Stark Industries cockpit HUD with cyber gold framing, red reactor and cyan telemetry</string>
+    <string name="vip_theme_phantom_hacker_title">Phantom Hacker (Void Black &amp; Radioactive Mint)</string>
+    <string name="vip_theme_phantom_hacker_desc">Pitch void black OLED canvas ignited by radioactive toxic mint lasers</string>
+    <string name="vip_theme_blood_overdrive_title">Blood Overdrive (Obsidian Black &amp; Neon Blood Red)</string>
+    <string name="vip_theme_blood_overdrive_desc">Total obsidian blackness electrified by hyper-vivid crimson neon glows</string>
+    <string name="vip_theme_synthwave_2077_title">Synthwave 2077 (Neo Tokyo Laser Pink &amp; Cyan)</string>
+    <string name="vip_theme_synthwave_2077_desc">Dual laser pink and cyan retro-futurism set in deep midnight Tokyo</string>
+    <string name="vip_theme_titanium_monolith_title">Titanium Monolith (Tactical Graphite &amp; Titanium)</string>
+    <string name="vip_theme_titanium_monolith_desc">Stealth tactical graphite structure crafted with brushed cold titanium</string>
+    <string name="vip_theme_matrix_terminal_zero_title">Matrix Terminal Zero (CRT Phosphor Green)</string>
+    <string name="vip_theme_matrix_terminal_zero_desc">Retro 1980s mainframe CRT phosphor green scanning pure deep space</string>
+    <string name="vip_theme_liquid_glass_dark_title">Liquid Obsidian Glass (Translucent Obsidian)</string>
+    <string name="vip_theme_liquid_glass_dark_desc">Deep obsidian translucent glass with glowing cyan fluid refraction</string>
+    <string name="vip_theme_crimson_reactor_title">Cyber Crimson Reactor (Plasma Red &amp; Gold)</string>
+    <string name="vip_theme_crimson_reactor_desc">Sub-atomic nuclear reactor chamber surrounded by stark gold containment lines</string>
 </resources>

@@ -1,4 +1,4 @@
-﻿package com.anindra.messages.ui.theme
+package com.anindra.messages.ui.theme
 
 import android.app.Activity
 import android.content.Context
@@ -280,7 +280,8 @@ val ChatMetaWeight: FontWeight = FontWeight.Medium
 internal fun themeIsDark(mode: String, systemIsDark: Boolean): Boolean = when (mode) {
     SettingsStore.THEME_LIGHT,
     "vip_stark_clean", "vip_matrix_light", "vip_sunset_amber",
-    "vip_quantum_lilac", "vip_arctic_ice" -> false
+    "vip_quantum_lilac", "vip_arctic_ice", "vip_liquid_glass_light",
+    "vip_rose_gold_lux", "vip_blueprint_light" -> false
     SettingsStore.THEME_SYSTEM -> systemIsDark
     else -> true
 }
