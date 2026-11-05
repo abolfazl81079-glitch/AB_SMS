@@ -190,4 +190,35 @@
     <!-- Notification Privacy -->
     <string name="settings_notif_hide_body_title">Hide Message Content in Notification</string>
     <string name="settings_notif_hide_body_subtitle">Show sender name only; conceal message text</string>
+    <!-- Cell Style & Divider Options -->
+    <string name="settings_cell_style_title">Cell style</string>
+    <string name="settings_cell_style_subtitle">Choose between modular cards or divider lines</string>
+    <string name="cell_style_card">Modular Cards (Border around each cell)</string>
+    <string name="cell_style_divider">Divider Lines (Clean lines between chats)</string>
+    <string name="settings_border_opacity_title">Cell border intensity</string>
+    <string name="settings_border_opacity_subtitle">Adjust visibility and glow of cell borders</string>
+    <string name="border_opacity_subtle">Subtle &amp; Dim</string>
+    <string name="border_opacity_medium">Medium &amp; Balanced</string>
+    <string name="border_opacity_strong">Strong &amp; Crisp</string>
+    <string name="border_opacity_neon">Neon Vibrant (100%)</string>
+    <string name="settings_divider_color_title">Divider line color</string>
+    <string name="settings_divider_color_subtitle">Color of dividing lines between chats</string>
+    <string name="settings_delay_secs_format">%d seconds</string>
+
+    <!-- Launcher Icon Options -->
+    <string name="settings_launcher_icon_title">App launcher icon</string>
+    <string name="settings_launcher_icon_subtitle">Switch launcher icon style or avatar</string>
+    <string name="launcher_icon_black_white">Minimal Black on White (Default)</string>
+    <string name="launcher_icon_stark_gold">Stark Gold on Black</string>
+    <string name="launcher_icon_matrix_green">Matrix Green on Black</string>
+    <string name="launcher_icon_cyber_cyan">Cyber Cyan on Black</string>
+
+    <!-- Contact Details Customization -->
+    <string name="contact_custom_cell_color">Custom cell border color</string>
+    <string name="contact_custom_cell_color_desc">Customize border color specifically for this chat</string>
+    <string name="contact_custom_preview_lines">Preview text lines</string>
+    <string name="contact_custom_preview_lines_desc">Number of preview lines in conversation list</string>
+    <string name="contact_cell_color_follow_global">Follow Global Theme</string>
+    <string name="contact_lines_follow_global">Follow Global Setting</string>
+    <string name="contact_cell_customization_group">Conversation Cell Customization</string>
 </resources>

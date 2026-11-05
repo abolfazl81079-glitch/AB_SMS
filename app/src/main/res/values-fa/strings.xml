@@ -166,4 +166,68 @@
     <string name="time_yesterday">دیروز</string>
     <string name="notif_title_private">پیام جدید</string>
     <string name="notif_body_private">پیام جدید دریافت شد</string>
+    <!-- Additional Messaging & Delivery Settings -->
+    <string name="settings_delayed_title">ارسال با تأخیر (Delay Send)</string>
+    <string name="settings_delayed_subtitle">ایجاد وقفه چند ثانیه‌ای قبل از ارسال برای امکان لغو پیام</string>
+    <string name="settings_delay_secs_title">مدت زمان تأخیر ارسال</string>
+    <string name="settings_delay_secs_format">%d ثانیه</string>
+    <string name="settings_delivery_reports_title">گزارش تحویل پیام (Delivery Report)</string>
+    <string name="settings_delivery_reports_subtitle">اطلاع از دریافت موفق پیامک توسط گیرنده</string>
+    <string name="settings_send_sound_title">صدای ارسال پیام</string>
+    <string name="settings_send_sound_subtitle">پخش صدا هنگام ارسال موفق پیامک</string>
+    <string name="settings_receive_sound_title">صدای دریافت پیام در برنامه</string>
+    <string name="settings_receive_sound_subtitle">پخش صدا هنگام دریافت پیام در صفحه چت</string>
+    <string name="settings_pinned_title">گفتگوهای پین‌شده در بالا</string>
+    <string name="settings_pinned_subtitle">قرار گرفتن پیام‌های پین‌شده در ابتدای لیست</string>
+    <string name="settings_archiving_title">قابلیت آرشیو گفتگوها</string>
+    <string name="settings_archiving_subtitle">امکان بایگانی کردن پیام‌ها</string>
+    <string name="settings_unread_top_title">پیام‌های خوانده‌نشده در بالای لیست</string>
+    <string name="settings_unread_top_subtitle">اولویت نمایش پیام‌های جدید در بالای صفحه اصلی</string>
+    <string name="settings_forwarding_title">بازارسال پیام‌ها (Forward)</string>
+    <string name="settings_forwarding_subtitle">امکان فوروارد سریع پیام‌ها به مخاطبین دیگر</string>
+    <string name="settings_drafts_title">ذخیره خودکار پیش‌نویس (Draft)</string>
+    <string name="settings_drafts_subtitle">ذخیره متن‌های ارسال نشده به عنوان پیش‌نویس</string>
+    <string name="settings_swipe_actions_title">حرکات کشیدن (سوایپ)</string>
+    <string name="settings_swipe_actions_subtitle">تنظیم عملکرد کشیدن پیام به چپ یا راست</string>
+    <string name="swipe_left_title">کشیدن به چپ</string>
+    <string name="swipe_right_title">کشیدن به راست</string>
+    <string name="swipe_action_off">هیچکدام</string>
+    <string name="swipe_action_archive">بایگانی (آرشیو)</string>
+    <string name="swipe_action_delete">حذف گفتگو</string>
+    <string name="swipe_action_mark_read">علامت خوانده‌شده / خوانده‌نشده</string>
+    <string name="settings_sim_indicator">نمایش نشانگر سیم‌کارت</string>
+    <string name="settings_sim_indicator_desc">نمایش برچسب سیم‌کارت مربوطه روی هر پیام</string>
+    <string name="settings_blocking_title">شماره‌های مسدود شده</string>
+    <string name="settings_blocking_subtitle">مدیریت لیست سیاه و مسدودسازی مخاطبین</string>
+
+    <!-- Cell Style & Divider Options -->
+    <string name="settings_cell_style_title">سبک کادر سلول‌های پیام</string>
+    <string name="settings_cell_style_subtitle">انتخاب بین کارت‌های کادردار یا خطوط جداکننده</string>
+    <string name="cell_style_card">کارت ماژولار (کادر دور هر پیام)</string>
+    <string name="cell_style_divider">خط جداکننده (حذف کادر و خط بین پیام‌ها)</string>
+    <string name="settings_border_opacity_title">شدت و شفافیت کادر سلول‌ها</string>
+    <string name="settings_border_opacity_subtitle">تنظیم میزان وضوح کادر دور گفتگوها</string>
+    <string name="border_opacity_subtle">کمرنگ و مات (Subtle)</string>
+    <string name="border_opacity_medium">متوسط و متعادل (Medium)</string>
+    <string name="border_opacity_strong">پررنگ و مشخص (Strong)</string>
+    <string name="border_opacity_neon">نئون درخشان (Neon 100%)</string>
+    <string name="settings_divider_color_title">رنگ خط جداکننده (دیوایدر)</string>
+    <string name="settings_divider_color_subtitle">انتخاب رنگ خط بین گفتگوها در حالت جداکننده</string>
+
+    <!-- Launcher Icon Options -->
+    <string name="settings_launcher_icon_title">آیکون برنامه</string>
+    <string name="settings_launcher_icon_subtitle">تغییر استایل آیکون یا تصویر دلخواه</string>
+    <string name="launcher_icon_black_white">مشکی مینیمال روی سفید (پیش‌فرض)</string>
+    <string name="launcher_icon_stark_gold">طلایی استارک روی مشکی</string>
+    <string name="launcher_icon_matrix_green">سبز ماتریکس روی مشکی</string>
+    <string name="launcher_icon_cyber_cyan">آبی سایان روی مشکی</string>
+
+    <!-- Contact Details Customization -->
+    <string name="contact_custom_cell_color">رنگ اختصاصی کادر سلول</string>
+    <string name="contact_custom_cell_color_desc">تنظیم رنگ کادر این مخاطب به طور اختصاصی</string>
+    <string name="contact_custom_preview_lines">تعداد خطوط متن پیش‌نمایش</string>
+    <string name="contact_custom_preview_lines_desc">ارتفاع و تعداد خطوط نمایش پیام این مخاطب در لیست</string>
+    <string name="contact_cell_color_follow_global">پیش‌فرض سراسری پوسته</string>
+    <string name="contact_lines_follow_global">پیش‌فرض سراسری</string>
+    <string name="contact_cell_customization_group">شخصی‌سازی سلول گفتگو</string>
 </resources>

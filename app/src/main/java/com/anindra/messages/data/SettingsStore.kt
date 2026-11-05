@@ -79,6 +79,24 @@ class SettingsStore(context: Context) {
         const val KEY_CUSTOM_CELL_COLOR = "custom_cell_color"
         const val CELL_COLOR_THEME = "theme"
 
+        const val KEY_CELL_STYLE = "cell_style"
+        const val CELL_STYLE_CARD = "card"
+        const val CELL_STYLE_DIVIDER = "divider"
+
+        const val KEY_CELL_BORDER_OPACITY = "cell_border_opacity"
+        const val BORDER_OPACITY_SUBTLE = "subtle"
+        const val BORDER_OPACITY_MEDIUM = "medium"
+        const val BORDER_OPACITY_STRONG = "strong"
+        const val BORDER_OPACITY_NEON = "neon"
+
+        const val KEY_DIVIDER_COLOR = "divider_color"
+
+        const val KEY_LAUNCHER_ICON = "launcher_icon"
+        const val ICON_BLACK_WHITE = "black_white"
+        const val ICON_STARK_GOLD = "stark_gold"
+        const val ICON_MATRIX_GREEN = "matrix_green"
+        const val ICON_CYBER_CYAN = "cyber_cyan"
+
         const val KEY_HIDE_NOTIF_BODY = "hide_notif_body"
         const val KEY_DRAFTS_ENABLED = "drafts_enabled"
         const val KEY_SWIPE_LEFT_ACTION = "swipe_left_action"
@@ -225,6 +243,22 @@ class SettingsStore(context: Context) {
     var hideNotificationBody: Boolean
         get() = prefs.getBoolean(KEY_HIDE_NOTIF_BODY, false)
         set(v) { prefs.edit().putBoolean(KEY_HIDE_NOTIF_BODY, v).apply(); _revision.value++ }
+
+    var cellStyle: String
+        get() = prefs.getString(KEY_CELL_STYLE, CELL_STYLE_CARD) ?: CELL_STYLE_CARD
+        set(v) { prefs.edit().putString(KEY_CELL_STYLE, v).apply(); _revision.value++ }
+
+    var cellBorderOpacity: String
+        get() = prefs.getString(KEY_CELL_BORDER_OPACITY, BORDER_OPACITY_MEDIUM) ?: BORDER_OPACITY_MEDIUM
+        set(v) { prefs.edit().putString(KEY_CELL_BORDER_OPACITY, v).apply(); _revision.value++ }
+
+    var dividerColor: String
+        get() = prefs.getString(KEY_DIVIDER_COLOR, CELL_COLOR_THEME) ?: CELL_COLOR_THEME
+        set(v) { prefs.edit().putString(KEY_DIVIDER_COLOR, v).apply(); _revision.value++ }
+
+    var launcherIcon: String
+        get() = prefs.getString(KEY_LAUNCHER_ICON, ICON_BLACK_WHITE) ?: ICON_BLACK_WHITE
+        set(v) { prefs.edit().putString(KEY_LAUNCHER_ICON, v).apply(); _revision.value++ }
 
     /** Legacy chat surfaces still gate on this. */
     var draftsEnabled: Boolean

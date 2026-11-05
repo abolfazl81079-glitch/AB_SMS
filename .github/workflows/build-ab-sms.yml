@@ -38,7 +38,9 @@ jobs:
 
       - name: Generate or Restore Keystore
         run: |
-          if [ -n "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" ]; then
+          if [ -f release.keystore ]; then
+            echo "Using permanent committed release.keystore"
+          elif [ -n "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" ]; then
             echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > release.keystore
           else
             keytool -genkeypair -v -keystore release.keystore -alias absms -keyalg RSA -keysize 2048 -validity 10000 \

@@ -48,7 +48,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.rounded.ColorLens
+import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -115,6 +117,13 @@ onBack: () -> Unit,
     var showBlockDialog by remember { mutableStateOf(false) }
     var numberIsBlocked by remember { mutableStateOf(false) }
     LaunchedEffect(address) { numberIsBlocked = vm.isNumberBlocked(address) }
+
+    val customRevision by com.anindra.messages.data.CustomConversationStore.revision.collectAsState()
+    val convoKey = address.ifBlank { conversationId.toString() }
+    val customColor = remember(customRevision) { com.anindra.messages.data.CustomConversationStore.getCellColor(context, convoKey) }
+    val customLines = remember(customRevision) { com.anindra.messages.data.CustomConversationStore.getPreviewLines(context, convoKey) }
+    var showColorDialog by remember { mutableStateOf(false) }
+    var showLinesDialog by remember { mutableStateOf(false) }
 
     val membershipRevision by vm.membershipRevision.collectAsState()
     var recipients by remember(address) { mutableStateOf(listOf(address)) }
@@ -410,6 +419,41 @@ onBack: () -> Unit,
 
             Spacer(Modifier.height(12.dp))
 
+            // Per-conversation customization (cell border color & preview lines)
+            GroupedRowList(Modifier.padding(horizontal = SettingsLayout.SCREEN_PADDING)) {
+                val colorLabel = when (customColor) {
+                    "green" -> stringResource(R.string.cell_color_green)
+                    "cyan" -> stringResource(R.string.cell_color_cyan)
+                    "gold" -> stringResource(R.string.cell_color_gold)
+                    "red" -> stringResource(R.string.cell_color_red)
+                    "purple" -> stringResource(R.string.cell_color_purple)
+                    "silver" -> stringResource(R.string.cell_color_silver)
+                    null -> stringResource(R.string.contact_cell_color_follow_global)
+                    else -> stringResource(R.string.contact_cell_color_follow_global)
+                }
+                DetailCardRow(
+                    icon = Icons.Rounded.ColorLens,
+                    title = stringResource(R.string.contact_custom_cell_color),
+                    subtitle = colorLabel,
+                    onClick = { showColorDialog = true }
+                )
+                val linesLabel = when (customLines) {
+                    1 -> stringResource(R.string.preview_lines_1)
+                    2 -> stringResource(R.string.preview_lines_2)
+                    3 -> stringResource(R.string.preview_lines_3)
+                    4 -> "۴ خط"
+                    else -> stringResource(R.string.contact_lines_follow_global)
+                }
+                DetailCardRow(
+                    icon = Icons.Rounded.Tune,
+                    title = stringResource(R.string.contact_custom_preview_lines),
+                    subtitle = linesLabel,
+                    onClick = { showLinesDialog = true }
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
+
             // The participant count and the participant list are one block too.
             GroupedRowList(Modifier.padding(horizontal = SettingsLayout.SCREEN_PADDING)) {
                 Row(
@@ -521,6 +565,94 @@ onBack: () -> Unit,
             }
         )
     }
+
+    if (showColorDialog) {
+        val colorOptions = listOf(
+            null to stringResource(R.string.contact_cell_color_follow_global),
+            "green" to stringResource(R.string.cell_color_green),
+            "cyan" to stringResource(R.string.cell_color_cyan),
+            "gold" to stringResource(R.string.cell_color_gold),
+            "red" to stringResource(R.string.cell_color_red),
+            "purple" to stringResource(R.string.cell_color_purple),
+            "silver" to stringResource(R.string.cell_color_silver)
+        )
+        AlertDialog(
+            onDismissRequest = { showColorDialog = false },
+            title = { Text(stringResource(R.string.contact_custom_cell_color)) },
+            text = {
+                Column {
+                    colorOptions.forEach { (code, label) ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    com.anindra.messages.data.CustomConversationStore.setCellColor(context, convoKey, code)
+                                    showColorDialog = false
+                                }
+                                .padding(vertical = 4.dp)
+                        ) {
+                            RadioButton(
+                                selected = customColor == code,
+                                onClick = {
+                                    com.anindra.messages.data.CustomConversationStore.setCellColor(context, convoKey, code)
+                                    showColorDialog = false
+                                }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(label)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showColorDialog = false }) { Text(stringResource(R.string.common_ok)) }
+            }
+        )
+    }
+
+    if (showLinesDialog) {
+        val linesOptions = listOf(
+            0 to stringResource(R.string.contact_lines_follow_global),
+            1 to stringResource(R.string.preview_lines_1),
+            2 to stringResource(R.string.preview_lines_2),
+            3 to stringResource(R.string.preview_lines_3),
+            4 to "۴ خط (حداکثر پیش‌نمایش متن)"
+        )
+        AlertDialog(
+            onDismissRequest = { showLinesDialog = false },
+            title = { Text(stringResource(R.string.contact_custom_preview_lines)) },
+            text = {
+                Column {
+                    linesOptions.forEach { (lines, label) ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    com.anindra.messages.data.CustomConversationStore.setPreviewLines(context, convoKey, lines)
+                                    showLinesDialog = false
+                                }
+                                .padding(vertical = 4.dp)
+                        ) {
+                            RadioButton(
+                                selected = customLines == lines,
+                                onClick = {
+                                    com.anindra.messages.data.CustomConversationStore.setPreviewLines(context, convoKey, lines)
+                                    showLinesDialog = false
+                                }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(label)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showLinesDialog = false }) { Text(stringResource(R.string.common_ok)) }
+            }
+        )
+    }
 }
 
 @Composable
@@ -559,6 +691,7 @@ internal fun DetailActionButton(
 internal fun DetailCardRow(
     icon: ImageVector,
     title: String,
+    subtitle: String? = null,
     titleColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface,
     iconColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurfaceVariant,
     trailing: @Composable (() -> Unit)? = null,
@@ -578,12 +711,21 @@ internal fun DetailCardRow(
             tint = iconColor
         )
         Spacer(Modifier.width(16.dp))
-        Text(
-            title,
-            style = MaterialTheme.typography.bodyLarge,
-            color = titleColor,
-            modifier = Modifier.weight(1f)
-        )
+        Column(Modifier.weight(1f)) {
+            Text(
+                title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = titleColor
+            )
+            if (!subtitle.isNullOrBlank()) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
         trailing?.invoke()
     }
 }

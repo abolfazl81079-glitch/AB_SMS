@@ -228,9 +228,10 @@ fun ConversationsScreen(
     // Recompute row-level settings whenever any setting changes (SettingsStore is a
     // singleton, so keying on the object would freeze these at first composition).
     val settingsRevision by vm.settings.revision.collectAsState()
+    val customConvoRev by com.anindra.messages.data.CustomConversationStore.revision.collectAsState()
     val leftSwipe = vm.settings.swipeLeftAction != SwipeAction.OFF
     val rightSwipe = vm.settings.swipeRightAction != SwipeAction.OFF
-    val rowSettings = remember(settingsRevision) {
+    val rowSettings = remember(settingsRevision, customConvoRev) {
         RowSettings(
             pinnedEnabled = vm.settings.pinnedEnabled,
             archivingEnabled = vm.settings.archivingEnabled,
@@ -240,7 +241,10 @@ fun ConversationsScreen(
             swipeRightAction = vm.settings.swipeRightAction,
             hideLinks = vm.settings.hideLinks,
             previewLines = vm.settings.previewLines,
-            customCellColor = vm.settings.customCellColor
+            customCellColor = vm.settings.customCellColor,
+            cellStyle = vm.settings.cellStyle,
+            cellBorderOpacity = vm.settings.cellBorderOpacity,
+            dividerColor = vm.settings.dividerColor
         )
     }
 
@@ -996,7 +1000,10 @@ internal data class RowSettings(
     val swipeRightAction: SwipeAction = SwipeAction.DELETE,
     val hideLinks: Boolean = false,
     val previewLines: Int = 1,
-    val customCellColor: String = "theme"
+    val customCellColor: String = "theme",
+    val cellStyle: String = "card",
+    val cellBorderOpacity: String = "medium",
+    val dividerColor: String = "theme"
 )
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -1044,7 +1051,13 @@ internal fun ConversationRow(
     )
     val cs = MaterialTheme.colorScheme
     val isUnread = convo.unreadCount > 0
-    val customAccent = when (settings.customCellColor) {
+    val convoKey = convo.address.ifBlank { convo.id.toString() }
+    val perConvoColor = com.anindra.messages.data.CustomConversationStore.getCellColor(context, convoKey)
+    val perConvoLines = com.anindra.messages.data.CustomConversationStore.getPreviewLines(context, convoKey)
+    val effectiveColorCode = perConvoColor ?: settings.customCellColor
+    val effectiveLines = if (perConvoLines > 0) perConvoLines else settings.previewLines
+
+    val customAccent = when (effectiveColorCode) {
         "green" -> Color(0xFF00FF66)
         "cyan" -> Color(0xFF00E5FF)
         "gold" -> Color(0xFFFFCC00)
@@ -1053,27 +1066,48 @@ internal fun ConversationRow(
         "silver" -> Color(0xFFE2E8F0)
         else -> cs.primary
     }
+    val borderAlpha = when (settings.cellBorderOpacity) {
+        "subtle" -> 0.16f
+        "strong" -> 0.70f
+        "neon" -> 1.0f
+        else -> 0.35f
+    }
+    val isDividerMode = settings.cellStyle == "divider"
     val cardBorderColor = when {
         selected && selectionMode -> customAccent
         isUnread -> customAccent
         convo.pinned && settings.pinnedEnabled -> cs.secondary
-        else -> customAccent.copy(alpha = 0.35f)
+        else -> customAccent.copy(alpha = borderAlpha)
     }
     val cardBg = when {
         selected && selectionMode -> customAccent.copy(alpha = 0.15f)
         convo.pinned && settings.pinnedEnabled -> cs.surfaceVariant.copy(alpha = 0.70f)
+        isDividerMode -> Color.Transparent
         else -> cs.surfaceContainer.copy(alpha = 0.65f)
+    }
+    val dividerColorResolved = when (settings.dividerColor) {
+        "green" -> Color(0xFF00FF66).copy(alpha = 0.40f)
+        "cyan" -> Color(0xFF00E5FF).copy(alpha = 0.40f)
+        "gold" -> Color(0xFFFFCC00).copy(alpha = 0.40f)
+        "red" -> Color(0xFFFF2A4A).copy(alpha = 0.40f)
+        "purple" -> Color(0xFFC084FC).copy(alpha = 0.40f)
+        "silver" -> Color(0xFFE2E8F0).copy(alpha = 0.30f)
+        "subtle" -> cs.outlineVariant.copy(alpha = 0.25f)
+        else -> cs.primary.copy(alpha = 0.40f)
     }
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 10.dp, vertical = 3.dp)
+            .padding(
+                horizontal = if (isDividerMode) 6.dp else 10.dp,
+                vertical = if (isDividerMode) 1.dp else 3.dp
+            )
     ) {
         Surface(
-            shape = RoundedCornerShape(8.dp),
+            shape = if (isDividerMode) RoundedCornerShape(4.dp) else RoundedCornerShape(8.dp),
             color = cardBg,
-            border = BorderStroke(0.8.dp, cardBorderColor),
+            border = if (isDividerMode) null else BorderStroke(0.8.dp, cardBorderColor),
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
@@ -1135,7 +1169,7 @@ internal fun ConversationRow(
                             text = previewLabel,
                             style = MaterialTheme.typography.bodyMedium,
                             color = cs.secondary,
-                            maxLines = settings.previewLines,
+                            maxLines = effectiveLines,
                             overflow = TextOverflow.Ellipsis
                         )
                     } else {
@@ -1144,7 +1178,7 @@ internal fun ConversationRow(
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = if (isUnread) FontWeight.Medium else FontWeight.Normal,
                             color = if (isUnread) cs.onSurface else cs.onSurfaceVariant,
-                            maxLines = settings.previewLines,
+                            maxLines = effectiveLines,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
@@ -1184,6 +1218,15 @@ internal fun ConversationRow(
                     )
                 }
             }
+        }
+        if (isDividerMode) {
+            HorizontalDivider(
+                thickness = 0.8.dp,
+                color = dividerColorResolved,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = 14.dp)
+            )
         }
     }
 }

@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -42,11 +41,14 @@ import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.VolumeUp
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -59,8 +61,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -74,24 +74,28 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.anindra.messages.AppViewModel
+import com.anindra.messages.R
 import com.anindra.messages.data.CustomAvatarStore
-import com.anindra.messages.data.SettingsStore
 import com.anindra.messages.data.PeriodicBackupScheduler
+import com.anindra.messages.data.SettingsStore
 import com.anindra.messages.data.SimCard
 import com.anindra.messages.data.SimCards
-import com.anindra.messages.data.SimSelection
 import com.anindra.messages.data.SimLabel
 import com.anindra.messages.data.SimLabels
-import androidx.compose.ui.res.stringResource
-import com.anindra.messages.R
+import com.anindra.messages.data.SimSelection
+import com.anindra.messages.data.SwipeAction
 import com.anindra.messages.sms.NotificationHelper
 import com.anindra.messages.ui.theme.LocalLargeTouchTargets
 
@@ -99,6 +103,19 @@ private enum class PinDialogMode { SET, ENTER }
 
 /** Which backup format the picked file belongs to. */
 private enum class ImportSource { OWN_BACKUP, SMS_IE }
+
+/** Searchable item model for settings */
+private data class SearchSettingItem(
+    val id: String,
+    val title: String,
+    val subtitle: String? = null,
+    val category: String,
+    val keywords: List<String>,
+    val isSwitch: Boolean = false,
+    val checked: Boolean = false,
+    val onChecked: ((Boolean) -> Unit)? = null,
+    val onClick: (() -> Unit)? = null
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -123,18 +140,62 @@ fun SettingsScreen(
     BackHandler(enabled = !searching, onBack = onBack)
 
     val context = LocalContext.current
-
     val revision by vm.settings.revision.collectAsState()
     val scheduledAll by vm.scheduledMessages().collectAsState(initial = emptyList())
     val scheduledCount = if (scheduledAll.isEmpty()) null
     else context.getString(R.string.settings_scheduled_count, scheduledAll.size)
 
+    // Dialog state
     var themeDialog by remember { mutableStateOf(false) }
     var languageDialog by remember { mutableStateOf(false) }
     var previewLinesDialog by remember { mutableStateOf(false) }
     var cellColorDialog by remember { mutableStateOf(false) }
+    var cellStyleDialog by remember { mutableStateOf(false) }
+    var cellOpacityDialog by remember { mutableStateOf(false) }
+    var dividerColorDialog by remember { mutableStateOf(false) }
+    var launcherIconDialog by remember { mutableStateOf(false) }
+    var delaySecondsDialog by remember { mutableStateOf(false) }
+    var swipeLeftDialog by remember { mutableStateOf(false) }
+    var swipeRightDialog by remember { mutableStateOf(false) }
+    var soundDialog by remember { mutableStateOf(false) }
+    var simDialog by remember { mutableStateOf(false) }
+    var importModeDialog by remember { mutableStateOf(false) }
+    var importSourceDialog by remember { mutableStateOf(false) }
+
+    // Reactive setting values
     var hideNotifBody by remember(revision) { mutableStateOf(vm.settings.hideNotificationBody) }
     var notificationSound by remember(revision) { mutableStateOf(vm.settings.notificationSound) }
+    var privacyMode by remember(revision) { mutableStateOf(vm.settings.privacyModeEnabled) }
+    var appLock by remember(revision) { mutableStateOf(vm.settings.appLockEnabled) }
+    var delayedSending by remember(revision) { mutableStateOf(vm.settings.delayedSendingEnabled) }
+    var delaySeconds by remember(revision) { mutableIntStateOf(vm.settings.delaySeconds) }
+    var deliveryReports by remember(revision) { mutableStateOf(vm.settings.deliveryReportsEnabled) }
+    var sendSound by remember(revision) { mutableStateOf(vm.settings.sendSoundEnabled) }
+    var receiveSound by remember(revision) { mutableStateOf(vm.settings.receiveSoundEnabled) }
+    var pinnedEnabled by remember(revision) { mutableStateOf(vm.settings.pinnedEnabled) }
+    var archivingEnabled by remember(revision) { mutableStateOf(vm.settings.archivingEnabled) }
+    var unreadAtTop by remember(revision) { mutableStateOf(vm.settings.unreadAtTopEnabled) }
+    var draftsEnabled by remember(revision) { mutableStateOf(vm.settings.draftsEnabled) }
+    var forwardingEnabled by remember(revision) { mutableStateOf(vm.settings.forwardingEnabled) }
+    var showSimIndicator by remember(revision) { mutableStateOf(vm.settings.showSimIndicator) }
+    var periodicBackup by remember(revision) { mutableStateOf(vm.settings.periodicBackupEnabled) }
+    var backupFolder by remember(revision) { mutableStateOf(vm.settings.backupTreeUri) }
+
+    var sims by remember { mutableStateOf(emptyList<SimCard>()) }
+    var pinMode by remember { mutableStateOf<PinDialogMode?>(null) }
+    var pendingImportUri by remember { mutableStateOf<Uri?>(null) }
+    var pendingImportMode by remember {
+        mutableStateOf(com.anindra.messages.data.ImportMode.MERGE)
+    }
+    var pendingImportFormat by remember {
+        mutableStateOf(com.anindra.messages.data.BackupFormat.LEGACY)
+    }
+    var pendingImportSource by remember { mutableStateOf(ImportSource.OWN_BACKUP) }
+    var pinInput by remember { mutableStateOf("") }
+    var pinConfirm by remember { mutableStateOf("") }
+    var pinError by remember { mutableStateOf<String?>(null) }
+    var showRawBackupWarning by remember { mutableStateOf(false) }
+
     val notificationSoundOptions = listOf(
         SettingsStore.NOTIFY_SOUND_DEFAULT to context.getString(R.string.settings_sound_default),
         SettingsStore.NOTIFY_SOUND_APP to context.getString(R.string.settings_sound_classic),
@@ -144,36 +205,8 @@ fun SettingsScreen(
     )
     val themeMode = vm.themeMode
 
-    var soundDialog by remember { mutableStateOf(false) }
-
-    var privacyMode by remember(revision) { mutableStateOf(vm.settings.privacyModeEnabled) }
-    var appLock by remember(revision) { mutableStateOf(vm.settings.appLockEnabled) }
-
-    var simDialog by remember { mutableStateOf(false) }
-    var sims by remember { mutableStateOf(emptyList<SimCard>()) }
-    var backupFolder by remember(revision) { mutableStateOf(vm.settings.backupTreeUri) }
-
-    var pinMode by remember { mutableStateOf<PinDialogMode?>(null) }
-    var pendingImportUri by remember { mutableStateOf<Uri?>(null) }
-    var pendingImportMode by remember {
-        mutableStateOf(com.anindra.messages.data.ImportMode.MERGE)
-    }
-    var pendingImportFormat by remember {
-        mutableStateOf(com.anindra.messages.data.BackupFormat.LEGACY)
-    }
-    var importModeDialog by remember { mutableStateOf(false) }
-    var importSourceDialog by remember { mutableStateOf(false) }
-    var pendingImportSource by remember { mutableStateOf(ImportSource.OWN_BACKUP) }
-    var pinInput by remember { mutableStateOf("") }
-    var pinConfirm by remember { mutableStateOf("") }
-    var pinError by remember { mutableStateOf<String?>(null) }
-    var showRawBackupWarning by remember { mutableStateOf(false) }
-    var periodicBackup by remember(revision) { mutableStateOf(vm.settings.periodicBackupEnabled) }
-
     LaunchedEffect(Unit) {
         sims = SimCards.load(context)
-        // Heal a saved subscription that no longer exists (SIM removed, or the
-        // debug fake list was turned off) back to the system default.
         val effective = SimSelection.effective(vm.settings.simSubscriptionId, sims)
         if (effective != vm.settings.simSubscriptionId) vm.settings.simSubscriptionId = effective
     }
@@ -225,7 +258,6 @@ fun SettingsScreen(
         ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
         if (uri != null) {
-            // Only persist a location we can actually keep using after reboot.
             try {
                 context.contentResolver.takePersistableUriPermission(
                     uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
@@ -238,6 +270,524 @@ fun SettingsScreen(
                     context.getString(R.string.settings_backup_location_failed),
                     Toast.LENGTH_LONG
                 ).show()
+            }
+        }
+    }
+
+    var profileAvatarTrigger by remember { mutableIntStateOf(0) }
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            val ok = CustomAvatarStore.saveAvatar(context, "me", uri)
+            if (ok) {
+                invalidateAvatarCache("me")
+                profileAvatarTrigger++
+                Toast.makeText(context, "تصویر پروفایل شما ذخیره شد", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    // Resolve labels
+    val themeSubtitle = themeLabel(themeMode, context)
+    val langSubtitle = when (vm.settings.appLanguage) {
+        "fa" -> stringResource(R.string.language_fa)
+        "en" -> stringResource(R.string.language_en)
+        else -> stringResource(R.string.language_system)
+    }
+    val linesSubtitle = when (vm.settings.previewLines) {
+        1 -> stringResource(R.string.preview_lines_1)
+        2 -> stringResource(R.string.preview_lines_2)
+        3 -> stringResource(R.string.preview_lines_3)
+        else -> "${vm.settings.previewLines} lines"
+    }
+    val cellColorSubtitle = when (vm.settings.customCellColor) {
+        "green" -> stringResource(R.string.cell_color_green)
+        "cyan" -> stringResource(R.string.cell_color_cyan)
+        "gold" -> stringResource(R.string.cell_color_gold)
+        "red" -> stringResource(R.string.cell_color_red)
+        "purple" -> stringResource(R.string.cell_color_purple)
+        "silver" -> stringResource(R.string.cell_color_silver)
+        else -> stringResource(R.string.cell_color_theme)
+    }
+    val cellStyleSubtitle = when (vm.settings.cellStyle) {
+        "divider" -> stringResource(R.string.cell_style_divider)
+        else -> stringResource(R.string.cell_style_card)
+    }
+    val borderOpacitySubtitle = when (vm.settings.cellBorderOpacity) {
+        "subtle" -> stringResource(R.string.border_opacity_subtle)
+        "strong" -> stringResource(R.string.border_opacity_strong)
+        "neon" -> stringResource(R.string.border_opacity_neon)
+        else -> stringResource(R.string.border_opacity_medium)
+    }
+    val dividerColorSubtitle = when (vm.settings.dividerColor) {
+        "gold" -> "طلایی استارک (Stark Gold)"
+        "green" -> "سبز ماتریکس (Matrix Green)"
+        "cyan" -> "آبی سایان (Cyber Cyan)"
+        "silver" -> "نقره‌ای (Ghost Silver)"
+        "subtle" -> "خاکستری مات (Subtle Dim)"
+        else -> "هماهنگ با تم انتخابی"
+    }
+    val launcherIconSubtitle = when (vm.settings.launcherIcon) {
+        SettingsStore.ICON_STARK_GOLD -> stringResource(R.string.launcher_icon_stark_gold)
+        SettingsStore.ICON_MATRIX_GREEN -> stringResource(R.string.launcher_icon_matrix_green)
+        SettingsStore.ICON_CYBER_CYAN -> stringResource(R.string.launcher_icon_cyber_cyan)
+        else -> stringResource(R.string.launcher_icon_black_white)
+    }
+    val selectedSub = sims.firstOrNull { it.subscriptionId == vm.settings.simSubscriptionId }
+    val currentSimLabel = if (selectedSub == null) {
+        context.getString(R.string.sim_default)
+    } else {
+        when (val label = SimLabels.resolve(
+            selectedSub.subscriptionId, selectedSub.slotIndex, selectedSub.carrierName
+        )) {
+            SimLabel.Default -> context.getString(R.string.sim_default)
+            is SimLabel.Carrier -> String.format(
+                context.getString(R.string.settings_sim_label_format), label.carrier, label.slot
+            )
+            is SimLabel.Slot -> String.format(
+                context.getString(R.string.settings_sim_label), label.slot
+            )
+            SimLabel.Unknown -> context.getString(R.string.sim_default)
+        }
+    }
+    val swipeLeftSubtitle = swipeActionLabel(vm.settings.swipeLeftAction, context)
+    val swipeRightSubtitle = swipeActionLabel(vm.settings.swipeRightAction, context)
+
+    // Construct the complete searchable catalog
+    val allSearchableItems = remember(
+        revision, delayedSending, delaySeconds, deliveryReports, sendSound, receiveSound,
+        pinnedEnabled, archivingEnabled, unreadAtTop, draftsEnabled, forwardingEnabled,
+        showSimIndicator, hideNotifBody, privacyMode, appLock, periodicBackup, currentSimLabel,
+        themeSubtitle, langSubtitle, linesSubtitle, cellColorSubtitle, cellStyleSubtitle,
+        borderOpacitySubtitle, dividerColorSubtitle, launcherIconSubtitle, swipeLeftSubtitle,
+        swipeRightSubtitle, scheduledCount
+    ) {
+        listOf(
+            // Appearance & Theme
+            SearchSettingItem(
+                id = "theme",
+                title = context.getString(R.string.settings_theme_title),
+                subtitle = themeSubtitle,
+                category = "ظاهر و طراحی / Appearance",
+                keywords = listOf("theme", "تم", "پوسته", "رنگ", "ظاهر", "dark", "light", "amoled", "stark", "matrix", "arctic", "ghost", "crimson", "cyber", "quantum", "blackout", "gold", "cyan", "green"),
+                onClick = { themeDialog = true }
+            ),
+            SearchSettingItem(
+                id = "cell_style",
+                title = context.getString(R.string.settings_cell_style_title),
+                subtitle = cellStyleSubtitle,
+                category = "ظاهر و طراحی / Appearance",
+                keywords = listOf("cell", "style", "card", "divider", "کادر", "سلول", "دیوایدر", "کارت", "خط جداکننده", "جداساز", "حذف کادر"),
+                onClick = { cellStyleDialog = true }
+            ),
+            SearchSettingItem(
+                id = "border_opacity",
+                title = context.getString(R.string.settings_border_opacity_title),
+                subtitle = borderOpacitySubtitle,
+                category = "ظاهر و طراحی / Appearance",
+                keywords = listOf("border", "opacity", "intensity", "شفافیت", "شدت", "کمرنگ", "پررنگ", "نئون", "کادر", "روشنایی"),
+                onClick = { cellOpacityDialog = true }
+            ),
+            SearchSettingItem(
+                id = "divider_color",
+                title = context.getString(R.string.settings_divider_color_title),
+                subtitle = dividerColorSubtitle,
+                category = "ظاهر و طراحی / Appearance",
+                keywords = listOf("divider", "color", "رنگ خط", "دیوایدر", "خط جداکننده", "رنگ دیوایدر"),
+                onClick = { dividerColorDialog = true }
+            ),
+            SearchSettingItem(
+                id = "cell_color",
+                title = context.getString(R.string.settings_cell_color_title),
+                subtitle = cellColorSubtitle,
+                category = "ظاهر و طراحی / Appearance",
+                keywords = listOf("cell color", "color", "رنگ کادر", "رنگ سلول", "رنگ پیش‌فرض", "کادر چت"),
+                onClick = { cellColorDialog = true }
+            ),
+            SearchSettingItem(
+                id = "preview_lines",
+                title = context.getString(R.string.settings_preview_lines_title),
+                subtitle = linesSubtitle,
+                category = "ظاهر و طراحی / Appearance",
+                keywords = listOf("preview", "lines", "خطوط", "پیش‌نمایش", "ارتفاع", "متن پیام", "نمایش پیام"),
+                onClick = { previewLinesDialog = true }
+            ),
+            SearchSettingItem(
+                id = "launcher_icon",
+                title = context.getString(R.string.settings_launcher_icon_title),
+                subtitle = launcherIconSubtitle,
+                category = "ظاهر و طراحی / Appearance",
+                keywords = listOf("icon", "launcher", "آیکون", "لوگو", "تصویر برنامه", "badge", "آیکون لانچر", "مشکی", "سفید"),
+                onClick = { launcherIconDialog = true }
+            ),
+            SearchSettingItem(
+                id = "profile_avatar",
+                title = "تصویر پروفایل شما (AB/SMS)",
+                subtitle = "انتخاب تصویر دلخواه برای پروفایل کاربری",
+                category = "ظاهر و طراحی / Appearance",
+                keywords = listOf("avatar", "profile", "عکس", "پروفایل", "تصویر", "photo", "camera", "تصویر کاربری"),
+                onClick = {
+                    photoPickerLauncher.launch(
+                        androidx.activity.result.PickVisualMediaRequest(
+                            ActivityResultContracts.PickVisualMedia.ImageOnly
+                        )
+                    )
+                }
+            ),
+
+            // Messaging & Delivery
+            SearchSettingItem(
+                id = "delayed_sending",
+                title = context.getString(R.string.settings_delayed_title),
+                subtitle = context.getString(R.string.settings_delayed_subtitle),
+                category = "ارسال و دریافت / Messaging",
+                keywords = listOf("delay", "send", "تاخیر", "ارسال با تاخیر", "وقفه", "لغو ارسال", "wait", "delay send", "ثانیه"),
+                isSwitch = true,
+                checked = delayedSending,
+                onChecked = {
+                    delayedSending = it
+                    vm.settings.delayedSendingEnabled = it
+                }
+            ),
+            SearchSettingItem(
+                id = "delay_seconds",
+                title = context.getString(R.string.settings_delay_secs_title),
+                subtitle = String.format(context.getString(R.string.settings_delay_secs_format), delaySeconds),
+                category = "ارسال و دریافت / Messaging",
+                keywords = listOf("delay", "seconds", "ثانیه", "مدت تاخیر", "زمان تاخیر"),
+                onClick = { delaySecondsDialog = true }
+            ),
+            SearchSettingItem(
+                id = "delivery_reports",
+                title = context.getString(R.string.settings_delivery_reports_title),
+                subtitle = context.getString(R.string.settings_delivery_reports_subtitle),
+                category = "ارسال و دریافت / Messaging",
+                keywords = listOf("delivery", "report", "تحویل", "گزارش تحویل", "دلیوری", "رسید ارسال"),
+                isSwitch = true,
+                checked = deliveryReports,
+                onChecked = {
+                    deliveryReports = it
+                    vm.settings.deliveryReportsEnabled = it
+                }
+            ),
+            SearchSettingItem(
+                id = "pin_sim",
+                title = context.getString(R.string.settings_pin_sim_card),
+                subtitle = currentSimLabel,
+                category = "ارسال و دریافت / Messaging",
+                keywords = listOf("sim", "سیم‌کارت", "سیم", "اپراتور", "carrier", "dual sim", "سیم ۱", "سیم ۲"),
+                onClick = {
+                    val hasPerm = context.checkSelfPermission(Manifest.permission.READ_PHONE_STATE) ==
+                        PackageManager.PERMISSION_GRANTED
+                    if (hasPerm) {
+                        sims = SimCards.load(context)
+                        simDialog = true
+                    } else {
+                        simPermissionLauncher.launch(Manifest.permission.READ_PHONE_STATE)
+                    }
+                }
+            ),
+            SearchSettingItem(
+                id = "sim_indicator",
+                title = context.getString(R.string.settings_sim_indicator),
+                subtitle = context.getString(R.string.settings_sim_indicator_desc),
+                category = "ارسال و دریافت / Messaging",
+                keywords = listOf("sim indicator", "نشانگر سیم‌کارت", "برچسب سیم", "نمایش سیم‌کارت"),
+                isSwitch = true,
+                checked = showSimIndicator,
+                onChecked = {
+                    showSimIndicator = it
+                    vm.settings.showSimIndicator = it
+                }
+            ),
+            SearchSettingItem(
+                id = "drafts",
+                title = context.getString(R.string.settings_drafts_title),
+                subtitle = context.getString(R.string.settings_drafts_subtitle),
+                category = "ارسال و دریافت / Messaging",
+                keywords = listOf("draft", "پیش‌نویس", "ذخیره متن", "متن نیمه‌کاره"),
+                isSwitch = true,
+                checked = draftsEnabled,
+                onChecked = {
+                    draftsEnabled = it
+                    vm.settings.draftsEnabled = it
+                }
+            ),
+            SearchSettingItem(
+                id = "forwarding",
+                title = context.getString(R.string.settings_forwarding_title),
+                subtitle = context.getString(R.string.settings_forwarding_subtitle),
+                category = "ارسال و دریافت / Messaging",
+                keywords = listOf("forward", "بازارسال", "فوروارد", "ارسال مجدد"),
+                isSwitch = true,
+                checked = forwardingEnabled,
+                onChecked = {
+                    forwardingEnabled = it
+                    vm.settings.forwardingEnabled = it
+                }
+            ),
+
+            // Notifications & Sounds
+            SearchSettingItem(
+                id = "notif_sound",
+                title = context.getString(R.string.settings_pin_notification_sound),
+                subtitle = notificationSoundLabel(notificationSound, notificationSoundOptions, context),
+                category = "اعلان‌ها و صداها / Notifications",
+                keywords = listOf("sound", "ringtone", "صدا", "زنگ", "اعلان", "صدای پیامک", "دریافت", "نوتیفیکیشن", "آهنگ"),
+                onClick = { soundDialog = true }
+            ),
+            SearchSettingItem(
+                id = "send_sound",
+                title = context.getString(R.string.settings_send_sound_title),
+                subtitle = context.getString(R.string.settings_send_sound_subtitle),
+                category = "اعلان‌ها و صداها / Notifications",
+                keywords = listOf("send sound", "صدای ارسال", "ارسال", "beep", "صدای بوق"),
+                isSwitch = true,
+                checked = sendSound,
+                onChecked = {
+                    sendSound = it
+                    vm.settings.sendSoundEnabled = it
+                }
+            ),
+            SearchSettingItem(
+                id = "receive_sound",
+                title = context.getString(R.string.settings_receive_sound_title),
+                subtitle = context.getString(R.string.settings_receive_sound_subtitle),
+                category = "اعلان‌ها و صداها / Notifications",
+                keywords = listOf("receive sound", "صدای دریافت", "دریافت در برنامه", "صدا"),
+                isSwitch = true,
+                checked = receiveSound,
+                onChecked = {
+                    receiveSound = it
+                    vm.settings.receiveSoundEnabled = it
+                }
+            ),
+            SearchSettingItem(
+                id = "hide_notif_body",
+                title = context.getString(R.string.settings_notif_hide_body_title),
+                subtitle = context.getString(R.string.settings_notif_hide_body_subtitle),
+                category = "اعلان‌ها و صداها / Notifications",
+                keywords = listOf("hide", "private", "مخفی", "متن اعلان", "حریم خصوصی", "اعلان خصوصی", "notification body"),
+                isSwitch = true,
+                checked = hideNotifBody,
+                onChecked = {
+                    hideNotifBody = it
+                    vm.settings.hideNotificationBody = it
+                }
+            ),
+            SearchSettingItem(
+                id = "system_notif",
+                title = context.getString(R.string.settings_notif_title),
+                subtitle = "تنظیمات سیستمی اعلان‌ها در اندروید",
+                category = "اعلان‌ها و صداها / Notifications",
+                keywords = listOf("system notification", "سیستم اعلان", "تنظیمات اندروید", "کانال اعلان"),
+                onClick = { openSystemNotificationSettings(context) }
+            ),
+
+            // Gestures & Chat List
+            SearchSettingItem(
+                id = "pinned_top",
+                title = context.getString(R.string.settings_pinned_title),
+                subtitle = context.getString(R.string.settings_pinned_subtitle),
+                category = "حرکات و لیست / List & Gestures",
+                keywords = listOf("pin", "پین", "سنجاق", "بالای لیست", "مخاطب پین شده"),
+                isSwitch = true,
+                checked = pinnedEnabled,
+                onChecked = {
+                    pinnedEnabled = it
+                    vm.settings.pinnedEnabled = it
+                }
+            ),
+            SearchSettingItem(
+                id = "unread_top",
+                title = context.getString(R.string.settings_unread_top_title),
+                subtitle = context.getString(R.string.settings_unread_top_subtitle),
+                category = "حرکات و لیست / List & Gestures",
+                keywords = listOf("unread", "خوانده نشده", "بالای صفحه", "پیام جدید"),
+                isSwitch = true,
+                checked = unreadAtTop,
+                onChecked = {
+                    unreadAtTop = it
+                    vm.settings.unreadAtTopEnabled = it
+                }
+            ),
+            SearchSettingItem(
+                id = "swipe_left",
+                title = context.getString(R.string.swipe_left_title),
+                subtitle = swipeLeftSubtitle,
+                category = "حرکات و لیست / List & Gestures",
+                keywords = listOf("swipe", "left", "سوایپ", "کشیدن به چپ", "بایگانی", "حذف"),
+                onClick = { swipeLeftDialog = true }
+            ),
+            SearchSettingItem(
+                id = "swipe_right",
+                title = context.getString(R.string.swipe_right_title),
+                subtitle = swipeRightSubtitle,
+                category = "حرکات و لیست / List & Gestures",
+                keywords = listOf("swipe", "right", "سوایپ", "کشیدن به راست", "بایگانی", "حذف"),
+                onClick = { swipeRightDialog = true }
+            ),
+            SearchSettingItem(
+                id = "archiving",
+                title = context.getString(R.string.settings_archiving_title),
+                subtitle = context.getString(R.string.settings_archiving_subtitle),
+                category = "حرکات و لیست / List & Gestures",
+                keywords = listOf("archive", "آرشیو", "بایگانی", "مخفی کردن چت"),
+                isSwitch = true,
+                checked = archivingEnabled,
+                onChecked = {
+                    archivingEnabled = it
+                    vm.settings.archivingEnabled = it
+                }
+            ),
+            SearchSettingItem(
+                id = "mark_read",
+                title = context.getString(R.string.settings_mark_read_title),
+                subtitle = context.getString(R.string.settings_mark_read_subtitle),
+                category = "حرکات و لیست / List & Gestures",
+                keywords = listOf("read", "خوانده شده", "علامت‌گذاری", "پاک کردن اعلان"),
+                onClick = {
+                    vm.markAllRead()
+                    Toast.makeText(context, context.getString(R.string.settings_mark_read), Toast.LENGTH_SHORT).show()
+                }
+            ),
+
+            // Security, Privacy & Retention
+            SearchSettingItem(
+                id = "app_lock",
+                title = context.getString(R.string.settings_applock_title),
+                subtitle = context.getString(R.string.settings_applock_subtitle),
+                category = "امنیت و نگهداری / Security",
+                keywords = listOf("lock", "fingerprint", "قفل", "اثر انگشت", "پین", "بیومتریک", "رمز"),
+                isSwitch = true,
+                checked = appLock,
+                onChecked = { enable ->
+                    verifyForAppLockChange(context) { verdict ->
+                        when (verdict) {
+                            AppLockVerdict.Verified -> {
+                                appLock = enable
+                                vm.settings.appLockEnabled = enable
+                            }
+                            AppLockVerdict.NoScreenLock -> Toast.makeText(
+                                context,
+                                context.getString(R.string.lock_setup_needed),
+                                Toast.LENGTH_LONG
+                            ).show()
+                            AppLockVerdict.Rejected -> Unit
+                        }
+                    }
+                }
+            ),
+            SearchSettingItem(
+                id = "privacy_mode",
+                title = context.getString(R.string.settings_privacy_title),
+                subtitle = context.getString(R.string.settings_privacy_subtitle),
+                category = "امنیت و نگهداری / Security",
+                keywords = listOf("privacy", "حریم خصوصی", "اسکرین‌شات", "ضد ضبط", "screenshot"),
+                isSwitch = true,
+                checked = privacyMode,
+                onChecked = {
+                    privacyMode = it
+                    (context as? Activity)?.let { act -> vm.setPrivacyMode(act, it) }
+                }
+            ),
+            SearchSettingItem(
+                id = "spam_blocked",
+                title = context.getString(R.string.conversations_spam_blocked),
+                subtitle = context.getString(R.string.settings_spam_blocked_subtitle),
+                category = "امنیت و نگهداری / Security",
+                keywords = listOf("block", "spam", "مسدود", "اسپم", "لیست سیاه", "شماره‌های مسدود"),
+                onClick = onOpenSpamBlocked
+            ),
+            SearchSettingItem(
+                id = "backup",
+                title = context.getString(R.string.settings_backup_title),
+                subtitle = context.getString(R.string.settings_backup_subtitle),
+                category = "امنیت و نگهداری / Security",
+                keywords = listOf("backup", "پشتیبان", "نسخه پشتیبان", "بکاپ", "رمزگذاری"),
+                onClick = {
+                    pinMode = PinDialogMode.SET
+                    pinInput = ""
+                    pinConfirm = ""
+                    pinError = null
+                }
+            ),
+            SearchSettingItem(
+                id = "periodic_backup",
+                title = context.getString(R.string.settings_periodic_backup_title),
+                subtitle = "پشتیبان‌گیری منظم روزانه یا هفتگی",
+                category = "امنیت و نگهداری / Security",
+                keywords = listOf("periodic", "دوره‌ای", "خودکار", "پشتیبان خودکار", "روزانه", "هفتگی"),
+                isSwitch = true,
+                checked = periodicBackup,
+                onChecked = { enabled ->
+                    periodicBackup = enabled
+                    vm.settings.periodicBackupEnabled = enabled
+                    PeriodicBackupScheduler.apply(context, enabled, vm.settings.periodicBackupInterval)
+                }
+            ),
+            SearchSettingItem(
+                id = "import_backup",
+                title = context.getString(R.string.settings_import_title),
+                subtitle = context.getString(R.string.settings_import_subtitle),
+                category = "امنیت و نگهداری / Security",
+                keywords = listOf("restore", "import", "بازیابی", "ایمپورت", "sms backup and restore", "بازگردانی"),
+                onClick = { importSourceDialog = true }
+            ),
+            SearchSettingItem(
+                id = "trash",
+                title = context.getString(R.string.settings_trash_title),
+                subtitle = context.getString(R.string.settings_trash_subtitle),
+                category = "امنیت و نگهداری / Security",
+                keywords = listOf("trash", "سطل زباله", "حذف شده", "بازیابی حذف"),
+                onClick = onOpenTrash
+            ),
+            SearchSettingItem(
+                id = "scheduled_messages",
+                title = context.getString(R.string.settings_scheduled_title),
+                subtitle = scheduledCount ?: "مشاهده و مدیریت پیام‌های زمان‌بندی‌شده",
+                category = "امنیت و نگهداری / Security",
+                keywords = listOf("scheduled", "زمان‌بندی", "ارسال در آینده", "زمان‌بندی شده"),
+                onClick = onOpenScheduled
+            ),
+
+            // General & System
+            SearchSettingItem(
+                id = "language",
+                title = context.getString(R.string.settings_language_title),
+                subtitle = langSubtitle,
+                category = "عمومی و سیستم / General",
+                keywords = listOf("language", "زبان", "فارسی", "english", "انگلیسی", "persian", "مترجم"),
+                onClick = { languageDialog = true }
+            ),
+            SearchSettingItem(
+                id = "advanced",
+                title = context.getString(R.string.settings_advanced_title),
+                subtitle = context.getString(R.string.settings_advanced_subtitle),
+                category = "عمومی و سیستم / General",
+                keywords = listOf("advanced", "پیشرفته", "مهندسی", "مخاطبین", "mms", "دیباگ", "diagnostics", "عیب‌یابی", "فونت"),
+                onClick = onOpenAdvanced
+            )
+        )
+    }
+
+    // Filter matching items
+    val searchResults = remember(searchQuery, allSearchableItems) {
+        if (searchQuery.isBlank()) emptyList()
+        else {
+            val q = searchQuery.trim().lowercase()
+                .replace('ي', 'ی')
+                .replace('ك', 'ک')
+                .replace('آ', 'ا')
+            val words = q.split(" ").filter { it.isNotBlank() }
+            allSearchableItems.filter { item ->
+                val pool = (item.title + " " + (item.subtitle ?: "") + " " + item.category + " " + item.keywords.joinToString(" "))
+                    .lowercase()
+                    .replace('ي', 'ی')
+                    .replace('ك', 'ک')
+                    .replace('آ', 'ا')
+                words.all { pool.contains(it) }
             }
         }
     }
@@ -301,266 +851,450 @@ fun SettingsScreen(
         ) {
             Spacer(Modifier.height(SettingsLayout.TOP_GAP))
 
-            var profileAvatarTrigger by remember { mutableIntStateOf(0) }
-            val photoPickerLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.PickVisualMedia()
-            ) { uri ->
-                if (uri != null) {
-                    val ok = CustomAvatarStore.saveAvatar(context, "me", uri)
-                    if (ok) {
-                        invalidateAvatarCache("me")
-                        profileAvatarTrigger++
-                        Toast.makeText(context, "تصویر پروفایل شما ذخیره شد", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
+            if (searching && searchQuery.isNotBlank()) {
+                // Search Results Mode
+                Text(
+                    text = "${searchResults.size} مورد یافت شد",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
 
-            // User Profile Picture HUD Card
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF09101C)),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x66FFCC00)),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp)
-                    .clickable {
-                        photoPickerLauncher.launch(
-                            androidx.activity.result.PickVisualMediaRequest(
-                                ActivityResultContracts.PickVisualMedia.ImageOnly
-                            )
-                        )
-                    }
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(14.dp)
-                ) {
-                    Box {
-                        key(profileAvatarTrigger) {
-                            PersonAvatar(
-                                key = "me",
-                                size = 52.dp
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .size(22.dp)
-                                .align(Alignment.BottomEnd)
-                                .background(Color(0xFFFFCC00), CircleShape),
-                            contentAlignment = Alignment.Center
+                if (searchResults.isEmpty()) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.fillMaxWidth().padding(24.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Rounded.CameraAlt,
-                                contentDescription = null,
-                                tint = Color(0xFF04070B),
-                                modifier = Modifier.size(13.dp)
+                            Text(
+                                text = stringResource(R.string.settings_search_none),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
-                    Spacer(Modifier.width(14.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "تصویر پروفایل شما (AB/SMS)",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFFFF2B2)
-                        )
-                        Spacer(Modifier.height(2.dp))
-                        Text(
-                            text = "برای انتخاب یا تغییر عکس ضربه بزنید",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFF88A0B8)
-                        )
-                    }
-                }
-            }
-
-            SettingsGroup {
-                SettingsRow(
-                    position = RowPosition.FIRST,
-                    title = stringResource(R.string.settings_notif_title),
-                    onClick = { openSystemNotificationSettings(context) }
-                )
-                SettingsRow(
-                    position = RowPosition.MIDDLE,
-                    title = stringResource(R.string.settings_notif_hide_body_title),
-                    subtitle = stringResource(R.string.settings_notif_hide_body_subtitle),
-                    checked = hideNotifBody,
-                    onChecked = {
-                        hideNotifBody = it
-                        vm.settings.hideNotificationBody = it
-                    }
-                )
-                SettingsRow(
-                    position = RowPosition.MIDDLE,
-                    title = stringResource(R.string.settings_mark_read_title),
-                    onClick = {
-                        vm.markAllRead()
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.settings_mark_read),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                )
-                SettingsRow(
-                    position = RowPosition.MIDDLE,
-                    title = stringResource(R.string.settings_theme_title),
-                    subtitle = themeLabel(themeMode, context),
-                    onClick = { themeDialog = true }
-                )
-                val langSubtitle = when (vm.settings.appLanguage) {
-                    "fa" -> stringResource(R.string.language_fa)
-                    "en" -> stringResource(R.string.language_en)
-                    else -> stringResource(R.string.language_system)
-                }
-                SettingsRow(
-                    position = RowPosition.MIDDLE,
-                    title = stringResource(R.string.settings_language_title),
-                    subtitle = langSubtitle,
-                    onClick = { languageDialog = true }
-                )
-                val linesSubtitle = when (vm.settings.previewLines) {
-                    1 -> stringResource(R.string.preview_lines_1)
-                    2 -> stringResource(R.string.preview_lines_2)
-                    3 -> stringResource(R.string.preview_lines_3)
-                    else -> "${vm.settings.previewLines} lines"
-                }
-                SettingsRow(
-                    position = RowPosition.MIDDLE,
-                    title = stringResource(R.string.settings_preview_lines_title),
-                    subtitle = linesSubtitle,
-                    onClick = { previewLinesDialog = true }
-                )
-                val colorSubtitle = when (vm.settings.customCellColor) {
-                    "green" -> stringResource(R.string.cell_color_green)
-                    "cyan" -> stringResource(R.string.cell_color_cyan)
-                    "gold" -> stringResource(R.string.cell_color_gold)
-                    "red" -> stringResource(R.string.cell_color_red)
-                    "purple" -> stringResource(R.string.cell_color_purple)
-                    "silver" -> stringResource(R.string.cell_color_silver)
-                    else -> stringResource(R.string.cell_color_theme)
-                }
-                SettingsRow(
-                    position = RowPosition.MIDDLE,
-                    title = stringResource(R.string.settings_cell_color_title),
-                    subtitle = colorSubtitle,
-                    onClick = { cellColorDialog = true }
-                )
-                val selectedSub = sims.firstOrNull { it.subscriptionId == vm.settings.simSubscriptionId }
-                val currentSimLabel = if (selectedSub == null) {
-                    context.getString(R.string.sim_default)
                 } else {
-                    when (val label = SimLabels.resolve(
-                        selectedSub.subscriptionId, selectedSub.slotIndex, selectedSub.carrierName
-                    )) {
-                        SimLabel.Default -> context.getString(R.string.sim_default)
-                        is SimLabel.Carrier -> String.format(
-                            context.getString(R.string.settings_sim_label_format), label.carrier, label.slot
-                        )
-                        is SimLabel.Slot -> String.format(
-                            context.getString(R.string.settings_sim_label), label.slot
-                        )
-                        SimLabel.Unknown -> context.getString(R.string.sim_default)
-                    }
-                }
-                SettingsRow(
-                    position = RowPosition.MIDDLE,
-                    title = stringResource(R.string.settings_pin_sim_card),
-                    subtitle = currentSimLabel,
-                    onClick = {
-                        val hasPerm = context.checkSelfPermission(Manifest.permission.READ_PHONE_STATE) ==
-                            PackageManager.PERMISSION_GRANTED
-                        if (hasPerm) {
-                            sims = SimCards.load(context)
-                            simDialog = true
-                        } else {
-                            simPermissionLauncher.launch(Manifest.permission.READ_PHONE_STATE)
+                    SettingsGroup {
+                        searchResults.forEachIndexed { index, item ->
+                            val pos = when {
+                                searchResults.size == 1 -> RowPosition.SINGLE
+                                index == 0 -> RowPosition.FIRST
+                                index == searchResults.size - 1 -> RowPosition.LAST
+                                else -> RowPosition.MIDDLE
+                            }
+                            SettingsRow(
+                                position = pos,
+                                title = item.title,
+                                subtitle = item.subtitle,
+                                checked = if (item.isSwitch) item.checked else null,
+                                onChecked = item.onChecked,
+                                onClick = item.onClick
+                            )
                         }
                     }
-                )
-                SettingsRow(
-                    position = RowPosition.MIDDLE,
-                    title = stringResource(R.string.settings_inbox_title),
-                    onClick = onOpenInbox
-                )
-                SettingsRow(
-                    position = RowPosition.MIDDLE,
-                    title = stringResource(R.string.settings_scheduled_title),
-                    subtitle = scheduledCount,
-                    onClick = onOpenScheduled
-                )
-                SettingsRow(
-                    position = RowPosition.MIDDLE,
-                    title = stringResource(R.string.settings_privacy_title),
-                    checked = privacyMode,
-                    onChecked = {
-                        privacyMode = it
-                        (context as? Activity)?.let { act -> vm.setPrivacyMode(act, it) }
-                    }
-                )
-                SettingsRow(
-                    position = RowPosition.MIDDLE,
-                    title = stringResource(R.string.settings_applock_title),
-                    subtitle = stringResource(R.string.settings_applock_subtitle),
-                    checked = appLock,
-                    onChecked = { enable ->
-                        verifyForAppLockChange(context) { verdict ->
-                            when (verdict) {
-                                AppLockVerdict.Verified -> {
-                                    appLock = enable
-                                    vm.settings.appLockEnabled = enable
-                                }
-                                AppLockVerdict.NoScreenLock -> Toast.makeText(
-                                    context,
-                                    context.getString(R.string.lock_setup_needed),
-                                    Toast.LENGTH_LONG
-                                ).show()
-                                AppLockVerdict.Rejected -> Unit
+                }
+            } else {
+                // Normal Grouped Settings Mode
+
+                // User Profile Picture HUD Card
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF09101C)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x66FFCC00)),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp)
+                        .clickable {
+                            photoPickerLauncher.launch(
+                                androidx.activity.result.PickVisualMediaRequest(
+                                    ActivityResultContracts.PickVisualMedia.ImageOnly
+                                )
+                            )
+                        }
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(14.dp)
+                    ) {
+                        Box {
+                            key(profileAvatarTrigger) {
+                                PersonAvatar(
+                                    key = "me",
+                                    size = 52.dp
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .size(22.dp)
+                                    .align(Alignment.BottomEnd)
+                                    .background(Color(0xFFFFCC00), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.CameraAlt,
+                                    contentDescription = null,
+                                    tint = Color(0xFF04070B),
+                                    modifier = Modifier.size(13.dp)
+                                )
                             }
                         }
+                        Spacer(Modifier.width(14.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "تصویر پروفایل شما (AB/SMS)",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFFFF2B2)
+                            )
+                            Spacer(Modifier.height(2.dp))
+                            Text(
+                                text = "برای انتخاب یا تغییر عکس ضربه بزنید",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFF88A0B8)
+                            )
+                        }
                     }
-                )
-                SettingsRow(
-                    position = RowPosition.MIDDLE,
-                    title = stringResource(R.string.settings_trash_title),
-                    onClick = onOpenTrash
-                )
-                SettingsRow(
-                    position = RowPosition.MIDDLE,
-                    title = stringResource(R.string.conversations_spam_blocked),
-                    onClick = onOpenSpamBlocked
-                )
-                SettingsRow(
-                    position = RowPosition.MIDDLE,
-                    title = stringResource(R.string.settings_backup_title),
-                    subtitle = stringResource(R.string.settings_backup_subtitle),
-                    enabled = !privacyMode,
-                    onClick = {
-                        pinMode = PinDialogMode.SET
-                        pinInput = ""
-                        pinConfirm = ""
-                        pinError = null
+                }
+
+                // Section 1: Appearance & Theme
+                SettingsSectionHeader("ظاهر، پوسته و سلول‌های چت")
+                SettingsGroup {
+                    SettingsRow(
+                        position = RowPosition.FIRST,
+                        title = stringResource(R.string.settings_theme_title),
+                        subtitle = themeSubtitle,
+                        onClick = { themeDialog = true }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_cell_style_title),
+                        subtitle = cellStyleSubtitle,
+                        onClick = { cellStyleDialog = true }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_border_opacity_title),
+                        subtitle = borderOpacitySubtitle,
+                        onClick = { cellOpacityDialog = true }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_divider_color_title),
+                        subtitle = dividerColorSubtitle,
+                        onClick = { dividerColorDialog = true }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_cell_color_title),
+                        subtitle = cellColorSubtitle,
+                        onClick = { cellColorDialog = true }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_preview_lines_title),
+                        subtitle = linesSubtitle,
+                        onClick = { previewLinesDialog = true }
+                    )
+                    SettingsRow(
+                        position = RowPosition.LAST,
+                        title = stringResource(R.string.settings_launcher_icon_title),
+                        subtitle = launcherIconSubtitle,
+                        onClick = { launcherIconDialog = true }
+                    )
+                }
+
+                // Section 2: Messaging & Delivery
+                SettingsSectionHeader("ارسال و دریافت پیام")
+                SettingsGroup {
+                    SettingsRow(
+                        position = RowPosition.FIRST,
+                        title = stringResource(R.string.settings_delayed_title),
+                        subtitle = stringResource(R.string.settings_delayed_subtitle),
+                        checked = delayedSending,
+                        onChecked = {
+                            delayedSending = it
+                            vm.settings.delayedSendingEnabled = it
+                        }
+                    )
+                    if (delayedSending) {
+                        SettingsRow(
+                            position = RowPosition.MIDDLE,
+                            title = stringResource(R.string.settings_delay_secs_title),
+                            subtitle = String.format(stringResource(R.string.settings_delay_secs_format), delaySeconds),
+                            onClick = { delaySecondsDialog = true }
+                        )
                     }
-                )
-                SettingsRow(
-                    position = RowPosition.MIDDLE,
-                    title = stringResource(R.string.settings_import_title),
-                    subtitle = stringResource(R.string.settings_import_subtitle),
-                    onClick = { importSourceDialog = true }
-                )
-                SettingsRow(
-                    position = RowPosition.LAST,
-                    title = stringResource(R.string.settings_advanced_title),
-                    subtitle = stringResource(R.string.settings_advanced_subtitle),
-                    onClick = onOpenAdvanced
-                )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_delivery_reports_title),
+                        subtitle = stringResource(R.string.settings_delivery_reports_subtitle),
+                        checked = deliveryReports,
+                        onChecked = {
+                            deliveryReports = it
+                            vm.settings.deliveryReportsEnabled = it
+                        }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_pin_sim_card),
+                        subtitle = currentSimLabel,
+                        onClick = {
+                            val hasPerm = context.checkSelfPermission(Manifest.permission.READ_PHONE_STATE) ==
+                                PackageManager.PERMISSION_GRANTED
+                            if (hasPerm) {
+                                sims = SimCards.load(context)
+                                simDialog = true
+                            } else {
+                                simPermissionLauncher.launch(Manifest.permission.READ_PHONE_STATE)
+                            }
+                        }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_sim_indicator),
+                        subtitle = stringResource(R.string.settings_sim_indicator_desc),
+                        checked = showSimIndicator,
+                        onChecked = {
+                            showSimIndicator = it
+                            vm.settings.showSimIndicator = it
+                        }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_drafts_title),
+                        subtitle = stringResource(R.string.settings_drafts_subtitle),
+                        checked = draftsEnabled,
+                        onChecked = {
+                            draftsEnabled = it
+                            vm.settings.draftsEnabled = it
+                        }
+                    )
+                    SettingsRow(
+                        position = RowPosition.LAST,
+                        title = stringResource(R.string.settings_forwarding_title),
+                        subtitle = stringResource(R.string.settings_forwarding_subtitle),
+                        checked = forwardingEnabled,
+                        onChecked = {
+                            forwardingEnabled = it
+                            vm.settings.forwardingEnabled = it
+                        }
+                    )
+                }
+
+                // Section 3: Notifications & Sounds
+                SettingsSectionHeader("اعلان‌ها و صداها")
+                SettingsGroup {
+                    SettingsRow(
+                        position = RowPosition.FIRST,
+                        title = stringResource(R.string.settings_pin_notification_sound),
+                        subtitle = notificationSoundLabel(notificationSound, notificationSoundOptions, context),
+                        onClick = { soundDialog = true }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_send_sound_title),
+                        subtitle = stringResource(R.string.settings_send_sound_subtitle),
+                        checked = sendSound,
+                        onChecked = {
+                            sendSound = it
+                            vm.settings.sendSoundEnabled = it
+                        }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_receive_sound_title),
+                        subtitle = stringResource(R.string.settings_receive_sound_subtitle),
+                        checked = receiveSound,
+                        onChecked = {
+                            receiveSound = it
+                            vm.settings.receiveSoundEnabled = it
+                        }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_notif_hide_body_title),
+                        subtitle = stringResource(R.string.settings_notif_hide_body_subtitle),
+                        checked = hideNotifBody,
+                        onChecked = {
+                            hideNotifBody = it
+                            vm.settings.hideNotificationBody = it
+                        }
+                    )
+                    SettingsRow(
+                        position = RowPosition.LAST,
+                        title = stringResource(R.string.settings_notif_title),
+                        subtitle = "تنظیمات سیستمی اعلان‌ها در اندروید",
+                        onClick = { openSystemNotificationSettings(context) }
+                    )
+                }
+
+                // Section 4: Gestures & Chat List
+                SettingsSectionHeader("حرکات لمسی و لیست گفتگوها")
+                SettingsGroup {
+                    SettingsRow(
+                        position = RowPosition.FIRST,
+                        title = stringResource(R.string.settings_pinned_title),
+                        subtitle = stringResource(R.string.settings_pinned_subtitle),
+                        checked = pinnedEnabled,
+                        onChecked = {
+                            pinnedEnabled = it
+                            vm.settings.pinnedEnabled = it
+                        }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_unread_top_title),
+                        subtitle = stringResource(R.string.settings_unread_top_subtitle),
+                        checked = unreadAtTop,
+                        onChecked = {
+                            unreadAtTop = it
+                            vm.settings.unreadAtTopEnabled = it
+                        }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.swipe_left_title),
+                        subtitle = swipeLeftSubtitle,
+                        onClick = { swipeLeftDialog = true }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.swipe_right_title),
+                        subtitle = swipeRightSubtitle,
+                        onClick = { swipeRightDialog = true }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_archiving_title),
+                        subtitle = stringResource(R.string.settings_archiving_subtitle),
+                        checked = archivingEnabled,
+                        onChecked = {
+                            archivingEnabled = it
+                            vm.settings.archivingEnabled = it
+                        }
+                    )
+                    SettingsRow(
+                        position = RowPosition.LAST,
+                        title = stringResource(R.string.settings_mark_read_title),
+                        subtitle = stringResource(R.string.settings_mark_read_subtitle),
+                        onClick = {
+                            vm.markAllRead()
+                            Toast.makeText(context, context.getString(R.string.settings_mark_read), Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                }
+
+                // Section 5: Security, Backup & Retention
+                SettingsSectionHeader("امنیت، پشتیبان‌گیری و نگهداری")
+                SettingsGroup {
+                    SettingsRow(
+                        position = RowPosition.FIRST,
+                        title = stringResource(R.string.settings_applock_title),
+                        subtitle = stringResource(R.string.settings_applock_subtitle),
+                        checked = appLock,
+                        onChecked = { enable ->
+                            verifyForAppLockChange(context) { verdict ->
+                                when (verdict) {
+                                    AppLockVerdict.Verified -> {
+                                        appLock = enable
+                                        vm.settings.appLockEnabled = enable
+                                    }
+                                    AppLockVerdict.NoScreenLock -> Toast.makeText(
+                                        context,
+                                        context.getString(R.string.lock_setup_needed),
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    AppLockVerdict.Rejected -> Unit
+                                }
+                            }
+                        }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_privacy_title),
+                        subtitle = stringResource(R.string.settings_privacy_subtitle),
+                        checked = privacyMode,
+                        onChecked = {
+                            privacyMode = it
+                            (context as? Activity)?.let { act -> vm.setPrivacyMode(act, it) }
+                        }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.conversations_spam_blocked),
+                        subtitle = stringResource(R.string.settings_spam_blocked_subtitle),
+                        onClick = onOpenSpamBlocked
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_backup_title),
+                        subtitle = stringResource(R.string.settings_backup_subtitle),
+                        enabled = !privacyMode,
+                        onClick = {
+                            pinMode = PinDialogMode.SET
+                            pinInput = ""
+                            pinConfirm = ""
+                            pinError = null
+                        }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_periodic_backup_title),
+                        subtitle = "پشتیبان‌گیری منظم روزانه یا هفتگی",
+                        checked = periodicBackup,
+                        onChecked = { enabled ->
+                            periodicBackup = enabled
+                            vm.settings.periodicBackupEnabled = enabled
+                            PeriodicBackupScheduler.apply(context, enabled, vm.settings.periodicBackupInterval)
+                        }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_import_title),
+                        subtitle = stringResource(R.string.settings_import_subtitle),
+                        onClick = { importSourceDialog = true }
+                    )
+                    SettingsRow(
+                        position = RowPosition.MIDDLE,
+                        title = stringResource(R.string.settings_trash_title),
+                        subtitle = stringResource(R.string.settings_trash_subtitle),
+                        onClick = onOpenTrash
+                    )
+                    SettingsRow(
+                        position = RowPosition.LAST,
+                        title = stringResource(R.string.settings_scheduled_title),
+                        subtitle = scheduledCount ?: "مدیریت پیام‌های زمان‌بندی‌شده",
+                        onClick = onOpenScheduled
+                    )
+                }
+
+                // Section 6: General & Advanced
+                SettingsSectionHeader("عمومی و پیشرفته")
+                SettingsGroup {
+                    SettingsRow(
+                        position = RowPosition.FIRST,
+                        title = stringResource(R.string.settings_language_title),
+                        subtitle = langSubtitle,
+                        onClick = { languageDialog = true }
+                    )
+                    SettingsRow(
+                        position = RowPosition.LAST,
+                        title = stringResource(R.string.settings_advanced_title),
+                        subtitle = stringResource(R.string.settings_advanced_subtitle),
+                        onClick = onOpenAdvanced
+                    )
+                }
             }
 
             SettingsFooter(stringResource(R.string.messages_footer))
         }
     }
 
+    // Dialogs
     if (themeDialog) {
         AlertDialog(
             onDismissRequest = { themeDialog = false },
@@ -604,6 +1338,267 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { themeDialog = false }) { Text(stringResource(R.string.common_cancel)) }
+            }
+        )
+    }
+
+    if (cellStyleDialog) {
+        AlertDialog(
+            onDismissRequest = { cellStyleDialog = false },
+            title = { Text(stringResource(R.string.settings_cell_style_title)) },
+            text = {
+                Column {
+                    val options = listOf(
+                        "card" to stringResource(R.string.cell_style_card),
+                        "divider" to stringResource(R.string.cell_style_divider)
+                    )
+                    options.forEach { (code, label) ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    vm.settings.cellStyle = code
+                                    cellStyleDialog = false
+                                }
+                                .padding(vertical = 6.dp)
+                        ) {
+                            RadioButton(
+                                selected = vm.settings.cellStyle == code,
+                                onClick = {
+                                    vm.settings.cellStyle = code
+                                    cellStyleDialog = false
+                                }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(label)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { cellStyleDialog = false }) { Text(stringResource(R.string.common_ok)) }
+            }
+        )
+    }
+
+    if (cellOpacityDialog) {
+        AlertDialog(
+            onDismissRequest = { cellOpacityDialog = false },
+            title = { Text(stringResource(R.string.settings_border_opacity_title)) },
+            text = {
+                Column {
+                    val options = listOf(
+                        "subtle" to stringResource(R.string.border_opacity_subtle),
+                        "medium" to stringResource(R.string.border_opacity_medium),
+                        "strong" to stringResource(R.string.border_opacity_strong),
+                        "neon" to stringResource(R.string.border_opacity_neon)
+                    )
+                    options.forEach { (code, label) ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    vm.settings.cellBorderOpacity = code
+                                    cellOpacityDialog = false
+                                }
+                                .padding(vertical = 6.dp)
+                        ) {
+                            RadioButton(
+                                selected = vm.settings.cellBorderOpacity == code,
+                                onClick = {
+                                    vm.settings.cellBorderOpacity = code
+                                    cellOpacityDialog = false
+                                }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(label)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { cellOpacityDialog = false }) { Text(stringResource(R.string.common_ok)) }
+            }
+        )
+    }
+
+    if (dividerColorDialog) {
+        AlertDialog(
+            onDismissRequest = { dividerColorDialog = false },
+            title = { Text(stringResource(R.string.settings_divider_color_title)) },
+            text = {
+                Column {
+                    val options = listOf(
+                        "theme" to "هماهنگ با تم انتخابی (پیش‌فرض)",
+                        "gold" to "طلایی استارک (Stark Gold)",
+                        "green" to "سبز ماتریکس (Matrix Green)",
+                        "cyan" to "آبی سایان (Cyber Cyan)",
+                        "silver" to "نقره‌ای شبح (Ghost Silver)",
+                        "subtle" to "خاکستری مات (Subtle Dim)"
+                    )
+                    options.forEach { (code, label) ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    vm.settings.dividerColor = code
+                                    dividerColorDialog = false
+                                }
+                                .padding(vertical = 6.dp)
+                        ) {
+                            RadioButton(
+                                selected = vm.settings.dividerColor == code,
+                                onClick = {
+                                    vm.settings.dividerColor = code
+                                    dividerColorDialog = false
+                                }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(label)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { dividerColorDialog = false }) { Text(stringResource(R.string.common_ok)) }
+            }
+        )
+    }
+
+    if (launcherIconDialog) {
+        AlertDialog(
+            onDismissRequest = { launcherIconDialog = false },
+            title = { Text(stringResource(R.string.settings_launcher_icon_title)) },
+            text = {
+                Column {
+                    val options = listOf(
+                        SettingsStore.ICON_BLACK_WHITE to stringResource(R.string.launcher_icon_black_white),
+                        SettingsStore.ICON_STARK_GOLD to stringResource(R.string.launcher_icon_stark_gold),
+                        SettingsStore.ICON_MATRIX_GREEN to stringResource(R.string.launcher_icon_matrix_green),
+                        SettingsStore.ICON_CYBER_CYAN to stringResource(R.string.launcher_icon_cyber_cyan)
+                    )
+                    options.forEach { (code, label) ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    vm.settings.launcherIcon = code
+                                    launcherIconDialog = false
+                                    Toast.makeText(context, "استایل آیکون تنظیم شد", Toast.LENGTH_SHORT).show()
+                                }
+                                .padding(vertical = 6.dp)
+                        ) {
+                            RadioButton(
+                                selected = vm.settings.launcherIcon == code,
+                                onClick = {
+                                    vm.settings.launcherIcon = code
+                                    launcherIconDialog = false
+                                    Toast.makeText(context, "استایل آیکون تنظیم شد", Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(label)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { launcherIconDialog = false }) { Text(stringResource(R.string.common_ok)) }
+            }
+        )
+    }
+
+    if (delaySecondsDialog) {
+        AlertDialog(
+            onDismissRequest = { delaySecondsDialog = false },
+            title = { Text(stringResource(R.string.settings_delay_secs_title)) },
+            text = {
+                Column {
+                    val options = listOf(1, 2, 3, 5, 10, 15, 30)
+                    options.forEach { sec ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    vm.settings.delaySeconds = sec
+                                    delaySecondsDialog = false
+                                }
+                                .padding(vertical = 4.dp)
+                        ) {
+                            RadioButton(
+                                selected = delaySeconds == sec,
+                                onClick = {
+                                    vm.settings.delaySeconds = sec
+                                    delaySecondsDialog = false
+                                }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(String.format(stringResource(R.string.settings_delay_secs_format), sec))
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { delaySecondsDialog = false }) { Text(stringResource(R.string.common_ok)) }
+            }
+        )
+    }
+
+    if (swipeLeftDialog || swipeRightDialog) {
+        val isLeft = swipeLeftDialog
+        val currentAction = if (isLeft) vm.settings.swipeLeftAction else vm.settings.swipeRightAction
+        val actions = listOf(
+            SwipeAction.Archive to stringResource(R.string.swipe_action_archive),
+            SwipeAction.Delete to stringResource(R.string.swipe_action_delete),
+            SwipeAction.MarkRead to stringResource(R.string.swipe_action_mark_read),
+            SwipeAction.None to stringResource(R.string.swipe_action_off)
+        )
+        AlertDialog(
+            onDismissRequest = {
+                swipeLeftDialog = false
+                swipeRightDialog = false
+            },
+            title = { Text(stringResource(if (isLeft) R.string.swipe_left_title else R.string.swipe_right_title)) },
+            text = {
+                Column {
+                    actions.forEach { (action, label) ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    if (isLeft) vm.settings.swipeLeftAction = action
+                                    else vm.settings.swipeRightAction = action
+                                    swipeLeftDialog = false
+                                    swipeRightDialog = false
+                                }
+                                .padding(vertical = 4.dp)
+                        ) {
+                            RadioButton(
+                                selected = currentAction == action,
+                                onClick = {
+                                    if (isLeft) vm.settings.swipeLeftAction = action
+                                    else vm.settings.swipeRightAction = action
+                                    swipeLeftDialog = false
+                                    swipeRightDialog = false
+                                }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(label)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    swipeLeftDialog = false
+                    swipeRightDialog = false
+                }) { Text(stringResource(R.string.common_ok)) }
             }
         )
     }
@@ -736,10 +1731,6 @@ fun SettingsScreen(
             }
         )
     }
-
-
-
-
 
     if (soundDialog) {
         AlertDialog(
@@ -888,8 +1879,6 @@ fun SettingsScreen(
         fun applyImport() {
             val target = uri ?: return
             if (pendingImportSource == ImportSource.SMS_IE) {
-                // The real ImportResult carries the reason; the old Int callback
-                // discarded it and showed one generic failure for every cause.
                 vm.importSmsIe(target, mode, showImportResult)
                 return
             }
@@ -1196,16 +2185,26 @@ fun SettingsScreen(
     }
 }
 
-/**
- * A run of settings rows separated by a small gap. Each row draws its own card;
- * the group itself is only the vertical rhythm, so a group's outer rows are
- * strongly rounded while the rows between them stay nearly rectangular.
- */
-/**
- * A card whose corner rounding follows its place in a group, for screens that
- * need their own row content but the same shape language as the settings list.
- * Pair with a [Column] of [SettingsLayout.ROW_GAP] spacing.
- */
+@Composable
+fun SettingsSectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp, bottom = 8.dp, start = 4.dp, end = 4.dp)
+    )
+}
+
+private fun swipeActionLabel(action: SwipeAction, context: android.content.Context): String = when (action) {
+    SwipeAction.Archive -> context.getString(R.string.swipe_action_archive)
+    SwipeAction.Delete -> context.getString(R.string.swipe_action_delete)
+    SwipeAction.MarkRead -> context.getString(R.string.swipe_action_mark_read)
+    SwipeAction.None -> context.getString(R.string.swipe_action_off)
+}
+
 @Composable
 fun GroupedRowCard(
     position: RowPosition,
@@ -1236,11 +2235,6 @@ fun SettingsGroup(content: @Composable () -> Unit) {
     }
 }
 
-/**
- * One card holding several related rows, split by hairlines. Used where a list
- * reads as a single block rather than as a run of separate row cards, e.g. a
- * contact profile's notification and block controls.
- */
 @Composable
 fun GroupedRowList(
     modifier: Modifier = Modifier,
@@ -1257,8 +2251,6 @@ fun GroupedRowList(
     }
 }
 
-/** Android's own notification prefs for this app, which is where the OS-level
- *  toggles (per-conversation, channels, badges) actually live. */
 private fun openSystemNotificationSettings(context: android.content.Context) {
     runCatching {
         context.startActivity(
@@ -1287,18 +2279,9 @@ private fun themeLabel(mode: String, context: android.content.Context) = when (m
     else -> "Stark Cyber HUD"
 }
 
-
-
 private fun notificationSoundLabel(value: String, options: List<Pair<String, String>>, context: android.content.Context) =
     options.firstOrNull { it.first == value }?.second ?: context.getString(R.string.settings_sound_default)
 
-/**
- * A single-choice group of [options] (label to optional supporting text),
- * following the Material 3 radio button guidelines: stacked vertically, one
- * option always selected, and the whole row is the tap target so either the
- * radio or its label selects. Selection does not act on its own - the dialog's
- * confirm button does.
- */
 @Composable
 internal fun ImportRadioGroup(
     options: List<Pair<String, String>>,
@@ -1327,12 +2310,6 @@ internal fun ImportRadioGroup(
     }
 }
 
-/**
- * One settings row, drawn as its own card. [position] decides which corners
- * soften, so the first and last rows of a group are strongly rounded and the
- * ones between them nearly square, which makes a gap-separated run of cards
- * read as one group.
- */
 @Composable
 fun SettingsRow(
     title: String,
@@ -1347,17 +2324,6 @@ fun SettingsRow(
 ) {
     val contentAlpha = if (enabled) 1f else 0.38f
     val corners = rowCorners(position)
-    // Corner radii are pixels with no text equivalent, so publish them the way
-    // the chat bubbles do (BubbleShape): a regression script can then assert a
-    // row's rounding from logcat instead of a screenshot.
-    LaunchedEffect(title, position) {
-        android.util.Log.d(
-            "SettingsRowShape",
-            "title=$title position=$position " +
-                "topStart=${corners.topStart.value} topEnd=${corners.topEnd.value} " +
-                "bottomStart=${corners.bottomStart.value} bottomEnd=${corners.bottomEnd.value}"
-        )
-    }
     Card(
         shape = RoundedCornerShape(
             topStart = corners.topStart,
@@ -1408,10 +2374,6 @@ fun SettingsRow(
                 }
                 if (checked != null && onChecked != null) {
                     Spacer(Modifier.width(8.dp))
-                    // M3 sizes the Switch for a 48dp touch target, which makes every
-                    // switch row ~16dp taller than a title-only one and breaks the
-                    // list's rhythm. The whole row is already the control, so the
-                    // switch only has to render at its own 52x32 track size.
                     Switch(
                         checked = checked,
                         onCheckedChange = { onChecked(it) },
@@ -1435,11 +2397,6 @@ fun SettingsRow(
     }
 }
 
-/**
- * Explanatory text under a settings group. Set on its own line rather than as a
- * row, so it reads as a note about the group instead of another option. Uses
- * the same type as a row's subtitle, since it describes those same options.
- */
 @Composable
 fun SettingsFooter(text: String) {
     Text(
@@ -1448,9 +2405,6 @@ fun SettingsFooter(text: String) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier
             .fillMaxWidth()
-            // No horizontal inset: the note lines up with the left and right
-            // edges of the row cards above it, the way a page's border does,
-            // rather than with the text inside them.
             .padding(
                 top = SettingsLayout.FOOTER_TOP_GAP,
                 bottom = SettingsLayout.FOOTER_BOTTOM_GAP

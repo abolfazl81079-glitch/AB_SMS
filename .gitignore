@@ -12,7 +12,7 @@ local.properties
 /mms/build
 .kotlin
 screenshots/*
-release.keystore
+# release.keystore is committed for consistent APK updates without reinstalling
 *.apk
 .commandcode/
 .cache/
