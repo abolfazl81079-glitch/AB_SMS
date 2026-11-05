@@ -1,4 +1,4 @@
-﻿package com.anindra.messages.ui
+package com.anindra.messages.ui
 
 import android.Manifest
 import android.app.Activity
@@ -580,12 +580,11 @@ fun ConversationsScreen(
                 ) {
                     LazyColumn(state = listState, modifier = Modifier.weight(1f)) {
                         items(displayed, key = { it.id }) { convo ->
-                            key(convo.id) {
-                                SwipeableConversationItem(
-                                    context,
-                                    modifier = Modifier.animateItem(
-                                        placementSpec = motionSpring(reduceMotion)
-                                    ),
+                            SwipeableConversationItem(
+                                context,
+                                modifier = Modifier.animateItem(
+                                    placementSpec = motionSpring(reduceMotion)
+                                ),
                                 settings = rowSettings,
                                 swipeEnabled = rowSettings.swipeEnabled && !showArchived && !selectionActive,
                                 convo = convo,
@@ -614,7 +613,6 @@ fun ConversationsScreen(
                                 onBlock = { blockWithUndo(convo) },
                                 onLongClick = { sheetConvoId = convo.id }
                             )
-                            }
                         }
                         item(key = "spacer") { Spacer(Modifier.height(96.dp)) }
                     }

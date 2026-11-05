@@ -1,17 +1,13 @@
 package com.anindra.messages.data
 
-import android.icu.util.Calendar
-import android.icu.util.PersianCalendar
-import android.icu.util.TimeZone
-import android.os.Build
 import java.time.Instant
 import java.time.ZoneId
 import java.util.Locale
 
 /**
  * High-performance Persian Solar Hijri (Jalali) calendar converter and Persian digit utility for A/SMS.
- * Uses Android ICU PersianCalendar on API 24+ for standard leap year calculations,
- * with a mathematical astronomical fallback ensuring 100% accuracy for decades.
+ * Pure Kotlin astronomical algorithm based on the standard JDF & Borkowski formula.
+ * Exact precision for decades into the past and future.
  */
 object JalaliCalendar {
     val PERSIAN_MONTHS = arrayOf(
@@ -36,22 +32,11 @@ object JalaliCalendar {
     }
 
     /**
-     * Converts an epoch millisecond timestamp to Jalali date.
+     * Converts an epoch millisecond timestamp to Jalali date in system timezone.
      */
     fun fromEpochMillis(epochMillis: Long): JalaliDate {
-        return try {
-            // Android ICU PersianCalendar (supported since API 24, app minSdk is 29)
-            val pCal = PersianCalendar(TimeZone.getDefault())
-            pCal.timeInMillis = epochMillis
-            val year = pCal.get(Calendar.YEAR)
-            val month = pCal.get(Calendar.MONTH) + 1 // 1-based
-            val day = pCal.get(Calendar.DAY_OF_MONTH)
-            JalaliDate(year, month, day)
-        } catch (_: Throwable) {
-            // Astronomical mathematical fallback
-            val date = Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()).toLocalDate()
-            gregorianToJalali(date.year, date.monthValue, date.dayOfMonth)
-        }
+        val date = Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()).toLocalDate()
+        return gregorianToJalali(date.year, date.monthValue, date.dayOfMonth)
     }
 
     /**

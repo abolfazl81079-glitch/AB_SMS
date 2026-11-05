@@ -1,4 +1,4 @@
-﻿package com.anindra.messages.ui
+package com.anindra.messages.ui
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.window.Dialog
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Call
