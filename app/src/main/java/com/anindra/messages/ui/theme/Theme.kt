@@ -1,4 +1,4 @@
-package com.anindra.messages.ui.theme
+﻿package com.anindra.messages.ui.theme
 
 import android.app.Activity
 import android.content.Context
@@ -311,7 +311,7 @@ internal fun schemeFor(
 ): ColorScheme = when {
     a11y.highContrastEnabled && darkTheme -> DarkHighContrastColors
     a11y.highContrastEnabled -> LightHighContrastColors
-    mode in listOf("stark", "stark_hud", "hud", "cyber", "cyber_blue", "ab_cyber_blue", "blackout", "matrix", "neon_matrix", "arctic", "arctic_glass", "ghost", "ghost_protocol", "ocean", "deep_ocean", "crimson", "crimson_hacker", "quantum", "minimal", "minimal_glass") -> CyberTheme.schemeForMode(mode)
+    mode in listOf("stark", "stark_hud", "hud", "cyber", "cyber_blue", "ab_cyber_blue", "blackout", "matrix", "neon_matrix", "arctic", "arctic_glass", "ghost", "ghost_protocol", "ocean", "deep_ocean", "crimson", "crimson_hacker", "quantum", "minimal", "minimal_glass", "orange", "cyber_orange", "amber_orange") -> CyberTheme.schemeForMode(mode)
     mode == SettingsStore.THEME_AMOLED -> CyberTheme.Blackout
     mode == SettingsStore.THEME_DYNAMIC && dynamic != null -> dynamic
     darkTheme || mode == SettingsStore.THEME_DARK -> CyberTheme.StarkHud

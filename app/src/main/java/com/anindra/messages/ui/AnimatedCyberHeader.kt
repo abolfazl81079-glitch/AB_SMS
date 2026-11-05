@@ -120,11 +120,11 @@ fun AnimatedCyberHeader(
                     style = Stroke(width = 1.dp.toPx())
                 )
 
-                // 2. High-intensity traveling laser beam with theme radial glow
+                // 2. High-intensity traveling laser beam with theme radial glow (Smooth beam, circle removed)
                 drawRoundRect(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            Color.White.copy(alpha = 0.95f),
+                            Color.White.copy(alpha = 0.90f),
                             effectiveLaserColor.copy(alpha = 0.85f),
                             effectiveLaserColor.copy(alpha = 0.35f),
                             Color.Transparent
@@ -134,21 +134,6 @@ fun AnimatedCyberHeader(
                     ),
                     cornerRadius = CornerRadius(cornerRadius, cornerRadius),
                     style = Stroke(width = 2.2.dp.toPx())
-                )
-
-                // 3. Laser head glowing comet dot
-                val dotX = lx.coerceIn(cornerRadius / 2, w - cornerRadius / 2)
-                val dotY = ly.coerceIn(cornerRadius / 2, h - cornerRadius / 2)
-                drawCircle(
-                    color = effectiveLaserColor,
-                    radius = 4.5.dp.toPx(),
-                    center = Offset(dotX, dotY),
-                    alpha = 0.5f * pulseAlpha
-                )
-                drawCircle(
-                    color = Color.White,
-                    radius = 2.dp.toPx(),
-                    center = Offset(dotX, dotY)
                 )
             }
     ) {
@@ -191,16 +176,6 @@ fun AnimatedCyberHeader(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp,
                         fontFamily = FontFamily.Monospace
-                    )
-
-                    Spacer(Modifier.width(8.dp))
-
-                    // Minimal Live Signal Dot
-                    Box(
-                        modifier = Modifier
-                            .size(7.dp)
-                            .clip(CircleShape)
-                            .background(effectiveLaserColor.copy(alpha = pulseAlpha))
                     )
                 }
 

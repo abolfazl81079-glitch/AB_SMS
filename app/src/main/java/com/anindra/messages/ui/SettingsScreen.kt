@@ -1,4 +1,4 @@
-package com.anindra.messages.ui
+﻿package com.anindra.messages.ui
 
 import android.Manifest
 import android.app.Activity
@@ -1349,6 +1349,7 @@ fun SettingsScreen(
                         add("ocean" to "Deep Ocean (Navy & Electric Blue)")
                         add("crimson" to "Crimson Hacker (Black & Red)")
                         add("quantum" to "Quantum (Cyber Purple & Cyan)")
+                        add("orange" to "نارنجی سایبرپانک / Cyber Orange")
                         add("minimal" to "Minimal Glass (Subtle Transparent)")
                         add("light" to stringResource(R.string.settings_theme_light))
                         add("system" to stringResource(R.string.settings_theme_system))
@@ -2471,6 +2472,7 @@ private fun themeLabel(mode: String, context: android.content.Context) = when (m
     "ocean", "deep_ocean" -> "Deep Ocean"
     "crimson", "crimson_hacker" -> "Crimson Hacker"
     "quantum" -> "Quantum"
+    "orange", "cyber_orange" -> "Cyber Orange"
     "minimal", "minimal_glass" -> "Minimal Glass"
     "light" -> context.getString(R.string.settings_theme_light)
     "dark" -> context.getString(R.string.settings_theme_dark)

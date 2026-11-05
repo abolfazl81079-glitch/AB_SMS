@@ -1,4 +1,4 @@
-package com.anindra.messages.ui
+﻿package com.anindra.messages.ui
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -453,123 +453,127 @@ fun CopySeparatorDialog(
         item.type == SmartNumberDetector.NumberType.LANDLINE ||
         (cleanText.isNotEmpty() && cleanText.all { it.isDigit() || it == '+' })
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = cs.surfaceContainerHigh.copy(alpha = 0.95f),
-        tonalElevation = 6.dp,
-        shape = RoundedCornerShape(14.dp),
-        modifier = Modifier.padding(16.dp),
-        title = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+    Dialog(onDismissRequest = onDismiss) {
+        androidx.compose.material3.Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = cs.surfaceContainerHigh.copy(alpha = 0.98f),
+            border = BorderStroke(0.9.dp, cs.primary.copy(alpha = 0.45f)),
+            shadowElevation = 8.dp,
+            modifier = Modifier
+                .widthIn(min = 280.dp, max = 310.dp)
+                .padding(horizontal = 8.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(
-                    imageVector = if (isDialable) Icons.Rounded.Call else Icons.Rounded.ContentCopy,
-                    contentDescription = null,
-                    tint = cs.primary,
-                    modifier = Modifier.size(20.dp)
-                )
+                // Title Row
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isDialable) Icons.Rounded.Call else Icons.Rounded.ContentCopy,
+                        contentDescription = null,
+                        tint = cs.primary,
+                        modifier = Modifier.size(17.dp)
+                    )
+                    Text(
+                        text = if (isDialable) "عملیات شماره و کد" else "کپی به کلیپ‌بورد",
+                        color = cs.primary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.5.sp
+                    )
+                }
+
+                // Subtitle
                 Text(
-                    text = if (isDialable) "عملیات شماره و کد" else "کپی به کلیپ‌بورد",
-                    color = cs.primary,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 17.sp
-                )
-            }
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(
-                    text = if (hasSeparators) "آیا مایلید علامت‌ها، فاصله‌ها و خطوط تیره از متن حذف شوند؟" else "مقدار انتخاب‌شده:",
-                    color = cs.onSurface,
-                    fontSize = 13.5.sp,
-                    lineHeight = 20.sp
+                    text = if (hasSeparators) "قالب مورد نظر را انتخاب یا لمس کنید:" else "مقدار انتخاب‌شده:",
+                    color = cs.onSurfaceVariant,
+                    fontSize = 11.5.sp
                 )
 
-                // Option 1 Preview Card: Cleaned without separators (Directly clickable)
-                Card(
-                    shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = cs.primary.copy(alpha = 0.12f)),
-                    border = BorderStroke(0.8.dp, cs.primary.copy(alpha = 0.6f)),
+                // Option 1: Cleaned
+                androidx.compose.material3.Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = cs.primary.copy(alpha = 0.10f),
+                    border = BorderStroke(0.7.dp, cs.primary.copy(alpha = 0.5f)),
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onCopy(cleanText, true) }
                 ) {
-                    Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = if (hasSeparators) "حالت خالص (بدون علامت و خط فاصله):" else "متن:",
+                                text = if (hasSeparators) "حالت خالص (بدون علامت):" else "مقدار:",
                                 color = cs.primary,
-                                fontSize = 11.sp,
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
+                            Spacer(Modifier.height(1.dp))
                             Text(
-                                text = "لمس برای کپی",
-                                color = cs.primary.copy(alpha = 0.8f),
-                                fontSize = 10.sp
+                                text = cleanText,
+                                color = cs.onSurface,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold
                             )
                         }
-                        Spacer(Modifier.height(3.dp))
-                        Text(
-                            text = cleanText,
-                            color = cs.onSurface,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
+                        Icon(
+                            imageVector = Icons.Rounded.ContentCopy,
+                            contentDescription = "کپی",
+                            tint = cs.primary.copy(alpha = 0.7f),
+                            modifier = Modifier.size(14.dp)
                         )
                     }
                 }
 
+                // Option 2: Original (if has separators)
                 if (hasSeparators) {
-                    // Option 2 Preview Card: Original with separators (Directly clickable)
-                    Card(
-                        shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = cs.surfaceVariant.copy(alpha = 0.5f)),
-                        border = BorderStroke(0.8.dp, cs.secondary.copy(alpha = 0.6f)),
+                    androidx.compose.material3.Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = cs.surfaceVariant.copy(alpha = 0.4f),
+                        border = BorderStroke(0.7.dp, cs.outlineVariant.copy(alpha = 0.5f)),
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { onCopy(originalText, false) }
                     ) {
-                        Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "حالت اصلی (با علامت و خط فاصله):",
-                                    color = cs.secondary,
-                                    fontSize = 11.sp,
+                                    text = "حالت اصلی (با علامت):",
+                                    color = cs.onSurfaceVariant,
+                                    fontSize = 10.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
+                                Spacer(Modifier.height(1.dp))
                                 Text(
-                                    text = "لمس برای کپی",
-                                    color = cs.secondary.copy(alpha = 0.8f),
-                                    fontSize = 10.sp
+                                    text = originalText,
+                                    color = cs.onSurface,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold
                                 )
                             }
-                            Spacer(Modifier.height(3.dp))
-                            Text(
-                                text = originalText,
-                                color = cs.onSurface,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold
+                            Icon(
+                                imageVector = Icons.Rounded.ContentCopy,
+                                contentDescription = "کپی",
+                                tint = cs.onSurfaceVariant.copy(alpha = 0.7f),
+                                modifier = Modifier.size(14.dp)
                             )
                         }
                     }
                 }
-            }
-        },
-        confirmButton = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Call Action Button if dialable
+
+                Spacer(Modifier.height(2.dp))
+
+                // Action Buttons
                 if (isDialable) {
                     Button(
                         onClick = {
@@ -586,22 +590,25 @@ fun CopySeparatorDialog(
                             onDismiss()
                         },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF10B981), // Vibrant Green
+                            containerColor = Color(0xFF10B981),
                             contentColor = Color.White
                         ),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        shape = RoundedCornerShape(6.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 4.dp, horizontal = 12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(34.dp)
                     ) {
-                        Icon(Icons.Rounded.Call, contentDescription = null, modifier = Modifier.size(17.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("تماس / شماره‌گیری", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Icon(Icons.Rounded.Call, contentDescription = null, modifier = Modifier.size(15.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("تماس / شماره‌گیری", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                 }
 
                 if (hasSeparators) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Button(
                             onClick = { onCopy(cleanText, true) },
@@ -609,47 +616,40 @@ fun CopySeparatorDialog(
                                 containerColor = cs.primary,
                                 contentColor = cs.onPrimary
                             ),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.weight(1f)
+                            shape = RoundedCornerShape(6.dp),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 2.dp, horizontal = 8.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(32.dp)
                         ) {
-                            Text("کپی بدون علامت", fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1)
+                            Text("کپی بدون علامت", fontWeight = FontWeight.Bold, fontSize = 11.sp, maxLines = 1)
                         }
 
                         OutlinedButton(
                             onClick = { onCopy(originalText, false) },
-                            border = BorderStroke(0.8.dp, cs.secondary),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = cs.secondary),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.weight(1f)
+                            border = BorderStroke(0.7.dp, cs.outlineVariant),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = cs.onSurface),
+                            shape = RoundedCornerShape(6.dp),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 2.dp, horizontal = 8.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(32.dp)
                         ) {
-                            Text("کپی با علامت", fontWeight = FontWeight.Medium, fontSize = 12.sp, maxLines = 1)
+                            Text("کپی با علامت", fontWeight = FontWeight.Medium, fontSize = 11.sp, maxLines = 1)
                         }
-                    }
-                } else {
-                    Button(
-                        onClick = { onCopy(cleanText, true) },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = cs.primary,
-                            contentColor = cs.onPrimary
-                        ),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Rounded.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("کپی در کلیپ‌بورد", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
                 }
 
                 TextButton(
                     onClick = onDismiss,
-                    colors = ButtonDefaults.textButtonColors(contentColor = cs.onSurfaceVariant),
-                    modifier = Modifier.fillMaxWidth()
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 2.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(30.dp)
                 ) {
-                    Text("انصراف", fontSize = 13.sp)
+                    Text("انصراف", color = cs.onSurfaceVariant, fontSize = 12.sp)
                 }
             }
-        },
-        dismissButton = null
-    )
+        }
+    }
 }

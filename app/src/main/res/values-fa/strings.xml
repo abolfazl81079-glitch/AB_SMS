@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">A/SMS</string>
     <string name="app_name_placeholder">A/SMS</string>
@@ -322,4 +322,7 @@
     <string name="convo_pinned">سنجاق شد</string>
     <string name="convo_unpinned">سنجاق برداشته شد</string>
     <string name="convo_blocked">شماره مسدود شد</string>
+    <string name="notif_action_reply">پاسخ</string>
+    <string name="notif_action_read">خوانده شد</string>
+    <string name="notif_action_delete">حذف</string>
 </resources>

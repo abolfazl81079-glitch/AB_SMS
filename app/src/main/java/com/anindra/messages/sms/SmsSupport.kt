@@ -1,4 +1,4 @@
-package com.anindra.messages.sms
+﻿package com.anindra.messages.sms
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -126,7 +126,8 @@ object NotificationHelper {
             .setIcon(IconCompat.createWithResource(context, R.drawable.ic_stat_message))
             .build()
         val style = NotificationCompat.MessagingStyle(me)
-            .setConversationTitle(senderName)
+            .setConversationTitle(null)
+            .setGroupConversation(false)
 
         val history = convoId
             ?.let { app.repository.notificationHistory(it, NotificationHistory.MAX_LINES) }
@@ -284,12 +285,12 @@ object NotificationHelper {
             PendingIntent.FLAG_MUTABLE
         )
 
-        val remoteInput = RemoteInput.Builder("quick_reply").setLabel("Reply").build()
+        val remoteInput = RemoteInput.Builder("quick_reply").setLabel(context.getString(R.string.notif_action_reply)).build()
 
         // Alphanumeric sender IDs cannot receive replies, so no reply action.
         val replyAction = if (com.anindra.messages.data.AddressIdentity.isReplyable(from)) {
             NotificationCompat.Action.Builder(
-                R.drawable.ic_reply, "Reply", replyIntent
+                R.drawable.ic_reply, context.getString(R.string.notif_action_reply), replyIntent
             ).setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_REPLY)
                 .addRemoteInput(remoteInput).build()
         } else {
@@ -307,7 +308,7 @@ object NotificationHelper {
             PendingIntent.FLAG_IMMUTABLE
         )
         val markReadAction = NotificationCompat.Action.Builder(
-            0, "Mark as read", markReadIntent
+            0, context.getString(R.string.notif_action_read), markReadIntent
         ).build()
 
         val deleteData = Intent(context, DeleteMessageReceiver::class.java)
@@ -344,8 +345,13 @@ object NotificationHelper {
         // playing the bundled silent clip instead.
         val builder = NotificationCompat.Builder(context, channelId(context))
             .setSmallIcon(R.drawable.ic_stat_message)
+            .setColor(0xFF257CB5.toInt())
+            .setSubText("A/SMS")
             .setContentTitle(title)
             .setContentText(text)
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setShowWhen(true)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
             .setAutoCancel(true)
             // Launchers that render a count read this field, and aggregate it

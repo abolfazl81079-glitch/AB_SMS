@@ -1,4 +1,4 @@
-package com.anindra.messages.ui.theme
+﻿package com.anindra.messages.ui.theme
 
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
@@ -252,6 +252,35 @@ object CyberTheme {
         surfaceContainerHighest = Color(0xFF1C202A)
     )
 
+
+    // ──────────────── 10. Cyber Orange (Neon Amber / Orange Hacker) ────────────────
+    val CyberOrange = darkColorScheme(
+        primary = Color(0xFFFF6D00),             // Electric Neon Orange
+        onPrimary = Color(0xFF0F0500),
+        primaryContainer = Color(0xFF4E1D00),    // Dark Orange Glass
+        onPrimaryContainer = Color(0xFFFFE0CC),
+        inversePrimary = Color(0xFFFF9E40),
+        secondary = Color(0xFFFF9100),           // Vivid Amber Accent
+        onSecondary = Color(0xFF0F0500),
+        secondaryContainer = Color(0xFF220E02),  // Secondary Deep Brown/Orange Glass
+        onSecondaryContainer = Color(0xFFFFE0CC),
+        tertiary = Color(0xFFFFAB40),            // Soft Amber
+        onTertiary = Color(0xFF0F0500),
+        background = Color(0xFF0A0502),          // Deep Obsidian Black
+        onBackground = Color(0xFFFFF2E6),        // Warm Light Text
+        surface = Color(0xFF100703),             // Dark Cockpit Slate
+        onSurface = Color(0xFFFFF2E6),
+        surfaceVariant = Color(0xFF1E0E06),      // Cell Card Background
+        onSurfaceVariant = Color(0xFFA68574),    // Secondary Text
+        outline = Color(0xFFFF6D00),             // Cyber Orange Borders
+        outlineVariant = Color(0xFF8C3800),
+        surfaceContainerLowest = Color(0xFF0A0502),
+        surfaceContainerLow = Color(0xFF0E0703),
+        surfaceContainer = Color(0xFF140A04),    // Conversation Cell Background
+        surfaceContainerHigh = Color(0xFF1E0E06),
+        surfaceContainerHighest = Color(0xFF2C160A)
+    )
+
     /**
      * Resolves the requested theme mode into a ColorScheme.
      */
@@ -266,6 +295,7 @@ object CyberTheme {
         "crimson", "crimson_hacker" -> CrimsonHacker
         "quantum" -> Quantum
         "minimal", "minimal_glass" -> MinimalGlass
+        "orange", "cyber_orange", "amber_orange" -> CyberOrange
         else -> StarkHud // Default is Stark Cyber HUD from screenshot
     }
 }

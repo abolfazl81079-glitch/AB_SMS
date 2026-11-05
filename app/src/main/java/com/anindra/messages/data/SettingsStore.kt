@@ -1,4 +1,4 @@
-package com.anindra.messages.data
+﻿package com.anindra.messages.data
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -17,6 +17,7 @@ class SettingsStore(context: Context) {
 
     companion object {
         const val THEME_STARK = "stark"
+        const val THEME_ORANGE = "orange"
         const val THEME_SYSTEM = "system"
         const val THEME_LIGHT = "light"
         const val THEME_DARK = "dark"
